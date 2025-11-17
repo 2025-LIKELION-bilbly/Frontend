@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import HomePage from './pages/HomePage';
 import MeetingSelectPage from './features/meeting/pages/MeetingSelectPage';
 import GlobalStyle from './styles/GlobalStyle';
+import Step1NamePage from "./features/meeting/pages/meeting-create-page/Step1NamePage";
 
 // function App() {
 //   return (
@@ -23,6 +24,7 @@ function App() {
         <Routes>
           <Route path="/meeting" element={<MeetingSelectPage />} />
           <Route path="/main" element={<HomePage />} />
+          <Route path="/meeting/create/1" element={<Step1NamePage />} />
         </Routes>
       </BrowserRouter>
     </>
