@@ -10,11 +10,8 @@ type NextButtonProps = {
 
 const NextButton = ({ label, state, onClick }: NextButtonProps) => {
     return (
-        <S.ButtonWrapper
-        $state={state}
-        onClick={state === "valid" ? onClick : undefined}
-        >
-        {label}
+        <S.ButtonWrapper $state={state} onClick={onClick}>
+            {label}
         </S.ButtonWrapper>
     );
 };

@@ -1,8 +1,10 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import * as S from "./Step1NamePage.styles";
 import NextBtn from "../../components/NextBtn";
 
 const Step1NamePage = () => {
+    const navigate = useNavigate();
     const [name, setName] = useState("");
 
     const isValid = name.length >= 1 && name.length <= 15;
@@ -10,9 +12,8 @@ const Step1NamePage = () => {
     const buttonState = name.length === 0 ? "default" : isValid ? "valid" : "invalid";
 
     const handleNext = () => {
-        if (!isValid) return;
-        console.log("다음 스텝으로 이동", name);
-        // navigate("/meeting/create/step2");
+        if (buttonState !== "valid") return;  // 조건 불만족하면 이동 막기
+        navigate("/meeting/create/2");
     };
 
     return (

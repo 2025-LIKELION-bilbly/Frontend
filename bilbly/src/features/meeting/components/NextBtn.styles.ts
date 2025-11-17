@@ -17,6 +17,8 @@ export const ButtonWrapper = styled.button<{ $state: "default" | "valid" | "inva
     line-height: 150%;
     letter-spacing: -0.5px;
 
+    border none;
+
     /* 기본, able, disable 상태별 배경색 */
     background-color: ${({ $state }) => {
         switch ($state) {
@@ -29,9 +31,11 @@ export const ButtonWrapper = styled.button<{ $state: "default" | "valid" | "inva
         }
     }};
 
-    /* 기본, able, disable 상태별 테두리 */
+    /* 기본, able, disable 상태별 테두리 
     border: ${({ $state }) =>
-        $state === "default" ? "1px solid #100F0F" : "none"};
+        $state === "default" ? "1px solid #100F0F" : "none"};  */
+
+
 
     /* 기본, able, disable 상태별 글자색 */
     color: ${({ $state }) => {
@@ -48,6 +52,5 @@ export const ButtonWrapper = styled.button<{ $state: "default" | "valid" | "inva
     /* 상태별 클릭 가능 여부 */
     cursor: ${({ $state }) => ($state === "valid" ? "pointer" : "default")};
     pointer-events: ${({ $state }) => ($state === "valid" ? "auto" : "none")};
-
     transition: 0.2s ease-in-out;
 `;
