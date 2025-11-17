@@ -1,13 +1,24 @@
+// src/App.tsx
+
 import React from 'react';
-import HomePage from './pages/HomePage';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { ThemeProvider } from 'styled-components'; 
+
 import GlobalStyle from './styles/GlobalStyle';
+import { theme } from './styles/theme'; // theme 불러오기
+import HomePage from './features/home/pages/HomePage';
 
 function App() {
   return (
-    <>
-      <GlobalStyle /> {/* 1. 앱 전체에 공통 스타일 적용 */}
-      <HomePage />  {/* 2. 우리가 만든 홈 페이지 보여주기 */}
-    </>
+    <ThemeProvider theme={theme}>
+      <GlobalStyle />
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Navigate to="/main" />} />
+          <Route path="/main" element={<HomePage />} />
+        </Routes>
+      </BrowserRouter>
+    </ThemeProvider>
   );
 }
 
