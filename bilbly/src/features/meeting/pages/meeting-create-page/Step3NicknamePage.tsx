@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import * as S from "./Step3NicknamePage.styles";
 import NextBtn from "../../components/NextBtn";
+import NicknameInputBox from "../../components/meeting-create/NicknameInputBox";
 
 const Step3NicknamePage = () => {
     const navigate = useNavigate();
@@ -27,19 +28,11 @@ const Step3NicknamePage = () => {
                 </S.MainBox1>
 
                 <S.MainBox2>
-                    <S.InputWrapper>
-
-                        <S.InputField
+                    <NicknameInputBox
                         value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        placeholder="닉네임을 입력해 주세요"
-                        $isInvalid={isInvalid}
-                        />
-
-                        <S.Desc $isInvalid={isInvalid}>
-                        최대 8자까지 입력 가능해요
-                        </S.Desc>
-                    </S.InputWrapper>
+                        onChange={(value) => setName(value)}
+                        isInvalid={isInvalid}
+                    />
                 </S.MainBox2>
             </S.MainContainer>
 
