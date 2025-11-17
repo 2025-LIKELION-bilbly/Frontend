@@ -4,6 +4,7 @@ import MeetingSelectPage from './features/meeting/pages/MeetingSelectPage';
 import GlobalStyle from './styles/GlobalStyle';
 import Step1NamePage from "./features/meeting/pages/meeting-create-page/Step1NamePage";
 import Step2PeriodPage from "./features/meeting/pages/meeting-create-page/Step2PeriodPage";
+import Step3NicknamePage from "./features/meeting/pages/meeting-create-page/Step3NickNamePage";
 
 // function App() {
 //   return (
@@ -20,13 +21,14 @@ function App() {
   return (
     <>
       <GlobalStyle />
-
+      
       <BrowserRouter>
         <Routes>
           <Route path="/meeting" element={<MeetingSelectPage />} />
           <Route path="/main" element={<HomePage />} />
           <Route path="/meeting/create/1" element={<Step1NamePage />} />
           <Route path="/meeting/create/2" element={<Step2PeriodPage />} />
+          <Route path="/meeting/create/3" element={<Step3NicknamePage />} />
         </Routes>
       </BrowserRouter>
     </>
