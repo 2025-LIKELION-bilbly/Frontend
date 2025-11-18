@@ -1,7 +1,7 @@
-// bilbly/src/components/Header.tsx
+// src/components/Header.tsx
 
 import React from 'react';
-import * as S from './Header.styles'; // 방금 만든 스타일 파일을 'S'라는 이름으로 가져옴
+import * as S from './Header.styles';
 
 function Header() {
   return (
