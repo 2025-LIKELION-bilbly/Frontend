@@ -1,6 +1,7 @@
 import styled from "styled-components";
-import BackgroundPattern from '../../../../assets/background_pattern.png';
+import BackgroundPattern from "../../../../assets/background_pattern.png";
 
+// 페이지 전체 컨테이너
 export const Container = styled.div`
     width: 100%;
     max-width: 393px;
@@ -15,48 +16,40 @@ export const Container = styled.div`
 
     &::before {
         content: "";
-        position: absolute; /* 이 Container(480px) 내부에 고정 */
+        position: absolute;
         top: 0;
         left: 0;
         right: 0;
         bottom: 0;
-        
-        /* 5. 피그마 속성 적용 */
+
         background-image: url(${BackgroundPattern});
-        background-repeat: repeat;  /* Scale: Tile */
-        opacity: 0.1;               /* Opacity: 10% */
-        mix-blend-mode: multiply;   /* Blend: Multiply */
-        
-        z-index: -1; /* 패턴을 이 컨테이너의 맨 뒤로 보냄 */
+        background-repeat: repeat;
+        opacity: 0.1;
+        mix-blend-mode: multiply;
+
+        z-index: -1;
     }
 `;
 
-// btn 제외 container
+// 버튼 제외 영역
 export const MainContainer = styled.div`
     display: flex;
-    width: 300px;
+    // max-width: 300px;
     padding-top: 60px;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 60px;
-    margin: 0 auto;
+    gap: 44px;
+    margin: 0 49.3px; 
 `;
 
 export const MainBox1 = styled.div`
     display: flex;
-    height: 135px;
+    height: 171px;
     flex-direction: column;
-    align-items: center;
+    align-items: center; 
 `;
 
-export const MainBox2 = styled.div`
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 6px;
-    align-self: stretch;
-`;
 
 export const StepText = styled.div`
     text-align: center;
@@ -68,7 +61,6 @@ export const StepText = styled.div`
     line-height: 30px; /* 150% */
     margin-bottom: 24px;
 `;
-
 export const Title = styled.div`
     text-align: center;
     color: #100f0f;
@@ -91,6 +83,16 @@ export const SubTitle = styled.div`
 `;
 
 
+// 색상 그리드
+export const ColorGrid = styled.div`
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    width: 100%;
+    justify-items: center;
+`;
+
+// 버튼 영역
 export const BottomArea = styled.div`
     margin-top: auto;
     width: 100%;

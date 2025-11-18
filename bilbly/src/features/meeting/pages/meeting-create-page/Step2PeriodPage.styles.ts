@@ -66,7 +66,7 @@ export const StepText = styled.div`
     font-style: normal;
     font-weight: 600;
     line-height: 30px; /* 150% */
-    margin-bottom: 12px;
+    margin-bottom: 24px;
 `;
 
 // 타이틀, 서브 타이틀
