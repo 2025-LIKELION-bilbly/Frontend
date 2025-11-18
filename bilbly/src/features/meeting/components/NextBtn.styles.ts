@@ -17,7 +17,7 @@ export const ButtonWrapper = styled.button<{ $state: "default" | "valid" | "inva
     line-height: 150%;
     letter-spacing: -0.5px;
 
-    border none;
+    border: none;
 
     /* 기본, able, disable 상태별 배경색 */
     background-color: ${({ $state }) => {
@@ -31,9 +31,6 @@ export const ButtonWrapper = styled.button<{ $state: "default" | "valid" | "inva
         }
     }};
 
-    /* 기본, able, disable 상태별 테두리 
-    border: ${({ $state }) =>
-        $state === "default" ? "1px solid #100F0F" : "none"};  */
 
 
 
