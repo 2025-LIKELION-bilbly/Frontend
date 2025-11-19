@@ -9,7 +9,7 @@ import NewMeetingCard from "../components/meeting-select/NewMeetingCard";
 const MeetingSelectPage = () => {
     const navigate = useNavigate();
 
-    const handleNewClick = () => navigate("/meeting/create");
+    const handleNewClick = () => navigate("/meeting/create/1");
     const handleOldClick = () => navigate("/meeting/join");
 
     return (

@@ -12,7 +12,8 @@ import Step2PeriodPage from "./features/meeting/pages/meeting-create-page/Step2P
 import Step3NicknamePage from "./features/meeting/pages/meeting-create-page/Step3NicknamePage";
 import Step4ColorPage from "./features/meeting/pages/meeting-create-page/Step4ColorPage";
 import CodeDisplayPage from './features/meeting/pages/meeting-create-page/CodeDisplayPage';
-
+import SelectBookIntroPage from './features/meeting/pages/meeting-create-page/SelectBookIntroPage';
+import SelectBookListPage from './features/SelectBookListPage';
 
 function App() {
   return (
@@ -22,13 +23,19 @@ function App() {
         <Routes>
           <Route path="/" element={<Navigate to="/main" />} />
           <Route path="/main" element={<HomePage />} />
+
+          {/* 모임 새로 생성하기 경로 */}
           <Route path="/meeting" element={<MeetingSelectPage />} />
           <Route path="/meeting/create/1" element={<Step1NamePage />} />
           <Route path="/meeting/create/2" element={<Step2PeriodPage />} />
           <Route path="/meeting/create/3" element={<Step3NicknamePage />} />
           <Route path="/meeting/create/4" element={<Step4ColorPage />} />
           <Route path="/meeting/create/code" element={<CodeDisplayPage />} /> 
-          <Route path="/meeting/create/selectbook/laterselect" element={<div>404 Not Found</div>} /> // 추후 구현: meeting-create 책 선택 페이지 [나중에] 
+          <Route path="/meeting/create/complete" element={<SelectBookIntroPage />} />
+
+          {/* 책 고르기 경로 */}
+          <Route path="/selectbooklist" element={<SelectBookListPage />} /> // 📚 책 선택 - 책 리스트 임시 경로
+          
         </Routes>
       </BrowserRouter>
     </ThemeProvider>

@@ -29,9 +29,9 @@ const CodeDisplayPage = () => {
     // alert("코드가 복사되었어요!");
   };
 
-  // 책 선택 페이지로 이동
+  // 책 선택 인트로 페이지로 이동
   const handleNext = () => {
-    navigate("/meeting/create/next-step");
+    navigate("/meeting/create/complete/");
   };
 
   return (

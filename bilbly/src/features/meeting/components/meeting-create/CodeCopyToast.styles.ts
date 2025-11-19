@@ -9,7 +9,7 @@ export const ToastContainer = styled.div`
     transform: translateX(-50%);
     z-index: 9999;
 
-    animation: toastSlide 2.5s ease-in-out forwards;
+    animation: toastSlide 2.2s ease-in-out forwards;
 
     @keyframes toastSlide {
         0% {
@@ -48,6 +48,7 @@ export const CheckIcon= styled(CheckSvg)`
     height: 24px;
     flex-shrink: 0;
     aspect-ratio: 1/1;
+    stroke: #100F0F;
 `;
 
 export const Message = styled.div`
