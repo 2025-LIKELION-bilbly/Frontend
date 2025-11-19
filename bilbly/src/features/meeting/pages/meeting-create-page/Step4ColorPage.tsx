@@ -32,7 +32,7 @@ const Step4ColorPage = () => {
 
     const handleNext = () => {
         if (!hasSelected) return;
-        navigate("/meeting/create/complete");
+        navigate("/meeting/create/code");
     };
 
     return (
