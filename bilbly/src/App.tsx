@@ -11,6 +11,8 @@ import Step1NamePage from "./features/meeting/pages/meeting-create-page/Step1Nam
 import Step2PeriodPage from "./features/meeting/pages/meeting-create-page/Step2PeriodPage";
 import Step3NicknamePage from "./features/meeting/pages/meeting-create-page/Step3NicknamePage";
 import Step4ColorPage from "./features/meeting/pages/meeting-create-page/Step4ColorPage";
+import CodeDisplayPage from './features/meeting/pages/meeting-create-page/CodeDisplayPage';
+
 
 function App() {
   return (
@@ -25,6 +27,8 @@ function App() {
           <Route path="/meeting/create/2" element={<Step2PeriodPage />} />
           <Route path="/meeting/create/3" element={<Step3NicknamePage />} />
           <Route path="/meeting/create/4" element={<Step4ColorPage />} />
+          <Route path="/meeting/create/code" element={<CodeDisplayPage />} /> 
+          <Route path="/meeting/create/selectbook/laterselect" element={<div>404 Not Found</div>} /> // 추후 구현: meeting-create 책 선택 페이지 [나중에] 
         </Routes>
       </BrowserRouter>
     </ThemeProvider>
