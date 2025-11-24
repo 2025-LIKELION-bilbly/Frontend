@@ -3,8 +3,6 @@ import GimpoBatangFont from '../assets/fonts/GimpoBatang.ttf';
 
 
 const GlobalStyle = createGlobalStyle`
-  @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css");
-  
   @font-face {
     font-family: 'GimpoBatang';
     src: url(${GimpoBatangFont}) format('truetype');

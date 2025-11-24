@@ -15,7 +15,7 @@ const ColorSelectBox = ({
     color, 
     textColor, 
     selected, 
-    hasSelected, 
+    // hasSelected, 
     onClick 
 }: Props) => {
     return (
@@ -24,8 +24,8 @@ const ColorSelectBox = ({
             {/* 선택된 경우 체크 표시 */}
             {selected && <S.CheckIcon $color={textColor}/>}
 
-            {/* 선택된 것이 있으면서, 선택된 박스가 아니면 X 표시 */}
-            {!selected && hasSelected && <S.UncheckIcon $color={textColor} />}
+            {/* ➡️ 추후 구현: 기존의 모임 참여 페이지 다른 사람들이 선택한 색이면 X로 표시하여 선택못하도록 막음 */}
+            {/* {!selected && hasSelected && <S.UncheckIcon $color={textColor} />} */}
 
             {/* 전역 테마 색상 사용 */}
             <S.Label $color={textColor}>{label}</S.Label>

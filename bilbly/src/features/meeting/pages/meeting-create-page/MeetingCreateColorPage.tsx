@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "styled-components";  // 🌈 전역 테마 사용
-import * as S from "./Step4ColorPage.styles";
+import * as S from "./MeetingCreateColorPage.styles";
 import NextBtn from "../../components/NextBtn";
 import ColorSelectBox from "../../components/meeting-create/ColorSelectBox";
 
@@ -32,6 +32,8 @@ const Step4ColorPage = () => {
 
     const handleNext = () => {
         if (!hasSelected) return;
+
+        console.log("최종 선택된 색:", selectedColor); // 확인용 console
         navigate("/meeting/create/code");
     };
 

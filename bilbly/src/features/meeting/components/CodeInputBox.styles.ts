@@ -3,8 +3,9 @@ import styled from "styled-components";
 
 export const Container = styled.div`
     display: flex;
-    gap: 20px;
+    gap: 16px;
     width: 192px;
+    height: 56px;
 `;
 
 // 숫자 입력 한 칸을 감싸는 박스
