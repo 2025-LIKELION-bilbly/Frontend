@@ -26,7 +26,7 @@ return (
             <S.Sheet>
                 <S.MainBox>
                     <S.Title>{meetingName}</S.Title>
-                    <S.Subtitle>이 모임에 참여하는 게 맞나요?</S.Subtitle>
+                    <S.Subtitle>이 모임을 정원이 채워져 가입할 수 없어요</S.Subtitle>
                 </S.MainBox>
 
                 {/* 멤버 MemberCircle */}
@@ -35,7 +35,7 @@ return (
                         <div
                         key={index}
                         style={{
-                            marginLeft: index === 0 ? 0 : -12,  // ⭐ 겹치게 하는 핵심
+                            marginLeft: index === 0 ? 0 : -12,  // 원을 겹치게 하기 위함
                             zIndex: index + 1,                 // 오른쪽 원이 위에 오도록
                             position: "relative"
                         }}
