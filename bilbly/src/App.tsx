@@ -20,6 +20,7 @@ import SelectBookIntroPage from './features/meeting/pages/meeting-create-page/Se
 
 //meeting-join 페이지
 import MeetingJoinCode from './features/meeting/pages/meeting-join-page/MeetingJoinCodePage'
+import MeetingJoinNickname from './features/meeting/pages/meeting-join-page/MeetingJoinNicknamePage'
 
 // 책 고르기 페이지
 import SelectBookListPage from './features/SelectBookListPage';
@@ -47,6 +48,8 @@ function App() {
 
           {/* 기존 모임 참여하기 경로 */}
           <Route path="/meeting/join/1" element={<MeetingJoinCode />} />
+          <Route path="/meeting/join/:code/2" element={<MeetingJoinNickname />} />
+
       
 
 
