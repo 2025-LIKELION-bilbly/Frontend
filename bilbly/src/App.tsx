@@ -6,14 +6,26 @@ import GlobalStyle from './styles/GlobalStyle';
 import { theme } from './styles/theme'; // theme 불러오기
 
 import HomePage from './features/home/pages/HomePage';
-import MeetingSelectPage from './features/meeting/pages/MeetingSelectPage';
-import Step1NamePage from "./features/meeting/pages/meeting-create-page/Step1NamePage";
-import Step2PeriodPage from "./features/meeting/pages/meeting-create-page/Step2PeriodPage";
-import Step3NicknamePage from "./features/meeting/pages/meeting-create-page/Step3NicknamePage";
-import Step4ColorPage from "./features/meeting/pages/meeting-create-page/Step4ColorPage";
+
+// meeting-select 페이지
+import MeetingSelect from './features/meeting/pages/MeetingSelectPage';
+
+// meeting-create 페이지
+import MeetingCreateName from "./features/meeting/pages/meeting-create-page/MeetingCreateNamePage";
+import MeetingCreatePeriod from "./features/meeting/pages/meeting-create-page/MeetingCreatePeriodPage";
+import MeetingCreateNickname from "./features/meeting/pages/meeting-create-page/MeetingCreateNicknamePage";
+import MeetingCreateColor from "./features/meeting/pages/meeting-create-page/MeetingCreateColorPage";
 import CodeDisplayPage from './features/meeting/pages/meeting-create-page/CodeDisplayPage';
 import SelectBookIntroPage from './features/meeting/pages/meeting-create-page/SelectBookIntroPage';
+
+//meeting-join 페이지
+import MeetingJoinCode from './features/meeting/pages/meeting-join-page/MeetingJoinCodePage'
+
+// 책 고르기 페이지
 import SelectBookListPage from './features/SelectBookListPage';
+
+
+
 
 function App() {
   return (
@@ -23,15 +35,20 @@ function App() {
         <Routes>
           <Route path="/" element={<Navigate to="/main" />} />
           <Route path="/main" element={<HomePage />} />
+          <Route path="/meeting" element={<MeetingSelect />} />
 
           {/* 모임 새로 생성하기 경로 */}
-          <Route path="/meeting" element={<MeetingSelectPage />} />
-          <Route path="/meeting/create/1" element={<Step1NamePage />} />
-          <Route path="/meeting/create/2" element={<Step2PeriodPage />} />
-          <Route path="/meeting/create/3" element={<Step3NicknamePage />} />
-          <Route path="/meeting/create/4" element={<Step4ColorPage />} />
+          <Route path="/meeting/create/1" element={<MeetingCreateName />} />
+          <Route path="/meeting/create/2" element={<MeetingCreatePeriod />} />
+          <Route path="/meeting/create/3" element={<MeetingCreateNickname />} />
+          <Route path="/meeting/create/4" element={<MeetingCreateColor />} />
           <Route path="/meeting/create/code" element={<CodeDisplayPage />} /> 
           <Route path="/meeting/create/complete" element={<SelectBookIntroPage />} />
+
+          {/* 기존 모임 참여하기 경로 */}
+          <Route path="/meeting/join/1" element={<MeetingJoinCode />} />
+      
+
 
           {/* 책 고르기 경로 */}
           <Route path="/selectbooklist" element={<SelectBookListPage />} /> // 📚 책 선택 - 책 리스트 임시 경로

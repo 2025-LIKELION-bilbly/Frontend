@@ -1,18 +1,19 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import * as S from "./Step3NicknamePage.styles";
+import * as S from "./MeetingCreateNicknamePage.styles";
 import NextBtn from "../../components/NextBtn";
 import NicknameInputBox from "../../components/meeting-create/NicknameInputBox";
 
 const Step3NicknamePage = () => {
     const navigate = useNavigate();
-    const [name, setName] = useState("");
+    const [nickname, setName] = useState("");
 
-    const isValid = name.length >= 1 && name.length <= 8;
-    const isInvalid = name.length > 0 && !isValid;
-    const buttonState = name.length === 0 ? "default" : isValid ? "valid" : "invalid";
+    const isValid = nickname.length >= 1 && nickname.length <= 8;
+    const isInvalid = nickname.length > 0 && !isValid;
+    const buttonState = nickname.length === 0 ? "default" : isValid ? "valid" : "invalid";
 
     const handleNext = () => {
+        console.log("meeting-nickname: ", nickname)
         if (buttonState !== "valid") return;  // 조건 불만족하면 이동 막기
         navigate("/meeting/create/4");
     };
@@ -29,7 +30,7 @@ const Step3NicknamePage = () => {
 
                 <S.MainBox2>
                     <NicknameInputBox
-                        value={name}
+                        value={nickname}
                         onChange={(value) => setName(value)}
                         isInvalid={isInvalid}
                     />

@@ -10,7 +10,7 @@ const MeetingSelectPage = () => {
     const navigate = useNavigate();
 
     const handleNewClick = () => navigate("/meeting/create/1");
-    const handleOldClick = () => navigate("/meeting/join");
+    const handleOldClick = () => navigate("/meeting/join/1");
 
     return (
         <S.Container>

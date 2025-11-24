@@ -8,7 +8,8 @@ const IntroPage = () => {
     const navigate = useNavigate();
 
     const handleLater = () => {
-        navigate("/main"); // 나중에 고르기 -> main 페이지로 이동
+        // navigate("/main"); // 나중에 고르기 -> main 페이지로 이동
+        navigate("/meeting/join/1"); // 추후 수정: 나중에 고르기 -> 데모에서 코드가 일치할 때 넘어가는 거 확인하는 용도
     };
 
     const handleSelectBook = () => {

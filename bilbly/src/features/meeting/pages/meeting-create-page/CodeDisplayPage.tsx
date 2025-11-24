@@ -2,8 +2,9 @@ import { useEffect, useState,  } from "react";
 import { useNavigate } from "react-router-dom";
 import * as S from "./CodeDisplayPage.styles";
 import NextBtn from "../../components/NextBtn";
-import CodeInput from "../../components/meeting-create/CodeInputBox";
+import CodeInput from "../../components/CodeInputBox";
 import CodeCopyToast  from "../../components/meeting-create/CodeCopyToast";
+import { setDemoMeetingCode } from "../../../../store/DemoMeetingCode";
 
 // 4자리 숫자 랜덤  생성  
 const generateCode = () => {
@@ -17,11 +18,10 @@ const CodeDisplayPage = () => {
 
 
   useEffect(() => {
-    setTimeout(() => {
-      setCode(generateCode());
-    }, 0);
+    const generated = generateCode();
+    setCode(generated);
+    setDemoMeetingCode(generated);   // ⭐ 전역 저장 (서버 대체)
   }, []);
-
 
   const handleCopy = () => {
     navigator.clipboard.writeText(code);

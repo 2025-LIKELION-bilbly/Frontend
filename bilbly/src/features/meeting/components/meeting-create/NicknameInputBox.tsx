@@ -1,5 +1,4 @@
 // features/meeting/components/NicknameInputBox.tsx
-
 import * as S from "./NicknameInputBox.styles";
 
 type Props = {
@@ -8,7 +7,7 @@ type Props = {
     isInvalid: boolean;
 };
 
-const NicknameInputBox = ({ value, onChange, isInvalid }: Props) => {
+const NicknameInputBox = ({ value, onChange, isInvalid }: Props) => { 
     return (
         <S.InputWrapper>
             <S.InputField
