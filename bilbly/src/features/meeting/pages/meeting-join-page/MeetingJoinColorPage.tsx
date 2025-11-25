@@ -60,7 +60,7 @@ const MeetingJoinColor = () => {
 
         console.log("선택된 색상 출력: ", selectedColor) // 확인용 colsole
     
-        navigate(`/meeting/join/${code}/selectbook`, {
+        navigate(`/meeting/join/${code}/selectbookshow`, {
             state: {
                 members,
                 meetingName,
