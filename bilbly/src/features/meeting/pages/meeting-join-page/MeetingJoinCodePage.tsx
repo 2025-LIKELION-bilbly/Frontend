@@ -16,6 +16,7 @@ type Member = {
 
 type Meeting = {
     name: string;
+    period: number;
     members: Member[];
 };
 
@@ -23,19 +24,21 @@ type Meeting = {
 const MOCK_MEETINGS: Record<string, Meeting> = {
     "9999": {
         name: "C.3.1.1 독서모임",
+        period: 3,
         members: [
         { nickname: "강아지", color: "userRose" },
         { nickname: "강백호", color: "userBlue" },
-        { nickname: "강동원", color: "userRose" },
-        { nickname: "강동원", color: "userRose" },
-        { nickname: "강동원", color: "userRose" },
-        { nickname: "강동원", color: "userRose" },
-        { nickname: "강동원", color: "userRose" },
-        { nickname: "강동원", color: "userRose" }
+        { nickname: "강동원", color: "userLime" },
+        { nickname: "강동원", color: "userGreen" },
+        { nickname: "강동원", color: "userBrown" },
+        { nickname: "강동원", color: "userMint" },
+        { nickname: "강동원", color: "userPink" },
+        { nickname: "강동원", color: "userViolet" }
         ]
     },
     "1234": {
         name: "월요일 저녁 모임",
+        period: 3,
         members: [
         { nickname: "박철수", color: "userPink" },
         { nickname: "이영희", color: "userMint" }
@@ -59,6 +62,8 @@ const MeetingJoinCodePage = () => {
     // 모임 다 찼을 때의 모달 상태
     const [showFullModal, setShowFullModal] = useState(false);
 
+    
+    // 연동시 삭제 예정
     const [meetingName, setMeetingName] = useState("");
     const [members, setMembers] = useState<Member[]>([]);
 
@@ -75,14 +80,14 @@ const MeetingJoinCodePage = () => {
         if (!isValid) return;
 
       // 1) 랜덤 생성된 코드 
-        if (trimmedCode === correctCode) {
+        if (trimmedCode === correctCode) { // 나중에 모달 뜨도록 수정
             setMeetingName("새로 생성된 모임");  // ✨ 추후 연동시 수정: 새로 만들어진 모임 이름 불러와야 함
             setMembers([]); 
             setShowModal(true);
             return;
         }
 
-        // 2) 데모용 코드
+        // 2) 데모용 코드(나중에 이와 같은 모달 형식 사용)
         if (createdCode) {
 
             // 데모용 코드에서 사람이 8명 이상일 때
@@ -103,9 +108,14 @@ const MeetingJoinCodePage = () => {
         setErrorToastVisible(true);
     };
 
-    // 모달 다 띄워진 후 <참여하기> 버튼 누른 다음 이동
+    // <참여하기> 버튼 누른 다음 이동
     const handleConfirmJoin = () => {
-        navigate(`/meeting/join/${trimmedCode}/2`);
+        navigate(`/meeting/join/${trimmedCode}/2`, {
+            state: {
+                members,     // 현재 모임의 멤버 데이터 전달 ➡️ 추후 수정
+                meetingName,   // 모임 이름 전달 ➡️ 추후 수정
+            }
+        });
     };
 
 
