@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useTheme } from "styled-components";  // 🌈 전역 테마 사용
 import * as S from "./MeetingCreateColorPage.styles";
 import NextBtn from "../../components/NextBtn";
-import ColorSelectBox from "../../components/meeting-create/ColorSelectBox";
+import ColorSelectBox from "../../components/ColorSelectBox";
 
 const COLOR_OPTIONS = [
     { label: "rose", bgKey: "userRose", textKey: "textRose" },

@@ -1,5 +1,5 @@
 // features/meeting/components/NicknameInputBox.tsx
-import * as S from "./NicknameInputBox.styles";
+import * as S from "../components/NicknameInputBox.styles";
 
 type Props = {
     value: string;
