@@ -1,7 +1,7 @@
 import * as S from "./SelectBookShowPage.styles";
 import { useParams, useNavigate } from "react-router-dom";
 import BookCard from "../../components/BookCard";
-import NextBtn from "../../components/NextBtn"
+import NextBtn from "../../../../components/NextBtn"
 
 type Member = {
     id: number;

@@ -1,7 +1,6 @@
 import { useEffect, useState,  } from "react";
-import { useNavigate } from "react-router-dom";
 import * as S from "./CodeDisplayPage.styles";
-import NextBtn from "../../components/NextBtn";
+import NextBtn from "../../../../components/NextBtn";
 import CodeInput from "../../components/CodeInputBox";
 import CodeCopyToast  from "../../components/meeting-create/CodeCopyToast";
 import { setDemoMeetingCode } from "../../../../store/DemoMeetingCode";
@@ -11,17 +10,26 @@ const generateCode = () => {
   return Math.floor(1000 + Math.random() * 9000).toString(); 
 };
 
-const CodeDisplayPage = () => {
-  const navigate = useNavigate();
-  const [code, setCode] = useState("    "); // 빈 4칸으로 초기화
+type CodeDisplayrProps = {
+    onNext: () => void;
+};
+
+const CodeDisplayPage = ({ onNext }: CodeDisplayrProps) => {
+  const [code] = useState(() => generateCode()); // 빈 4칸으로 초기화
   const [toastVisible, setToastVisible] = useState(false); // ✨ 코드 복사 토스트 상태 관리
 
 
   useEffect(() => {
-    const generated = generateCode();
-    setCode(generated);
-    setDemoMeetingCode(generated);   // ⭐ 전역 저장 (서버 대체)
-  }, []);
+    setDemoMeetingCode(code);
+  }, [code]);
+
+  useEffect(() => {
+    if (!code.trim()) return;  // 빈 코드일 때 실행 X
+
+    setDemoMeetingCode(code);  
+  }, [code]);
+
+
 
   const handleCopy = () => {
     navigator.clipboard.writeText(code);
@@ -31,7 +39,7 @@ const CodeDisplayPage = () => {
 
   // 책 선택 인트로 페이지로 이동
   const handleNext = () => {
-    navigate("/meeting/create/complete/");
+    onNext();
   };
 
   return (

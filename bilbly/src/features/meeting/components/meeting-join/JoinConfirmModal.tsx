@@ -1,5 +1,5 @@
-import MemberCircle from "../../../../shared/components/MemberCircle";
-import NextBtnTwo from "../../../meeting/components/NextBtnTwo";
+import MemberCircle from "../../../../components/MemberCircle";
+import NextBtnTwo from "../../../../components/NextBtnTwo";
 import * as S from "./JoinConfirmModal.styles";
 import * as G from '../../../../styles/GlobalStyle';
 

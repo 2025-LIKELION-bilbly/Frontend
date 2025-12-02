@@ -4,7 +4,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import * as S from "./meeting/pages/meeting-create-page/SelectBookIntroPage.styles";
-import NextBtnTwo from "../features/meeting/components/NextBtnTwo";
+import NextBtnTwo from "../components/NextBtnTwo";
 
 const IntroPage = () => {
     const navigate = useNavigate();

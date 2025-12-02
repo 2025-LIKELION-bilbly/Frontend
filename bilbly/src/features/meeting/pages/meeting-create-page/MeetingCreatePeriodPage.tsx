@@ -1,12 +1,12 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import * as S from "./MeetingCreatePeriodPage.styles";
-import NextBtn from "../../components/NextBtn";
+import NextBtn from "../../../../components/NextBtn";
 
+type MeetingCreatePeriodProps = {
+    onNext: () => void;
+};
 
-
-const Step1NamePage = () => {
-    const navigate = useNavigate();
+const MeetingCreatePeriod = ({ onNext }: MeetingCreatePeriodProps) => {
     const [name, setName] = useState("");
 
     const period = Number(name);
@@ -20,7 +20,7 @@ const Step1NamePage = () => {
         console.log("period: ", period);
         
         if (buttonState !== "valid") return;  // 조건 불만족하면 이동 막기
-        navigate("/meeting/create/3");
+        onNext(); // 만족하면 이동
     };
 
     return (
@@ -57,4 +57,4 @@ const Step1NamePage = () => {
     );
 };
 
-export default Step1NamePage;
+export default MeetingCreatePeriod;

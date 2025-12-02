@@ -24,5 +24,10 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["src", "src/features/default-home/components"]
+  "include": ["src", "src/features/default-home/components"],
+
+  "baseUrl": ".",
+  "paths": {
+    "@/*": ["src/*"]
+  }
 }

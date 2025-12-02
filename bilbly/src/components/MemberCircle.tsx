@@ -1,6 +1,6 @@
 import * as S from "./MemberCircle.styles";
-import * as G from '../../styles/GlobalStyle';
-import { getTextColorFromBg } from "../../styles/ColorUtils";
+import * as G from '../styles/GlobalStyle';
+import { getTextColorFromBg } from "../styles/ColorUtils";
 
 type Props = {
     name: string;

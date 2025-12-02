@@ -1,5 +1,5 @@
 import styled from "styled-components";
-import * as G from "../../styles/GlobalStyle";
+import * as G from "../styles/GlobalStyle";
 
 export const Circle = styled.div<{
     $bgColor: keyof typeof G.theme.colors;

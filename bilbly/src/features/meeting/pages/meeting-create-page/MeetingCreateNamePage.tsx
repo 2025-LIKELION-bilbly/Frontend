@@ -1,10 +1,12 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import * as S from "./MeetingCreateNamePage.styles";
-import NextBtn from "../../components/NextBtn";
+import NextBtn from "../../../../components/NextBtn";
 
-const Step1NamePage = () => {
-    const navigate = useNavigate();
+type MeetingCreateNameProps = {
+    onNext: () => void;
+};
+
+const MeetingCreateName = ({ onNext }: MeetingCreateNameProps) => {
     const [name, setName] = useState("");
 
     const isValid = name.length >= 1 && name.length <= 15;
@@ -15,7 +17,7 @@ const Step1NamePage = () => {
         console.log("meeting-name:", name);  // 삭제 예정: 모임이름 확인용
 
         if (buttonState !== "valid") return;  // 조건 불만족하면 이동 막기
-        navigate("/meeting/create/2"); // 만족하면 이동
+        onNext(); // 만족하면 이동
     };
 
     return (
@@ -52,4 +54,4 @@ const Step1NamePage = () => {
     );
 };
 
-export default Step1NamePage;
+export default MeetingCreateName;

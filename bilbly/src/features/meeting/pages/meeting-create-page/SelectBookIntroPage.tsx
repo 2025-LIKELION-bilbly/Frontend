@@ -1,7 +1,7 @@
 // Step4ColorPage.tsx
 import { useNavigate } from "react-router-dom";
 import * as S from "./SelectBookIntroPage.styles";
-import NextBtnTwo from "../../components/NextBtnTwo";
+import NextBtnTwo from "../../../../components/NextBtnTwo";
 
 const IntroPage = () => {
     const navigate = useNavigate();

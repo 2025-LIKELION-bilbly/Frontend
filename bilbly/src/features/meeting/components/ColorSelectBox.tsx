@@ -5,7 +5,8 @@ type Props = {
     color: string;
     textColor: string;
     selected: boolean;
-    isUsed: boolean;
+    hasSelected: boolean;   
+    isUsed?: boolean;
     onClick: () => void;
 };
 
@@ -14,7 +15,8 @@ const ColorSelectBox = ({
     color,
     textColor,
     selected,
-    isUsed,
+    isUsed = false,
+    hasSelected, 
     onClick
 }: Props) => {
     return (

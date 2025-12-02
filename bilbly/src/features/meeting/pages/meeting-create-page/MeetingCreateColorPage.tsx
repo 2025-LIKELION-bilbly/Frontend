@@ -1,10 +1,13 @@
 // Step4ColorPage.tsx
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { useTheme } from "styled-components";  // 🌈 전역 테마 사용
 import * as S from "./MeetingCreateColorPage.styles";
-import NextBtn from "../../components/NextBtn";
+import NextBtn from "../../../../components/NextBtn";
 import ColorSelectBox from "../../components/ColorSelectBox";
+
+type MeetingCreateColorProps = {
+    onNext: () => void;
+};
 
 const COLOR_OPTIONS = [
     { label: "rose", bgKey: "userRose", textKey: "textRose" },
@@ -17,8 +20,7 @@ const COLOR_OPTIONS = [
     { label: "violet", bgKey: "userViolet", textKey: "textViolet" },
 ] as const;
 
-const Step4ColorPage = () => {
-    const navigate = useNavigate();
+const MeetingCreateColor = ({ onNext }: MeetingCreateColorProps) => {
     const theme = useTheme();
 
     const [selectedColor, setSelectedColor] = useState<string | null>(null);
@@ -34,7 +36,7 @@ const Step4ColorPage = () => {
         if (!hasSelected) return;
 
         console.log("최종 선택된 색:", selectedColor); // 확인용 console
-        navigate("/meeting/create/code");
+        onNext(); // 성공하면 이동
     };
 
     return (
@@ -73,4 +75,4 @@ const Step4ColorPage = () => {
     );
 };
 
-export default Step4ColorPage;
+export default MeetingCreateColor;

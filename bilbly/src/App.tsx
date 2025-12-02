@@ -10,12 +10,7 @@ import HomePage from './features/home/pages/HomePage';
 import MeetingSelect from './features/meeting/pages/MeetingSelectPage';
 
 // meeting-create 페이지
-import MeetingCreateName from "./features/meeting/pages/meeting-create-page/MeetingCreateNamePage";
-import MeetingCreatePeriod from "./features/meeting/pages/meeting-create-page/MeetingCreatePeriodPage";
-import MeetingCreateNickname from "./features/meeting/pages/meeting-create-page/MeetingCreateNicknamePage";
-import MeetingCreateColor from "./features/meeting/pages/meeting-create-page/MeetingCreateColorPage";
-import CodeDisplayPage from './features/meeting/pages/meeting-create-page/CodeDisplayPage';
-import SelectBookIntroPage from './features/meeting/pages/meeting-create-page/SelectBookIntroPage';
+import MeetingCreateFlow from './features/meeting/pages/meeting-create-page/MeetingCreateFlow';
 
 //meeting-join 페이지
 import MeetingJoinCode from './features/meeting/pages/meeting-join-page/MeetingJoinCodePage'
@@ -40,12 +35,7 @@ function App() {
           <Route path="/meeting" element={<MeetingSelect />} />
 
           {/* 모임 새로 생성하기 경로 */}
-          <Route path="/meeting/create/1" element={<MeetingCreateName />} />
-          <Route path="/meeting/create/2" element={<MeetingCreatePeriod />} />
-          <Route path="/meeting/create/3" element={<MeetingCreateNickname />} />
-          <Route path="/meeting/create/4" element={<MeetingCreateColor />} />
-          <Route path="/meeting/create/code" element={<CodeDisplayPage />} /> 
-          <Route path="/meeting/create/complete" element={<SelectBookIntroPage />} />
+          <Route path="/meeting/create/:step" element={<MeetingCreateFlow />} />
 
           {/* 기존 모임 참여하기 경로 */}
           <Route path="/meeting/join/1" element={<MeetingJoinCode />} />
@@ -54,8 +44,6 @@ function App() {
           <Route path="/meeting/join/:code/selectbookshow" element={<SelectBookShow />} /> 
 
       
-
-
           {/* 책 고르기 경로 */}
           <Route path="/meeting/join/:code/selectbooklist" element={<SelectBookListPage />}/> // 📚 책 선택 - 책 리스트 임시 경로
           

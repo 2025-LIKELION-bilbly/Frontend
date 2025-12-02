@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import * as S from "./MeetingJoinNicknamePage.styles";
-import NextBtn from "../../components/NextBtn";
+import NextBtn from "../../../../components/NextBtn";
 import NicknameInputBox from "../../components/NicknameInputBox";
 
 const MeetingJoinNickname = () => {
