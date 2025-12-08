@@ -123,7 +123,9 @@ const ReadingBookPage = () => {
             )}
 
             {/* 헤더 */}
-            {showUI && <ReadingHeader title="책 이름" />}
+            {showUI && <ReadingHeader 
+                    title="책 이름"
+                    percent={percent}/>}
 
             {/* === 3개 클릭 영역 오버레이 추가 === */}
             {!showWarning && (
@@ -138,11 +140,14 @@ const ReadingBookPage = () => {
             <S.ContentBox>{pages[page]}</S.ContentBox>
 
             {/* 모드 토글 */}
-            <S.ToggleWrapper 
-                showUI={showUI}
-                onClick={e => e.stopPropagation()}
-            >
-                <ModeToggle mode={mode} onChangeMode={setMode} />
+            <S.ToggleWrapper $showUI={showUI} onClick={e => e.stopPropagation()}>
+                <ModeToggle
+                    mode={mode}
+                    onChangeMode={(newMode) => {
+                        console.log("모드 변경됨:", newMode);
+                        setMode(newMode);
+                    }}
+                />
             </S.ToggleWrapper>
 
 

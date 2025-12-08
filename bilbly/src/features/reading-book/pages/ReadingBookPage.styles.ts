@@ -43,13 +43,13 @@ export const ContentBox = styled.div`
 
 
 
-export const ToggleWrapper = styled.div<{ showUI: boolean }>`
+export const ToggleWrapper = styled.div<{ $showUI: boolean }>`
     position: fixed; // 화면 아래쪽에 고정
     left: 50%;
     transform: translateX(-50%);
 
     /* 기본 위치: 아래쪽에 붙음 */
-    bottom: ${({ showUI }) => (showUI ? "100px" : "24px")};
+    bottom: ${({ $showUI }) => ($showUI ? "100px" : "24px")};
 
     transition: bottom 0.25s ease;
     z-index: 20;

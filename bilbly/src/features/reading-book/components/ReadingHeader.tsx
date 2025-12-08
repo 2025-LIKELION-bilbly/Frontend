@@ -4,13 +4,18 @@ import { useNavigate } from "react-router-dom";
 
 type Props = {
     title: string;
+    percent: number;
 };
 
-const ReadingHeader = ({ title }: Props) => {
+const ReadingHeader = ({ title, percent }: Props) => {
     const [showBookmarkToast, setShowBookmarkToast] = useState(false);
     const navigate = useNavigate();
 
     const handleBookmark = () => {
+        localStorage.setItem("bookmarkProgress", percent.toString()); 
+
+        console.log("저장된 북마크 진행률:", localStorage.getItem("bookmarkProgress"));
+
         setShowBookmarkToast(true);
         setTimeout(() => setShowBookmarkToast(false), 1500);
     };
