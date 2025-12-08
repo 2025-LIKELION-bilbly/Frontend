@@ -1,5 +1,5 @@
 import styled from "styled-components";
-import BackgroundPattern from "../../../../assets/background_pattern.png"; 
+import BackgroundPattern from "../../../assets/background_pattern.png";
 
 export const Backdrop = styled.div`
     position: fixed;
@@ -16,8 +16,7 @@ export const Sheet = styled.div`
     display: flex;
     background: #f8f5f0;
     width: 392px;
-    padding: 36px 16px;
-    gap: 29px;
+    padding: 48px 16px 20px 16px;
     flex-direction: column;
     align-items: center;
     border-top: 1px solid var(--Stroke-primary, #100F0F);
@@ -65,6 +64,10 @@ export const MainBox = styled.div`
     flex-direction: column;
     align-items: center;
     align-self: stretch;
+    justify-content: center;
+    gap: 24px;
+
+    margin-bottom: 24px;
 `;
 
 export const Title = styled.div`
@@ -74,10 +77,10 @@ export const Title = styled.div`
     font-style: normal;
     font-weight: 600;
     line-height: 30px; 
+    text-align: center;
 `;
 
 export const Subtitle = styled.div`
-    margin-top: 12px;
     color: var(--text-primary, #100F0F);
     text-align: center;
     font-family: Pretendard;
@@ -87,35 +90,15 @@ export const Subtitle = styled.div`
     line-height: 24px; 
 `;
 
-export const MemberRow = styled.div`
-    position: relative;
-    justify-content: center;
+export const CheckArea = styled.div`
+    display: flex;
     align-items: center;
-    margin: 0 auto;
-    display: flex;
+    gap: 4px;
+    justify-content: center;
+
+    input {
+        width: 18px;
+        height: 18px;
+    }
 `;
 
-
-export const ButtonArea = styled.div`
-    display: flex;
-    gap: 10px;
-`;
-
-export const CancelButton = styled.button`
-    flex: 1;
-    border: 1px solid #aaa;
-    padding: 12px 0;
-    background: white;
-    border-radius: 10px;
-    font-size: 16px;
-    `;
-
-export const ConfirmButton = styled.button`
-    flex: 1;
-    background: #f28b45;
-    color: white;
-    padding: 12px 0;
-    border: none;
-    border-radius: 10px;
-    font-size: 16px;
-`;

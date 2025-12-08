@@ -4,7 +4,7 @@ import { useState } from "react";
 import * as S from "./MeetingJoinColorPage.styles";
 import * as G from "../../../../styles/GlobalStyle";
 import ColorSelectBox from "../../components/ColorSelectBox";
-import NextBtn from "../../components/NextBtn";
+import NextBtn from "../../../../components/NextBtn";
 import UsedColorToast from "../../components/meeting-join/UsedColorToast";
 
 type Member = {

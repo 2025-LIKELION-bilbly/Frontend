@@ -1,25 +1,16 @@
-import * as S from "./NextBtn.styles";
+// NextButton.tsx
+import * as S from "../components/NextBtn.styles";
 
+// valid: able, invalid: disable, default: 기본
 type NextButtonProps = {
     label: string;
     state?: "default" | "valid" | "invalid";
     onClick?: () => void;
 };
 
-const NextButton = ({ label, state = "default", onClick }: NextButtonProps) => {
-    const isDisabled = state !== "valid";
-
-    const handleClick = () => {
-        if (isDisabled) return; // ⭐ 클릭 차단
-        onClick?.();            // 안전하게 실행
-    };
-
+const NextButton = ({ label, state = "valid", onClick }: NextButtonProps) => {
     return (
-        <S.ButtonWrapper
-            $state={state}
-            onClick={handleClick}
-            aria-disabled={isDisabled}
-        >
+        <S.ButtonWrapper $state={state} onClick={onClick}>
             {label}
         </S.ButtonWrapper>
     );
