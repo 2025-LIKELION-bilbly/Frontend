@@ -1,6 +1,7 @@
 import styled from "styled-components";
 import ArrowLeftIcon from "@/assets/arrow-left.svg?react";
-
+import BookmarkIcon from "@/assets/bookmark.svg?react";
+import BookmarkFilledIcon from "@/assets/bookmark-fill.svg?react";
 
 export const HeaderBox = styled.div`
     position: absolute;     
@@ -56,4 +57,19 @@ export const LeftIcon = styled(ArrowLeftIcon)`
     width: 7.5px;
     height: 15px;
     flex-shrink: 0;
+`;
+
+
+export const Bookmark = styled(BookmarkIcon)`
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    color: #100F0F;
+`;
+
+export const BookmarkFilled = styled(BookmarkFilledIcon)`
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    color: #F28C3A;
 `;

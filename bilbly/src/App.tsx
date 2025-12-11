@@ -51,7 +51,7 @@ function App() {
 
       
           {/* 책 고르기 경로 */}
-          <Route path="/:code/selectbooklist" element={<SelectBookListPage />}/> // 📚 책 선택 - 책 리스트 임시 경로
+          <Route path="/:code/selectbooklist" element={<SelectBookListPage />}/> // 책 선택 - 책 리스트 임시 경로
           
           {/* 테스트용-책 시작 버튼 경로 */}
           <Route path="/reading-test-start" element={<ReadingTestStart />} />

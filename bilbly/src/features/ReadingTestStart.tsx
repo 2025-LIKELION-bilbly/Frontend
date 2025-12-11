@@ -9,7 +9,7 @@ const ReadingTestStart = () => {
             <p>모임 생성 없이, 책 선택 없이 바로 테스트할 수 있어요.</p>
 
             <button
-                onClick={() => navigate("/reading/1/1")} // api 연동시 수정
+                onClick={() => navigate("/reading/1/1")} // api 연동시 수정 -> bookid, pagenumber
                 style={{
                     padding: "12px 20px",
                     fontSize: 16,
