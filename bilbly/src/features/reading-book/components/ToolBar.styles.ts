@@ -49,4 +49,26 @@ export const Memo = styled(MemoSvg)`
     }
 `;
 
+// src/components/ToolBar.styles.ts (예시)
 
+// 기존 S.Container, S.Highlight, S.Comment, S.Memo 스타일 정의
+
+export const Delete = styled.button`
+    /* * ⭐ 삭제 버튼 스타일 
+     * 삭제 기능을 강조하기 위해 배경색을 빨간색 계열로 설정하는 것이 일반적입니다.
+     */
+    background-color: #ff4d4f; /* 붉은색 */
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    white-space: nowrap;
+
+    &:hover {
+        background-color: #cc0000;
+    }
+`;
+
+// 기존 스타일 컴포넌트들...
