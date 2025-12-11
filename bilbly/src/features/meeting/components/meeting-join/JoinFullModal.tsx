@@ -1,7 +1,7 @@
 import MemberCircle from "../../../../components/MemberCircle";
 import * as S from "./JoinFullModal.styles"; 
 import * as G from '../../../../styles/GlobalStyle';
-import NextBtn from "../../components/NextBtn"
+import NextBtn from "../../../../components/NextBtn";
 
 
 type Member = {

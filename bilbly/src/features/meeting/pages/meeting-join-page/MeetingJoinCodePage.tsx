@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import * as S from "./MeetingJoinCodePage.styles";
 import * as G from "../../../../styles/GlobalStyle";
-import NextBtn from "../../components/NextBtn";
+import NextBtn from "../../../../components/NextBtn";
 import CodeInput from "../../components/CodeInputBox"; // 코드 입력 컴포넌트
 import CodeErrorToast  from "../../components/meeting-join/CodeErrorToast"; // 코드 오류 토스트 컴포넌트
 import JoinConfirmModal from "../../components/meeting-join/JoinConfirmModal";  // 모임 확인용 모달

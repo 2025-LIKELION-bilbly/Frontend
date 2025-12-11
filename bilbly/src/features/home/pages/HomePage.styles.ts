@@ -2,7 +2,6 @@
 
 import styled from 'styled-components';
 
-// 👇 경로 수정: ../ 에서 ../../../ 로 변경 (3단계 상위로 이동)
 import BackgroundPattern from '../../../assets/background_pattern.png'; 
 
 export const Container = styled.div`
@@ -14,7 +13,7 @@ export const Container = styled.div`
   flex-direction: column;
   min-height: 100vh;
   padding: 0 16px; 
-
+  padding-bottom: 117px;
   position: relative;
   z-index: 0;
   

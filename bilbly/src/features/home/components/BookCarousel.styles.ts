@@ -56,9 +56,7 @@ export const CoverWrapper = styled.div<{ $isActive?: boolean }>`
   border: 1px solid #DBDBDB;
   box-sizing: border-box;
   
-  /* 👇 [수정] 쉐도우 효과 삭제 */
-  /* box-shadow: ... ; (삭제됨) */
-  /* transition: box-shadow 0.3s ease; (삭제됨) */
+
 `;
 
 export const BookCoverImage = styled.img`
