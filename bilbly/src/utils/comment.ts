@@ -3,9 +3,14 @@
 import { surroundSelection, removeAnnotation, surroundElement } from "./annotation.core";
 import type { AnnotationResult, ActiveAnnotation } from "./annotation.core";
 
-// ⭐ 1. 컨테이너 셀렉터 정의 (ReadingBookPage.tsx의 ContainerRef가 가리키는 요소의 ID나 클래스를 사용해야 합니다)
-// 예시: <S.Container id="reading-page-container" ... /> 로 가정
-const READING_CONTAINER_SELECTOR = '#reading-page-container'; 
+const READING_CONTAINER_SELECTOR = ".reading-page-container";
+
+let activeCommentInputId: string | null = null;
+
+
+
+
+
 
 /**
  * 주어진 ID를 가진 하이라이트 그룹 중 가장 마지막 줄의 컨테이너 상대 좌표를 계산합니다.
@@ -45,7 +50,7 @@ const getLastLinePosition = (annotationId: string) => {
         
         // 4. Container 기준 상대 좌표로 변환
         // top: 마지막 줄 bottom - 컨테이너 top + 컨테이너 스크롤 위치 + 여백(10px)
-        const top = rect.bottom - containerRect.top + containerEl.scrollTop + 10; 
+        const top = rect.bottom - containerRect.top + containerEl.scrollTop-2; 
         
         // left: 하이라이트 시작 위치 + 여백(16px) (가독성을 위해 약간 우측으로 이동)
         const left = rect.left - containerRect.left + 16;
@@ -60,93 +65,92 @@ const getLastLinePosition = (annotationId: string) => {
  * 코멘트/인용 주석을 적용하고 입력 요소를 표시합니다.
  * @param activeAnnotation - 현재 클릭된 주석 정보 (중첩 코멘트 생성 시 사용)
  */
-export const applyComment = (activeAnnotation?: ActiveAnnotation | null): AnnotationResult | null => {
+export const applyComment = (
+    activeAnnotation?: ActiveAnnotation | null
+    ): AnnotationResult | null => {
     const selection = window.getSelection();
-    
+
     const style: React.CSSProperties = {
-        cursor: 'pointer',
+        cursor: "pointer",
     };
-    
+
     let result: AnnotationResult | null = null;
     let targetAnnotationId: string | null = null;
 
-    // 1. 선택 영역이 있는 경우 (새로운 드래그)
+    // 1. quote span 생성
     if (selection && selection.toString().trim()) {
-        result = surroundSelection('quote', style, undefined, true); 
-        if (result) {
-            targetAnnotationId = result.id;
-        }
-    } 
-    
-    // 2. Active Annotation이 존재하는 경우 (하이라이트 클릭 후 코멘트 버튼 클릭)
-    else if (activeAnnotation) {
-        const targetElement = document.querySelector(`.annotation[data-id="${activeAnnotation.id}"]`);
-        
-        if (targetElement) {
-            console.log(`[INFO] 중첩 코멘트 생성 시도: Target ID ${activeAnnotation.id}`);
-            
-            result = surroundElement(targetElement as HTMLElement, 'quote', style, undefined, true); 
-            if (result) {
-                targetAnnotationId = result.id;
-            }
+        result = surroundSelection("quote", style);
+        if (result) targetAnnotationId = result.id;
+    } else if (activeAnnotation) {
+        const el = document.querySelector(
+        `.annotation[data-id="${activeAnnotation.id}"]`
+        ) as HTMLElement | null;
+
+        if (el) {
+        result = surroundElement(el, "quote", style);
+        if (result) targetAnnotationId = result.id;
         }
     }
 
-    // ⭐ 3. 코멘트 입력창 위치 조정 (공통 로직: 입력창이 생성된 후 위치를 조정)
-    if (targetAnnotationId) {
-        const position = getLastLinePosition(targetAnnotationId);
-        // commentWrapper는 surroundSelection/surroundElement 내부에서 생성되어 DOM에 삽입됩니다.
-        const commentWrapper = document.querySelector(`div.comment-wrapper[data-id="${targetAnnotationId}"]`) as HTMLElement;
+    if (!targetAnnotationId) return result;
 
-        if (position && commentWrapper) {
-            // 인라인 스타일로 위치 강제 적용
-            commentWrapper.style.position = 'absolute';
-            commentWrapper.style.top = `${position.top}px`;
-            commentWrapper.style.left = `${position.left}px`;
-            commentWrapper.style.width = '250px'; // 너비 설정은 필요에 따라 조정하세요.
-        }
+    // ✅ 기존 입력 UI 제거 (겹침 방지)
+    if (activeCommentInputId) {
+        document.querySelector(".comment-input-wrapper")?.remove();
     }
-    
-    return result; 
+    activeCommentInputId = targetAnnotationId;
+
+    // ✅ container 기준 overlay 생성
+    const container = document.querySelector(
+        READING_CONTAINER_SELECTOR
+    ) as HTMLElement | null;
+    if (!container) {
+        console.error("독서 페이지 컨테이너 요소를 찾을 수 없습니다");
+        return result;
+    }
+
+    const position = getLastLinePosition(targetAnnotationId);
+    if (!position) return result;
+
+    const wrapper = document.createElement("div");
+    wrapper.className = "comment-input-wrapper";
+    wrapper.style.position = "absolute";
+    wrapper.style.top = `${position.top}px`;
+    wrapper.style.left = `${position.left}px`;
+    wrapper.style.width = "250px";
+    wrapper.style.zIndex = "999";
+
+    wrapper.innerHTML = `
+        <textarea class="comment-input" placeholder="여기에 코멘트를 입력하세요"></textarea>
+        <button class="comment-save-btn">저장</button>
+    `;
+
+    container.appendChild(wrapper);
+
+    return result;
 };
+
 
 /**
  * 저장 후 코멘트 마커를 업데이트하고 입력 요소를 제거합니다.
  */
-export const updateCommentMarker = (annotationId: string, content: string): void => {
-    // 1. 입력 요소가 포함된 기존 wrapper 제거
-    const oldWrapper = document.querySelector(`div.comment-wrapper[data-id="${annotationId}"]`);
-    if (oldWrapper) oldWrapper.remove();
-    
-    // 2. 주석 span 요소 찾기
-    const span = document.querySelector(`span.annotation[data-id="${annotationId}"]`);
-    if (!span || !span.parentNode) return;
+export const updateCommentMarker = (
+    annotationId: string,
+    content: string
+    ) => {
+    document.querySelector(".comment-input-wrapper")?.remove();
+    activeCommentInputId = null;
 
-    // ⭐ 3. 새로운 마커를 담을 comment-wrapper 생성 및 위치 조정
-    const newWrapper = document.createElement('div');
-    newWrapper.classList.add('comment-wrapper');
-    newWrapper.dataset.id = annotationId;
-    
-    // 4. 새로운 마커(content) 요소 생성
-    const newMarker = document.createElement('span');
-    newMarker.innerText = content;
-    
-    newWrapper.appendChild(newMarker);
+    const span = document.querySelector(
+        `.annotation[data-id="${annotationId}"]`
+    ) as HTMLElement | null;
+    if (!span) return;
 
-    // 5. 텍스트 노드(span) 바로 뒤에 새로운 wrapper를 삽입
-    span.insertAdjacentElement('afterend', newWrapper);
-    
-    // ⭐ 6. 최종 마커 위치 재설정 (저장 후에도 위치가 유지되도록)
-    const position = getLastLinePosition(annotationId);
-    if (position && newWrapper) {
-        newWrapper.style.position = 'absolute';
-        newWrapper.style.top = `${position.top}px`;
-        newWrapper.style.left = `${position.left}px`;
-        newWrapper.style.width = '250px'; 
-    }
-    
-    // TODO: 백엔드에 업데이트된 내용(content) 저장 API 호출
+    span.dataset.content = content;
+
+  // TODO: marker UI (아이콘, underline 등)
 };
+
 
 /**
  * 코멘트 주석과 그와 관련된 모든 DOM 요소를 제거합니다.

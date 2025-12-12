@@ -157,6 +157,24 @@ const ReadingBookPage = () => {
         return Math.round((page / (pages.length - 1)) * 100);
     }, [page, pages.length]);
 
+    // 상호작용 상태 초기화 함수 (기능 동시에 적용 가능하도록)
+    const resetInteractionState = () => {
+    // selection 제거
+    const selection = window.getSelection();
+    selection?.removeAllRanges();
+
+    // comment input 닫기
+    document.querySelector(".comment-input-wrapper")?.remove();
+
+    // memo popup 닫기 (있다면)
+    // showMemoPopup 내부에서 document click으로 닫히니 여기선 상태만
+    setMemoInputState(null);
+
+    // annotation 선택 해제
+    setActiveAnnotation(null);
+    setIsDeleteUiActive(false);
+    setToolbarPos(null);
+    };
 
     // 스와이프
     const handleTouchStart = (e: React.TouchEvent) => { 
@@ -207,8 +225,6 @@ const ReadingBookPage = () => {
         }
 
         lastSelectionRangeRef.current = selection.getRangeAt(0).cloneRange();
-        // 메모 입력 상태가 떠 있다면 툴바를 숨겨야 합니다.
-        if (memoInputState) return;
 
         setActiveAnnotation(null); 
         // 삭제 모드 초기화
@@ -233,7 +249,8 @@ const ReadingBookPage = () => {
         const target = e.target as HTMLElement;
 
         const annotationEl = (target as Element).closest(".annotation[data-id]") as HTMLElement | null;
-
+        
+        
         if (annotationEl) {
             const annotationId = annotationEl.dataset.id;
             const annotationType = annotationEl.dataset.type as AnnotationType;
@@ -298,8 +315,7 @@ const ReadingBookPage = () => {
 
     // 1. 드래그 후 새로운 하이라이트 적용 (생성)
     const handleHighlight = () => {
-        // CRITICAL FIX: 하이라이트 중첩 생성은 복잡하므로, Active 상태일 때 상태를 초기화하고 리턴하여 
-        // 새로운 드래그를 유도합니다.
+
         if (activeAnnotation) {
             setToolbarPos(null);
             setActiveAnnotation(null);
@@ -308,6 +324,9 @@ const ReadingBookPage = () => {
         }
         
         const result = applyHighlight(cssColor); 
+
+        resetInteractionState();
+        
         setToolbarPos(null);
         setActiveAnnotation(null); 
         setIsDeleteUiActive(false); 
@@ -320,6 +339,8 @@ const ReadingBookPage = () => {
     
     // 2. 코멘트 버튼 클릭 (인라인 입력 UI 활성화)
     const handleCommentClick = () => {
+        resetInteractionState();
+
         if (memoInputState) return;
 
         // 1. 드래그 선택 영역이 있는 경우 (새 코멘트 생성 시도)
@@ -420,6 +441,8 @@ const ReadingBookPage = () => {
 
 
 const handleMemo = () => {
+    resetInteractionState();
+
     if (!lastSelectionRangeRef.current) return;
 
     const selection = window.getSelection();
@@ -441,8 +464,17 @@ const handleMemo = () => {
         top: top + lastRect.height + 15,
         left: left - 125,
         onSave: (content) => {
+            const el = document.querySelector(
+                `.annotation.memo[data-id="${result.id}"]`
+            ) as HTMLElement | null;
+
+            if (el) {
+                el.dataset.content = content; // ✅ 여기 이미 입력 내용이 저장됨
+            }
+
             console.log("[POST] 메모 저장:", result.id, content);
         },
+
         onCancel: () => {
             removeMemo(result.id);
         },
@@ -455,6 +487,7 @@ const handleMemo = () => {
     return (
         <S.Container
             // Container Ref 연결
+            className="reading-page-container"
             ref={containerRef}
             onMouseUp={handleMouseUp}
             onTouchStart={handleTouchStart}
@@ -501,15 +534,45 @@ const handleMemo = () => {
                 
                 // ⭐ 메모 핸들러 연결
                 onMemo={() => {
-                    // 메모 입력 상태가 아니며, 드래그 상태일 때만 새로운 메모를 시작합니다.
+                    // 1️⃣ 새 메모 생성 (기존 그대로)
                     if (!activeAnnotation) {
                         handleMemo();
-                    } else if (activeAnnotation.type === 'memo') {
-                        // 이미 메모가 선택된 상태에서 다시 메모 아이콘을 클릭하면 삭제 모드 전환
-                        // if (handleToolbarIconClick('memo')) return;
+                        return;
                     }
-                    // 다른 주석(하이라이트 등)이 선택된 상태라면, 메모 생성을 막거나 해당 주석을 해제해야 합니다.
-                }}
+
+                    // 2️⃣ 기존 메모 다시 열기 (🔥 추가된 부분)
+                    if (activeAnnotation.type === 'memo') {
+                        if (!containerRef.current) return;
+
+                        const el = document.querySelector(
+                            `.annotation.memo[data-id="${activeAnnotation.id}"]`
+                        ) as HTMLElement | null;
+
+                        if (!el) return;
+
+                        const rect = el.getBoundingClientRect();
+                        const containerRect = containerRef.current.getBoundingClientRect();
+
+                        showMemoPopup({
+                            container: containerRef.current,
+                            top: rect.bottom - containerRect.top + 12,
+                            left: rect.left - containerRect.left,
+
+                            initialContent: el.dataset.content || "",
+
+                            onSave: (content) => {
+                                el.dataset.content = content;
+                                console.log("[POST] 메모 수정:", activeAnnotation.id, content);
+                            },
+                            onCancel: () => {
+                                removeMemo(activeAnnotation.id);
+                                setActiveAnnotation(null);
+                                setToolbarPos(null);
+                            },
+                        });
+                    }
+}}
+
 
                 activeAnnotation={activeAnnotation}
                 isDeleteUiActive={isDeleteUiActive} 

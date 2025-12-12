@@ -8,6 +8,7 @@ export const showMemoPopup = ({
     container: HTMLElement;
     top: number;
     left: number;
+    initialContent?: string;
     onSave: (content: string) => void;
     onCancel: () => void;
 }) => {
