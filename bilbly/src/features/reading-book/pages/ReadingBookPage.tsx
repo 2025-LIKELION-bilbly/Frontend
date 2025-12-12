@@ -1,4 +1,4 @@
-// ReadingBookPage.tsx (최종 오류 수정 및 메모 기능 통합 버전)
+// ReadingBookPage.tsx (최종 수정: 메모 위치 로직 개선 및 불필요한 코드 제거)
 
 import { useEffect, useState, useMemo, useRef } from "react";
 import { useParams } from "react-router-dom"; 
@@ -9,16 +9,15 @@ import ModeToggle from "../components/ModeToggle";
 import ProgressBar from "../components/ProgressBar";
 import ToolBar from "../components/ToolBar";
 import DeleteHighlightModal from "../components/DeleteHighlightModal"; 
+import { showMemoPopup } from "../../../utils/memoPopup";
 
-// 코멘트 유틸리티
+// 코멘트 유틸리티 (applyComment는 이제 1개의 인수만 받도록 처리)
 import { applyComment, removeComment, updateCommentMarker } from "../../../utils/comment"; 
 
 // 하이라이트 유틸리티
 import { applyHighlight, removeHighlight } from "../../../utils/highlight"; 
-
-// 메모 유틸리티
-import { applyMemo, updateMemoMarker, removeMemo } from "../../../utils/memo"; 
-
+// ⭐ removeMemo import 포함 확인
+import { applyMemo, removeMemo } from "../../../utils/memo";
 // 통합된 주석 상태 타입 import
 import type { AnnotationType } from "../../../utils/annotation.core";
 
@@ -97,6 +96,17 @@ const ReadingBookPage = () => {
     const cssColor = getBgColor(selectedBgKey);
     const backendColor = toBackendColor(selectedBgKey); 
 
+    // ⭐ 드래그 시점의 selection range 저장
+    const lastSelectionRangeRef = useRef<Range | null>(null);
+
+
+    // ⭐ 새로 추가된 상태: 메모 입력 박스 상태
+    const [memoInputState, setMemoInputState] = useState<{ 
+        id: string; 
+        position: { top: number; left: number }; 
+        content?: string; 
+    } | null>(null);
+
     const fullText = useMemo( 
         () =>
             `
@@ -113,14 +123,11 @@ const ReadingBookPage = () => {
         setPages(generated);
     }, [fullText]);
     
-    // 코멘트/메모 저장 이벤트 리스너 통합 (바깥 클릭 저장 처리 포함)
+    // 코멘트 저장 이벤트 리스너 등록 
     useEffect(() => {
-        const setupAnnotationListeners = () => {
+        const setupCommentListener = () => {
             const handleSaveClick = (e: Event) => {
                 const target = e.target as HTMLElement;
-                const color = getBgColor(selectedBgKey);
-
-                // 1. 코멘트 저장 로직 (comment-save-btn 클릭)
                 if (target.classList.contains('comment-save-btn')) {
                     const wrapper = target.closest('.comment-wrapper') as HTMLElement;
                     const textarea = wrapper?.querySelector('.comment-input') as HTMLTextAreaElement;
@@ -135,77 +142,14 @@ const ReadingBookPage = () => {
                         }
                     }
                 }
-                
-                // 2. 메모 저장 로직 (memo-save-btn 클릭)
-                if (target.classList.contains('memo-save-btn')) { 
-                    const wrapper = target.closest('.memo-wrapper') as HTMLElement;
-                    const textarea = wrapper?.querySelector('.memo-input') as HTMLTextAreaElement;
-                    
-                    if (wrapper && textarea) { 
-                        const annotationId = wrapper.dataset.id;
-                        const content = textarea.value.trim();
-                        
-                        if (annotationId) {
-                            updateMemoMarker(annotationId, content, color); 
-                            console.log(`[POST] 메모 저장: ID ${annotationId}, 내용: ${content}`);
-                        }
-                    }
-                }
-            };
-
-            // 바깥 화면 클릭 시 저장 처리 및 UI 초기화
-            const handleOutsideClick = (e: MouseEvent) => {
-                 const target = e.target as HTMLElement;
-                 const color = getBgColor(selectedBgKey);
-
-                // 툴바, 모달, 입력창 등을 제외한 클릭
-                if (
-                    !target.closest('.toolbar-container') && 
-                    !target.closest('.delete-modal') &&
-                    !target.closest('.comment-wrapper') &&
-                    !target.closest('.memo-wrapper') &&
-                    !target.closest('.annotation')
-                ) {
-                    // 열려있는 모든 입력창 저장 처리
-                    let didSave = false;
-                    document.querySelectorAll('.comment-wrapper, .memo-wrapper').forEach(wrapper => {
-                        const annotationId = wrapper.getAttribute('data-id');
-                        const isComment = wrapper.classList.contains('comment-wrapper');
-                        const input = wrapper.querySelector(isComment ? '.comment-input' : '.memo-input') as HTMLTextAreaElement;
-                        
-                        if (annotationId && input) {
-                            const content = input.value.trim();
-                            
-                            if (isComment) {
-                                updateCommentMarker(annotationId, content);
-                            } else {
-                                // 메모 저장 (밑줄 마커 적용)
-                                updateMemoMarker(annotationId, content, color);
-                            }
-                            didSave = true;
-                        }
-                    });
-                    
-                    // 입력창이 닫혔다면 상태 초기화
-                    if(didSave) {
-                        setToolbarPos(null);
-                        setActiveAnnotation(null);
-                        setIsDeleteUiActive(false);
-                    }
-                }
             };
 
             document.addEventListener('click', handleSaveClick);
-            document.addEventListener('mousedown', handleOutsideClick);
-
-            return () => {
-                document.removeEventListener('click', handleSaveClick);
-                document.removeEventListener('mousedown', handleOutsideClick);
-            };
+            return () => document.removeEventListener('click', handleSaveClick);
         };
 
-        setupAnnotationListeners();
-    }, [selectedBgKey]);
+        setupCommentListener();
+    }, []);
     
 
     const percent = useMemo(() => {
@@ -231,9 +175,12 @@ const ReadingBookPage = () => {
 
     /**
      * 툴바 위치를 Container 기준으로 계산하는 함수
+     * @param rect - 주석 요소 또는 선택 영역의 getBoundingClientRect() 값
+     * @returns Container 내부의 { top, left } 좌표
      */
     const calculateToolbarPosition = (rect: DOMRect) => {
         if (!containerRef.current) {
+            // Container Ref가 없을 경우 기존 window.scrollY 기반 위치 반환 (Fallback)
             return {
                 top: rect.top + window.scrollY - 8,
                 left: rect.left + rect.width / 2,
@@ -242,6 +189,8 @@ const ReadingBookPage = () => {
 
         const containerRect = containerRef.current.getBoundingClientRect();
 
+        // 툴바 위치 계산 로직 수정 (Container 기준 상대 좌표)
+        // -8은 툴바가 선택 영역 위에 오도록 하는 오프셋입니다.
         const top = rect.top - containerRect.top + containerRef.current.scrollTop - 8;
         const left = rect.left - containerRect.left + rect.width / 2;
         
@@ -257,16 +206,24 @@ const ReadingBookPage = () => {
             return;
         }
 
+        lastSelectionRangeRef.current = selection.getRangeAt(0).cloneRange();
+        // 메모 입력 상태가 떠 있다면 툴바를 숨겨야 합니다.
+        if (memoInputState) return;
+
         setActiveAnnotation(null); 
+        // 삭제 모드 초기화
         setIsDeleteUiActive(false); 
         
+        // ⭐ 수정: 선택 영역의 모든 줄 경계(rects)를 가져와 마지막 줄을 사용합니다.
         const range = selection.getRangeAt(0);
         const clientRects = range.getClientRects();
         
         if (clientRects.length === 0) return;
         
+        // 핵심: clientRects에서 가장 마지막 라인 (마지막 요소)의 경계를 사용합니다.
         const lastRect = clientRects[clientRects.length - 1];
 
+        // 툴바 위치 계산 함수를 마지막 라인의 경계(DOMRect)로 호출합니다.
         setToolbarPos(calculateToolbarPosition(lastRect as DOMRect));
     };
 
@@ -285,8 +242,10 @@ const ReadingBookPage = () => {
 
             const rect = annotationEl.getBoundingClientRect();
             
+            // 툴바 위치 계산 함수 사용
             setToolbarPos(calculateToolbarPosition(rect));
 
+            // 1차 클릭: activeAnnotation 설정, 삭제 UI 비활성화
             setActiveAnnotation({ id: annotationId, type: annotationType });
             setIsDeleteUiActive(false);
 
@@ -300,6 +259,9 @@ const ReadingBookPage = () => {
 
     // 페이지 클릭 UI 처리
     const handleContentClick = (e: React.MouseEvent<HTMLDivElement>) => {
+        // 메모 입력창이 열려있다면 닫지 않습니다. (MemoInputBox의 외부 클릭 로직이 처리합니다)
+        if (memoInputState) return;
+
         if (handleAnnotationClick(e)) return;
 
         const selection = window.getSelection();
@@ -307,6 +269,7 @@ const ReadingBookPage = () => {
 
         setToolbarPos(null);
         setActiveAnnotation(null); 
+        // 삭제 모드 초기화
         setIsDeleteUiActive(false);
         
         const rect = e.currentTarget.getBoundingClientRect();
@@ -321,16 +284,22 @@ const ReadingBookPage = () => {
 
     // 새로 추가: 툴바 아이콘 재클릭 시 삭제 모드로 전환하는 로직
     const handleToolbarIconClick = (type: AnnotationType): boolean => {
+        // 1. 주석이 선택된 상태이고,
+        // 2. 클릭한 아이콘의 타입이 현재 선택된 주석의 타입과 같다면,
         if (activeAnnotation && activeAnnotation.type === type) {
+            // 삭제 UI 활성화 (두 번째 클릭)
             setIsDeleteUiActive(true);
-            return true;
+            return true; // 생성 로직 실행 방지
         }
+        // 주석이 선택되지 않았거나 타입이 다르다면 생성 로직을 실행합니다.
         return false;
     };
 
 
     // 1. 드래그 후 새로운 하이라이트 적용 (생성)
     const handleHighlight = () => {
+        // CRITICAL FIX: 하이라이트 중첩 생성은 복잡하므로, Active 상태일 때 상태를 초기화하고 리턴하여 
+        // 새로운 드래그를 유도합니다.
         if (activeAnnotation) {
             setToolbarPos(null);
             setActiveAnnotation(null);
@@ -351,10 +320,13 @@ const ReadingBookPage = () => {
     
     // 2. 코멘트 버튼 클릭 (인라인 입력 UI 활성화)
     const handleCommentClick = () => {
+        if (memoInputState) return;
 
         // 1. 드래그 선택 영역이 있는 경우 (새 코멘트 생성 시도)
         if (!activeAnnotation) {
-            // ⭐ 오류 수정: position 인수를 제거했습니다.
+            
+            // ⭐ 타입 오류를 피하기 위해 position 인수를 제거하고,
+            // 코멘트 위치 계산은 applyComment 유틸리티 함수 내부에서 처리되도록 합니다.
             const result = applyComment(null); 
             
             setToolbarPos(null);
@@ -369,15 +341,16 @@ const ReadingBookPage = () => {
             return;
         }
         
+        // 2. 기존 주석(highlight)이 Active 상태인 경우 (클릭 후 코멘트 버튼)
         if (activeAnnotation.type === 'highlight') {
             const groupId = activeAnnotation.id; 
             
+            // 2-1. 중복 코멘트 확인 로직
             const allHighlightSpansInGroup = document.querySelectorAll(`.annotation[data-id="${groupId}"]`);
             
             let isCommentAlreadyPresent = false;
             allHighlightSpansInGroup.forEach(span => {
-                // comment.core에서 생성한 div.comment-wrapper로 확인
-                if (span.parentNode?.querySelector(`div.comment-wrapper[data-id="${groupId}"]`)) { 
+                if (span.querySelector('.comment-wrapper')) {
                     isCommentAlreadyPresent = true;
                 }
             });
@@ -387,12 +360,12 @@ const ReadingBookPage = () => {
                 setToolbarPos(null);
                 setActiveAnnotation(null);
                 setIsDeleteUiActive(false); 
-                return;
+                return; // 중복 생성 방지
             }
         }
         
-        // 3. 기존 주석에 코멘트 추가 또는 기존 코멘트 클릭 시
-        // ⭐ 오류 수정: position 인수를 제거했습니다.
+        // 3. 코멘트가 없는 하이라이트인 경우 또는 기존 코멘트(quote)를 클릭한 경우
+        // ⭐ position 인수를 제거하고, applyComment 유틸리티 함수에 책임을 넘깁니다.
         const result = applyComment(activeAnnotation);
         
         setToolbarPos(null);
@@ -407,41 +380,15 @@ const ReadingBookPage = () => {
     };
 
     
-    // 4. 메모 버튼 클릭 핸들러 (메모 생성 로직)
-    const handleMemoClick = () => {
-        const color = getBgColor(selectedBgKey); 
-
-        // 1. 재클릭 시 삭제 모드 전환
-        if (activeAnnotation && activeAnnotation.type === 'memo') {
-             if (handleToolbarIconClick('memo')) return; 
-        }
-        
-        // 2. 새로운 메모 생성 (activeAnnotation이 없어야 함 = 드래그된 상태)
-        if (activeAnnotation) {
-            // 메모는 하이라이트 위에 중첩되지 않고 독립적으로 생성되어야 합니다.
-            console.warn("메모는 기존 주석 위에 추가될 수 없습니다. 새로운 메모 생성을 시도합니다.");
-        }
-        
-        // 메모 입력 UI 활성화 (선택 영역에)
-        const result = applyMemo(color); 
-        
-        setToolbarPos(null);
-        setActiveAnnotation(null);
-        setIsDeleteUiActive(false);
-        
-        if (result) {
-            console.log("메모 입력 UI 활성화:", result.id);
-        } else {
-            console.log("메모 생성 실패: 선택 영역 없음");
-        }
-    }
-    
-    // 3. 통합된 삭제 처리 로직 (메모 삭제 추가)
+    // 3. 통합된 삭제 처리 로직
     const handleDeleteAnnotation = () => {
         if (!activeAnnotation) {
             console.error("삭제할 activeAnnotation이 없습니다.");
             return;
         }
+        
+        // 메모 입력창이 열려있다면 닫습니다.
+        setMemoInputState(null);
 
         console.log(`${activeAnnotation.type} ID ${activeAnnotation.id} 삭제를 진행합니다.`);
 
@@ -452,27 +399,63 @@ const ReadingBookPage = () => {
             case 'quote':
                 removeComment(activeAnnotation.id);
                 break;
-            case 'memo': 
-                removeMemo(activeAnnotation.id); // 메모 삭제 함수 호출
+            case 'memo':
+                removeMemo(activeAnnotation.id);
                 break;
             default:
                 console.warn(`Unknown annotation type: ${activeAnnotation.type}`);
                 break;
         }
 
+        console.log(`[DELETE] ${activeAnnotation.type} ID ${activeAnnotation.id}`);
+
+        // CRITICAL FIX: 여기서만 상태를 초기화해야 합니다.
         setActiveAnnotation(null);
         setToolbarPos(null);
         setShowDeleteModal(false);
         setIsDeleteUiActive(false);
     };
 
+    // ⭐ 3. 메모 버튼 클릭 (메모 입력 UI 활성화)
+
+
+const handleMemo = () => {
+    if (!lastSelectionRangeRef.current) return;
+
+    const selection = window.getSelection();
+    selection?.removeAllRanges();
+    selection?.addRange(lastSelectionRangeRef.current);
+
+    const result = applyMemo();
+    if (!result) return;
+
+    const range = lastSelectionRangeRef.current;
+    const rects = range.getClientRects();
+    if (!rects.length) return;
+
+    const lastRect = rects[rects.length - 1];
+    const { top, left } = calculateToolbarPosition(lastRect as DOMRect);
+
+    showMemoPopup({
+        container: containerRef.current!,
+        top: top + lastRect.height + 15,
+        left: left - 125,
+        onSave: (content) => {
+            console.log("[POST] 메모 저장:", result.id, content);
+        },
+        onCancel: () => {
+            removeMemo(result.id);
+        },
+    });
+
+};
+
+
 
     return (
         <S.Container
             // Container Ref 연결
             ref={containerRef}
-            // ID 지정 (유틸리티 함수에서 위치 계산 시 사용)
-            id="reading-page-container" 
             onMouseUp={handleMouseUp}
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
@@ -498,6 +481,9 @@ const ReadingBookPage = () => {
             )}
             
             {/* ToolBar는 Container 내부에 렌더링되므로, Container를 벗어나지 않습니다. */}
+
+
+
             <ToolBar 
                 position={toolbarPos} 
                 onHighlight={() => {
@@ -512,14 +498,25 @@ const ReadingBookPage = () => {
                     }
                     handleCommentClick(); 
                 }}
-                // onMemo prop을 handleMemoClick 함수와 연결
-                onMemo={handleMemoClick}
                 
+                // ⭐ 메모 핸들러 연결
+                onMemo={() => {
+                    // 메모 입력 상태가 아니며, 드래그 상태일 때만 새로운 메모를 시작합니다.
+                    if (!activeAnnotation) {
+                        handleMemo();
+                    } else if (activeAnnotation.type === 'memo') {
+                        // 이미 메모가 선택된 상태에서 다시 메모 아이콘을 클릭하면 삭제 모드 전환
+                        // if (handleToolbarIconClick('memo')) return;
+                    }
+                    // 다른 주석(하이라이트 등)이 선택된 상태라면, 메모 생성을 막거나 해당 주석을 해제해야 합니다.
+                }}
+
                 activeAnnotation={activeAnnotation}
                 isDeleteUiActive={isDeleteUiActive} 
 
                 onDeleteClick={() => {
                     setToolbarPos(null); 
+                    // 하이라이트/코멘트는 삭제 모달을 띄우고, 메모는 바로 삭제할 수도 있습니다.
                     setShowDeleteModal(true); 
                 }}
             />

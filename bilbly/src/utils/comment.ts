@@ -1,12 +1,10 @@
 // utils/comment.ts
 
-import { surroundSelection, removeAnnotation } from "./annotation.core";
+import { surroundSelection, removeAnnotation, surroundElement } from "./annotation.core";
 import type { AnnotationResult, ActiveAnnotation } from "./annotation.core";
 
-// ⭐ 글자 수 제한 상수 정의
-const MAX_COMMENT_LENGTH = 25;
-
 // ⭐ 1. 컨테이너 셀렉터 정의 (ReadingBookPage.tsx의 ContainerRef가 가리키는 요소의 ID나 클래스를 사용해야 합니다)
+// 예시: <S.Container id="reading-page-container" ... /> 로 가정
 const READING_CONTAINER_SELECTOR = '#reading-page-container'; 
 
 /**
@@ -41,6 +39,7 @@ const getLastLinePosition = (annotationId: string) => {
     });
 
     if (lastRect) {
+        // ⭐ 3. 타입 안정성을 위해 lastRect를 DOMRect로 단언합니다.
         const rect = lastRect as DOMRect; 
         const containerRect = containerEl.getBoundingClientRect();
         
@@ -59,7 +58,7 @@ const getLastLinePosition = (annotationId: string) => {
 
 /**
  * 코멘트/인용 주석을 적용하고 입력 요소를 표시합니다.
- * (이 함수는 입력창의 위치와 글자 수 제한을 담당하며, 마커의 인라인 배치는 updateCommentMarker에서 처리합니다.)
+ * @param activeAnnotation - 현재 클릭된 주석 정보 (중첩 코멘트 생성 시 사용)
  */
 export const applyComment = (activeAnnotation?: ActiveAnnotation | null): AnnotationResult | null => {
     const selection = window.getSelection();
@@ -93,49 +92,18 @@ export const applyComment = (activeAnnotation?: ActiveAnnotation | null): Annota
         }
     }
 
-    // ⭐ 3. 코멘트 입력창 위치 및 글자 수 제한 적용 (공통 로직)
+    // ⭐ 3. 코멘트 입력창 위치 조정 (공통 로직: 입력창이 생성된 후 위치를 조정)
     if (targetAnnotationId) {
+        const position = getLastLinePosition(targetAnnotationId);
+        // commentWrapper는 surroundSelection/surroundElement 내부에서 생성되어 DOM에 삽입됩니다.
         const commentWrapper = document.querySelector(`div.comment-wrapper[data-id="${targetAnnotationId}"]`) as HTMLElement;
 
-        if (commentWrapper) {
-            const position = getLastLinePosition(targetAnnotationId);
-
-            // A. 위치 조정
-            if (position) {
-                commentWrapper.style.position = 'absolute';
-                commentWrapper.style.top = `${position.top}px`;
-                commentWrapper.style.left = `${position.left}px`;
-                commentWrapper.style.width = '250px'; 
-            }
-            
-            // B. 글자 수 제한 및 카운터 표시 로직
-            const textarea = commentWrapper.querySelector('.comment-input') as HTMLTextAreaElement;
-            const counter = document.createElement('div');
-            counter.classList.add('comment-char-counter');
-            
-            counter.style.fontSize = '10px';
-            counter.style.textAlign = 'right';
-            counter.style.marginTop = '4px';
-            counter.style.color = '#777'; 
-
-            if (textarea) {
-                textarea.maxLength = MAX_COMMENT_LENGTH; 
-
-                const updateCounter = () => {
-                    const currentLength = textarea.value.length;
-                    counter.textContent = `${currentLength}/${MAX_COMMENT_LENGTH}자`;
-                    
-                    if (currentLength > MAX_COMMENT_LENGTH) {
-                        counter.style.color = 'red';
-                    } else {
-                        counter.style.color = '#777';
-                    }
-                };
-
-                textarea.addEventListener('input', updateCounter);
-                commentWrapper.appendChild(counter);
-                updateCounter();
-            }
+        if (position && commentWrapper) {
+            // 인라인 스타일로 위치 강제 적용
+            commentWrapper.style.position = 'absolute';
+            commentWrapper.style.top = `${position.top}px`;
+            commentWrapper.style.left = `${position.left}px`;
+            commentWrapper.style.width = '250px'; // 너비 설정은 필요에 따라 조정하세요.
         }
     }
     
@@ -154,20 +122,10 @@ export const updateCommentMarker = (annotationId: string, content: string): void
     const span = document.querySelector(`span.annotation[data-id="${annotationId}"]`);
     if (!span || !span.parentNode) return;
 
-    // 3. 새로운 마커를 담을 comment-wrapper 생성 및 위치 조정
+    // ⭐ 3. 새로운 마커를 담을 comment-wrapper 생성 및 위치 조정
     const newWrapper = document.createElement('div');
     newWrapper.classList.add('comment-wrapper');
     newWrapper.dataset.id = annotationId;
-    
-    // ⭐ ⭐ ⭐ 수정 부분: 가로로 나열되도록 스타일 추가 ⭐ ⭐ ⭐
-    newWrapper.style.display = 'inline-block';
-    newWrapper.style.marginRight = '8px'; // 마커 간 간격
-    newWrapper.style.padding = '2px 6px';
-    newWrapper.style.backgroundColor = '#e0f7fa'; // 예시 색상 (코멘트임을 시각적으로 보여줌)
-    newWrapper.style.borderRadius = '4px';
-    newWrapper.style.fontSize = '12px';
-    newWrapper.style.color = '#006064';
-    // ⭐ ⭐ ⭐ ⭐ ⭐ ⭐ ⭐ ⭐ ⭐ ⭐ ⭐ ⭐ ⭐ ⭐ ⭐ ⭐ ⭐ ⭐ ⭐ 
     
     // 4. 새로운 마커(content) 요소 생성
     const newMarker = document.createElement('span');
@@ -176,20 +134,16 @@ export const updateCommentMarker = (annotationId: string, content: string): void
     newWrapper.appendChild(newMarker);
 
     // 5. 텍스트 노드(span) 바로 뒤에 새로운 wrapper를 삽입
-    // 이 위치는 텍스트 바로 다음입니다.
     span.insertAdjacentElement('afterend', newWrapper);
     
-    // ⭐ 6. 최종 마커 위치 재설정 
-    // 마커가 텍스트 흐름을 따르도록 (span 옆에 붙도록) 하기 위해
-    // 기존의 absolute 포지셔닝을 제거하고 텍스트의 인라인 흐름을 따르게 합니다.
-    
-    // ⚠️ 인라인 요소로 만들었으므로, absolute 포지셔닝은 제거합니다.
-    // 만약 여전히 코멘트가 한 줄씩 쌓인다면,
-    // span의 부모 요소 또는 .comment-wrapper를 감싸는 상위 요소에
-    // display: flex; flex-wrap: wrap; 와 같은 속성이 필요할 수 있습니다.
-    
-    // 절대 위치 지정 스타일은 제거하거나 인라인 흐름에 맞게 조정해야 합니다.
-    // 여기서는 absolute 스타일을 적용하지 않음으로써 인라인 플로우를 따르게 합니다.
+    // ⭐ 6. 최종 마커 위치 재설정 (저장 후에도 위치가 유지되도록)
+    const position = getLastLinePosition(annotationId);
+    if (position && newWrapper) {
+        newWrapper.style.position = 'absolute';
+        newWrapper.style.top = `${position.top}px`;
+        newWrapper.style.left = `${position.left}px`;
+        newWrapper.style.width = '250px'; 
+    }
     
     // TODO: 백엔드에 업데이트된 내용(content) 저장 API 호출
 };
@@ -198,5 +152,7 @@ export const updateCommentMarker = (annotationId: string, content: string): void
  * 코멘트 주석과 그와 관련된 모든 DOM 요소를 제거합니다.
  */
 export const removeComment = (commentId: string): void => {
+    // annotation.core.ts의 removeAnnotation 함수가
+    // 주석 span과 함께 comment-wrapper도 제거하도록 수정되었다고 가정합니다.
     removeAnnotation(commentId);
 };

@@ -1,5 +1,4 @@
-// src/components/ToolBar.tsx
-
+// src/components/ToolBar.tsx (요구사항 반영 수정안)
 
 import * as S from "./ToolBar.styles"; 
 
@@ -11,15 +10,14 @@ interface ActiveAnnotation {
     type: AnnotationType;
 }
 
-// ⭐ Props 정의: isDeleteUiActive 포함 (유지)
 type Props = {
     position: { top: number; left: number } | null;
     onHighlight: () => void;
-    onComment: () => void; 
-    onMemo?: () => void;
-    
-    activeAnnotation: ActiveAnnotation | null; 
-    isDeleteUiActive: boolean; // ⭐ 새로 추가된 Prop
+    onComment: () => void;
+    onMemo?: () => void; 
+
+    activeAnnotation: ActiveAnnotation | null;
+    isDeleteUiActive: boolean;
     onDeleteClick: () => void;
 };
 
@@ -29,25 +27,42 @@ const ToolBar = ({
     onComment, 
     onMemo,
     activeAnnotation, 
-    isDeleteUiActive, // Prop으로 받기
+    isDeleteUiActive,
     onDeleteClick
 }: Props) => {
     if (!position) return null;
 
     const isAnnotationSelected = !!activeAnnotation;
     
-    // ⭐ 삭제 버튼 표시 조건: 주석이 선택되었고 (1차 클릭) AND 삭제 UI가 활성화되었을 때 (2차 재클릭)
+    // ⭐ 주석이 선택되었고, 삭제 UI가 활성화되었을 때 (재클릭 시)
     const shouldShowDeleteButton = isAnnotationSelected && isDeleteUiActive;
+
+    // --- 주석 관리/생성 모드 분리 로직을 삭제하고, 항상 생성 버튼을 표시합니다. ---
+    
+    // onMemo가 전달되지 않았을 경우, 클릭 시 오류를 피하기 위해 더미 함수를 사용합니다.
+    const memoClickHandler = () => {
+        if (onMemo) {
+            console.log("1. ✅ ToolBar: 'onMemo' prop을 통해 클릭 이벤트 전달 시작");
+            onMemo();
+        } else {
+            console.error("1. 🛑 ToolBar: 'onMemo' 핸들러가 정의되지 않았습니다. 클릭 무시.");
+        }
+    };
+
 
     return (
         <S.Container style={{ top: position.top, left: position.left }}>
             
-            {/* 1. 생성 버튼들 (항상 표시) */}
+            {/* 1. 생성 버튼들 (주석 선택 여부와 관계없이 항상 표시) */}
             <S.Highlight onClick={onHighlight} />
             <S.Comment onClick={onComment} />
-            {onMemo && <S.Memo onClick={onMemo} />} 
+            
+            {/* ⭐ Memo 버튼: onMemo가 없어도 툴바의 디자인이 깨지지 않도록 S.Memo는 항상 렌더링하고,
+                   클릭 핸들러만 널 검사를 합니다. (단, 스타일 파일에 S.Memo가 SVG를 렌더링하는 로직이 있어야 합니다) */}
+            <S.Memo onClick={memoClickHandler}  />
 
-            {/* 2. ⭐ 삭제 버튼 (재클릭 시만 표시) */}
+
+            {/* 2. ⭐ 삭제 버튼 (주석이 선택되었고, 재클릭 상태일 때만 표시) */}
             {shouldShowDeleteButton && (
                 <>
                     <S.Separator />

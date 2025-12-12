@@ -3,6 +3,9 @@ import HighlightSvg from "@/assets/highlight.svg?react";
 import CommentSvg from "@/assets/comment.svg?react";
 import MemoSvg from "@/assets/memo.svg?react";
 
+
+import type { AnnotationType } from "../../../utils/annotation.core";
+
 // 기본 버튼 스타일 (삭제 버튼의 기반이 될 수 있도록 정의)
 const BaseButton = styled.button`
     background: transparent;
@@ -56,18 +59,40 @@ export const Comment = styled(CommentSvg)`
     }
 `;
 
-export const Memo = styled(MemoSvg)`
-    font-size: 18px;
+// src/components/ToolBar.styles.ts (가정)
+
+// ... (기존 IconBase 정의) ...
+
+// ⭐ S.Memo 스타일 컴포넌트에 $type prop을 추가하여 색상 변경 로직 삽입
+export const Memo = styled(MemoSvg)<{ $type?: AnnotationType }>` // $type Prop 정의
     cursor: pointer;
-    color: white;
-    user-select: none;
     width: 20px;
     height: 20px;
+    
+    // ⭐ 주석 관리 모드에서 사용될 때 (Highlight/Quote/Memo가 선택되었을 때)
+    color: ${({ $type }) => {
+        if (!$type) return 'white'; // 일반 생성 모드일 경우 흰색 유지
+        
+        switch ($type) {
+            case 'highlight':
+                return '#ffc107'; // 하이라이트 색상
+            case 'quote':
+                return '#66ccff'; // 코멘트 색상
+            case 'memo':
+                return '#ffcc00'; // 메모 색상
+            default:
+                return 'white';
+        }
+    }};
 
     &:hover {
         opacity: 0.8;
     }
 `;
+
+// S.Highlight와 S.Comment는 $type이 없으므로 고정된 흰색을 유지하거나,
+// 이들도 S.Memo처럼 동적 스타일을 갖도록 수정할 수 있습니다.
+// ...
 
 
 // --- 삭제/선택 모드 UI ---
