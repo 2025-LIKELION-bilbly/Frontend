@@ -1,6 +1,6 @@
 // utils/comment.ts
 
-import { surroundSelection, removeAnnotation, surroundElement } from "./annotation.core";
+import { surroundSelection, surroundElement } from "./annotation.core";
 import type { AnnotationResult, ActiveAnnotation } from "./annotation.core";
 
 const READING_CONTAINER_SELECTOR = ".reading-page-container";
@@ -156,7 +156,25 @@ export const updateCommentMarker = (
  * 코멘트 주석과 그와 관련된 모든 DOM 요소를 제거합니다.
  */
 export const removeComment = (commentId: string): void => {
-    // annotation.core.ts의 removeAnnotation 함수가
-    // 주석 span과 함께 comment-wrapper도 제거하도록 수정되었다고 가정합니다.
-    removeAnnotation(commentId);
+  // 1️⃣ comment 입력 UI 제거 (🔥 핵심)
+  document.querySelector(".comment-input-wrapper")?.remove();
+  activeCommentInputId = null;
+
+  // 2️⃣ quote annotation 제거
+  const el = document.querySelector(
+    `.annotation.quote[data-id="${commentId}"]`
+  ) as HTMLElement | null;
+
+  if (!el) return;
+
+  const parent = el.parentNode;
+  if (!parent) return;
+
+  // 텍스트만 남기고 annotation 제거
+  const text = document.createTextNode(el.textContent || "");
+  parent.insertBefore(text, el);
+  el.remove();
+
+  parent.normalize();
 };
+
