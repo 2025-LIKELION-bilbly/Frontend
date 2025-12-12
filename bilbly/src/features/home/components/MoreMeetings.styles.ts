@@ -1,4 +1,5 @@
 import styled from 'styled-components';
+import BackgroundPattern from '../../../assets/background_pattern.png';
 
 export const Container = styled.div`
   padding: 0;
@@ -72,15 +73,17 @@ export const CardText = styled.p<{ $isBlurred?: boolean }>`
   line-height: 21px;
   width: 100%;
   height: 62px;
-  text-align: center; /* 텍스트 가운데 정렬 */
-  
+  text-align: center; 
+
+  filter: ${props => props.$isBlurred ? 'blur(3.5px)' : 'none'};
+  user-select: ${props => props.$isBlurred ? 'none' : 'auto'};
 `;
 
 // 하단 정보 컨테이너 (세로 정렬로 변경)
 export const CardFooter = styled.div`
   width: 100%;
   display: flex;
-  flex-direction: column; /* 세로 정렬 중요! */
+  flex-direction: column; 
   align-items: center;
   justify-content: center;
   margin-top: auto; 
