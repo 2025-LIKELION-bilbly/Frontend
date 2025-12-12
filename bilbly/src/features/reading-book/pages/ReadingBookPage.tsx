@@ -10,7 +10,6 @@ import ProgressBar from "../components/ProgressBar";
 import ToolBar from "../components/ToolBar";
 import DeleteHighlightModal from "../components/DeleteHighlightModal"; 
 import { showMemoPopup } from "../../../utils/memoPopup";
-
 // 코멘트 유틸리티 (applyComment는 이제 1개의 인수만 받도록 처리)
 import { applyComment, removeComment, updateCommentMarker } from "../../../utils/comment"; 
 
@@ -22,6 +21,25 @@ import { applyMemo, removeMemo } from "../../../utils/memo";
 import type { AnnotationType } from "../../../utils/annotation.core";
 
 import { getBgColor, toBackendColor } from "../../../styles/ColorUtils";
+
+import { createGlobalStyle } from "styled-components";
+
+export const AnnotationStyle = createGlobalStyle`
+  .annotation.memo {
+    position: relative;
+    border-bottom: 1px solid #c93b4d;
+    padding-bottom: 2px;
+    top: 100%;
+  }
+
+  .annotation.memo .memo-icon {
+    display: inline-flex;
+    margin-left: 4px;
+    vertical-align: middle;
+    cursor: pointer;
+    user-select: none;
+  }
+`;
 
 type Mode = "focus" | "together";
 
@@ -159,22 +177,12 @@ const ReadingBookPage = () => {
 
     // 상호작용 상태 초기화 함수 (기능 동시에 적용 가능하도록)
     const resetInteractionState = () => {
-    // selection 제거
-    const selection = window.getSelection();
-    selection?.removeAllRanges();
-
-    // comment input 닫기
-    document.querySelector(".comment-input-wrapper")?.remove();
-
-    // memo popup 닫기 (있다면)
-    // showMemoPopup 내부에서 document click으로 닫히니 여기선 상태만
-    setMemoInputState(null);
-
-    // annotation 선택 해제
-    setActiveAnnotation(null);
-    setIsDeleteUiActive(false);
-    setToolbarPos(null);
+        document.querySelector(".comment-input-wrapper")?.remove();
+        setMemoInputState(null);
+        setIsDeleteUiActive(false);
+        setToolbarPos(null);
     };
+
 
     // 스와이프
     const handleTouchStart = (e: React.TouchEvent) => { 
@@ -301,10 +309,8 @@ const ReadingBookPage = () => {
 
     // 새로 추가: 툴바 아이콘 재클릭 시 삭제 모드로 전환하는 로직
     const handleToolbarIconClick = (type: AnnotationType): boolean => {
-        // 1. 주석이 선택된 상태이고,
-        // 2. 클릭한 아이콘의 타입이 현재 선택된 주석의 타입과 같다면,
         if (activeAnnotation && activeAnnotation.type === type) {
-            // 삭제 UI 활성화 (두 번째 클릭)
+
             setIsDeleteUiActive(true);
             return true; // 생성 로직 실행 방지
         }
@@ -485,134 +491,141 @@ const handleMemo = () => {
 
 
     return (
-        <S.Container
-            // Container Ref 연결
-            className="reading-page-container"
-            ref={containerRef}
-            onMouseUp={handleMouseUp}
-            onTouchStart={handleTouchStart}
-            onTouchEnd={handleTouchEnd}
-        >
-            {showWarning && (
-                <WarningModal onClose={() => setShowWarning(false)} />
-            )}
-            
-            {showDeleteModal && (
-                <DeleteHighlightModal
-                    onConfirm={handleDeleteAnnotation} 
-                    onCancel={() => setShowDeleteModal(false)}
-                />
-            )}
-            
-            {showUI && (
-                <ReadingHeader
-                    title="책 이름"
-                    percent={percent}
-                    page={page}
-                    bookId={bookId ?? "unknown"}
-                />
-            )}
-            
-            {/* ToolBar는 Container 내부에 렌더링되므로, Container를 벗어나지 않습니다. */}
-
-
-
-            <ToolBar 
-                position={toolbarPos} 
-                onHighlight={() => {
-                    if (activeAnnotation && activeAnnotation.type === 'highlight') {
-                        if (handleToolbarIconClick('highlight')) return;
-                    }
-                    handleHighlight(); 
-                }} 
-                onComment={() => {
-                    if (activeAnnotation && activeAnnotation.type === 'quote') {
-                        if (handleToolbarIconClick('quote')) return;
-                    }
-                    handleCommentClick(); 
-                }}
+        <>
+            <AnnotationStyle />
+            <S.Container
+                // Container Ref 연결   
+                className="reading-page-container"
+                ref={containerRef}
+                onMouseUp={handleMouseUp}
+                onTouchStart={handleTouchStart}
+                onTouchEnd={handleTouchEnd}
+            >
+                {showWarning && (
+                    <WarningModal onClose={() => setShowWarning(false)} />
+                )}
                 
-                // ⭐ 메모 핸들러 연결
-                onMemo={() => {
-                    // 1️⃣ 새 메모 생성 (기존 그대로)
-                    if (!activeAnnotation) {
+                {showDeleteModal && (
+                    <DeleteHighlightModal
+                        onConfirm={handleDeleteAnnotation} 
+                        onCancel={() => setShowDeleteModal(false)}
+                    />
+                )}
+                
+                {showUI && (
+                    <ReadingHeader
+                        title="책 이름"
+                        percent={percent}
+                        page={page}
+                        bookId={bookId ?? "unknown"}
+                    />
+                )}
+                
+                {/* ToolBar는 Container 내부에 렌더링되므로, Container를 벗어나지 않습니다. */}
+
+
+
+                <ToolBar 
+                    position={toolbarPos} 
+                    onHighlight={() => {
+                        if (activeAnnotation && activeAnnotation.type === 'highlight') {
+                            if (handleToolbarIconClick('highlight')) return;
+                        }
+                        handleHighlight(); 
+                    }} 
+                    onComment={() => {
+                        if (activeAnnotation && activeAnnotation.type === 'quote') {
+                            if (handleToolbarIconClick('quote')) return;
+                        }
+                        handleCommentClick(); 
+                    }}
+                    
+                    // ⭐ 메모 핸들러 연결
+                    onMemo={() => {
+                    if (!activeAnnotation || activeAnnotation.type !== "memo") {
+                        // 🆕 새 메모 생성
                         handleMemo();
                         return;
                     }
 
-                    // 2️⃣ 기존 메모 다시 열기 (🔥 추가된 부분)
-                    if (activeAnnotation.type === 'memo') {
-                        if (!containerRef.current) return;
+                    // 🗑 삭제 UI 활성화 (두 번째 클릭 상태)
+                    handleToolbarIconClick("memo"); // ❗ return 절대 하면 안 됨
 
-                        const el = document.querySelector(
-                            `.annotation.memo[data-id="${activeAnnotation.id}"]`
-                        ) as HTMLElement | null;
+                    // ✏️ 수정 팝업 열기
+                    if (!containerRef.current) return;
 
-                        if (!el) return;
+                    const el = document.querySelector(
+                        `.annotation.memo[data-id="${activeAnnotation.id}"]`
+                    ) as HTMLElement | null;
 
-                        const rect = el.getBoundingClientRect();
-                        const containerRect = containerRef.current.getBoundingClientRect();
+                    if (!el) return;
 
-                        showMemoPopup({
-                            container: containerRef.current,
-                            top: rect.bottom - containerRect.top + 12,
-                            left: rect.left - containerRect.left,
+                    const rect = el.getBoundingClientRect();
+                    const containerRect = containerRef.current.getBoundingClientRect();
 
-                            initialContent: el.dataset.content || "",
+                    showMemoPopup({
+                        container: containerRef.current,
+                        top: rect.bottom - containerRect.top + 12,
+                        left: rect.left - containerRect.left,
 
-                            onSave: (content) => {
-                                el.dataset.content = content;
-                                console.log("[POST] 메모 수정:", activeAnnotation.id, content);
-                            },
-                            onCancel: () => {
-                                removeMemo(activeAnnotation.id);
-                                setActiveAnnotation(null);
-                                setToolbarPos(null);
-                            },
-                        });
-                    }
-}}
+                        // ✅ 기존 메모 내용 유지
+                        initialContent: el.dataset.content || "",
+
+                        onSave: (content) => {
+                        el.dataset.content = content;
+                        console.log("[PUT] 메모 수정:", activeAnnotation.id, content);
+                        },
+
+                        onCancel: () => {
+                        // ❌ 취소해도 삭제 UI는 유지
+                        console.log("메모 수정 취소");
+                        },
+                    });
+                    }}
 
 
-                activeAnnotation={activeAnnotation}
-                isDeleteUiActive={isDeleteUiActive} 
 
-                onDeleteClick={() => {
-                    setToolbarPos(null); 
-                    // 하이라이트/코멘트는 삭제 모달을 띄우고, 메모는 바로 삭제할 수도 있습니다.
-                    setShowDeleteModal(true); 
-                }}
-            />
 
-            <S.ContentBox onClick={handleContentClick}>
-                <S.TextWrapper>{pages[page]}</S.TextWrapper>
-            </S.ContentBox>
+                    activeAnnotation={activeAnnotation}
+                    isDeleteUiActive={isDeleteUiActive} 
 
-            <S.ToggleWrapper $showUI={showUI}>
-                <ModeToggle mode={mode} onChangeMode={setMode} />
-            </S.ToggleWrapper>
-
-            {showUI && pages.length > 1 && (
-                <ProgressBar
-                    percent={percent}
-                    onDragPercent={(p) => {
-                        const newPageIndex = Math.round((p / 100) * (pages.length - 1));
-                        setPage(newPageIndex);
+                    onDeleteClick={() => {
+                        setToolbarPos(null); 
+                        // 하이라이트/코멘트는 삭제 모달을 띄우고, 메모는 바로 삭제할 수도 있습니다.
+                        setShowDeleteModal(true); 
                     }}
                 />
-            )}
 
-            <div
-                ref={measureRef} 
-                style={{
-                    position: "absolute",
-                    visibility: "hidden",
-                    width: "100%",
-                    pointerEvents: "none",
-                    padding: "0 16px"
-                }}
-            />
-        </S.Container>
+                <S.ContentBox onClick={handleContentClick}>
+                    <S.TextWrapper>{pages[page]}</S.TextWrapper>
+                </S.ContentBox>
+
+                <S.ToggleWrapper $showUI={showUI}>
+                    <ModeToggle mode={mode} onChangeMode={setMode} />
+                </S.ToggleWrapper>
+
+                {showUI && pages.length > 1 && (
+                    <ProgressBar
+                        percent={percent}
+                        onDragPercent={(p) => {
+                            const newPageIndex = Math.round((p / 100) * (pages.length - 1));
+                            setPage(newPageIndex);
+                        }}
+                    />
+                )}
+
+                <div
+                    ref={measureRef} 
+                    style={{
+                        position: "absolute",
+                        visibility: "hidden",
+                        width: "100%",
+                        pointerEvents: "none",
+                        padding: "0 16px"
+                    }}
+                />
+            </S.Container>
+        </>
     );
 };
 

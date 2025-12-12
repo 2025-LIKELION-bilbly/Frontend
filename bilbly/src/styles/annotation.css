@@ -1,0 +1,14 @@
+/* annotation.css */
+.annotation.memo {
+  position: relative;
+  border-bottom: 1px solid #c93b4d;
+  padding-bottom: 2px;
+}
+
+.annotation.memo .memo-icon {
+  display: inline-flex;
+  margin-left: 4px;
+  vertical-align: middle;
+  cursor: pointer;
+  user-select: none;
+}

@@ -56,9 +56,6 @@ const ToolBar = ({
             {/* 1. 생성 버튼들 (주석 선택 여부와 관계없이 항상 표시) */}
             <S.Highlight onClick={onHighlight} />
             <S.Comment onClick={onComment} />
-            
-            {/* ⭐ Memo 버튼: onMemo가 없어도 툴바의 디자인이 깨지지 않도록 S.Memo는 항상 렌더링하고,
-                   클릭 핸들러만 널 검사를 합니다. (단, 스타일 파일에 S.Memo가 SVG를 렌더링하는 로직이 있어야 합니다) */}
             <S.Memo onClick={memoClickHandler}  />
 
 
