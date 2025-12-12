@@ -13,6 +13,7 @@ export interface ActiveAnnotation {
 export interface AnnotationResult {
     id: string;
     type: AnnotationType;
+    groupId?: string;
     textSentence: string;
     startOffset: number;
     endOffset: number;
@@ -85,10 +86,13 @@ export const surroundSelection = (
     const text = selection.toString();
 
     const id = `${type[0]}-${generateUniqueId()}`;
+    const groupId = id; // 기본값: 자기 자신
     const span = document.createElement("span");
 
     span.classList.add("annotation", type);
     span.dataset.id = id;
+    
+    span.dataset.groupId = groupId;
     span.dataset.type = type;
 
     Object.assign(span.style, style, { position: "relative" });
@@ -112,16 +116,17 @@ export const surroundSelection = (
     }
 
 
-
     return {
         id,
         type,
+        groupId,
         textSentence: text,
         startOffset: range.startOffset,
         endOffset: range.endOffset,
         color: type === "highlight" ? style.backgroundColor : undefined,
         content,
     };
+
 };
 
 

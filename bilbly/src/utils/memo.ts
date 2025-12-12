@@ -1,22 +1,21 @@
-import { removeAnnotation } from "./annotation.core";
 
-export const applyMemo = () => {
-    // utils/memo.ts 맨 위에 추가
-    const generateMemoId = () =>
-     `m-${Date.now().toString(36)}${Math.random().toString(36).slice(2)}`;
 
+export const applyMemo = (groupId?: string) => {
+  
   const selection = window.getSelection();
   if (!selection || !selection.toString().trim()) return null;
 
+    
   const range = selection.getRangeAt(0);
-  const id = generateMemoId();
+  const id = `m-${Date.now().toString(36)}${Math.random().toString(36).slice(2)}`;  
+
 
   // 1️⃣ span 생성
   const span = document.createElement("span");
   span.classList.add("annotation", "memo");
   span.dataset.id = id;
   span.dataset.type = "memo";
-
+  span.dataset.groupId = groupId ?? id;
   span.style.borderBottom = "1px solid #c93b4d";
   span.style.paddingBottom = "2px";
 
@@ -53,6 +52,24 @@ export const applyMemo = () => {
   return { id, type: "memo" as const };
 };
 
+// 메모 삭제
+
 export const removeMemo = (memoId: string) => {
-  removeAnnotation(memoId);
+  const el = document.querySelector(
+    `.annotation.memo[data-id="${memoId}"]`
+  ) as HTMLElement | null;
+
+  if (!el) return;
+
+  const parent = el.parentNode;
+  if (!parent) return;
+
+  // ✅ 텍스트만 복구 (memo-icon은 버림)
+  const text = document.createTextNode(el.textContent || "");
+  parent.insertBefore(text, el);
+
+  // ✅ annotation + svg 한 번에 제거
+  el.remove();
+
+  parent.normalize();
 };

@@ -66,6 +66,8 @@ const getLastLinePosition = (annotationId: string) => {
  * @param activeAnnotation - 현재 클릭된 주석 정보 (중첩 코멘트 생성 시 사용)
  */
 export const applyComment = (
+
+    
     activeAnnotation?: ActiveAnnotation | null
     ): AnnotationResult | null => {
     const selection = window.getSelection();
@@ -93,6 +95,23 @@ export const applyComment = (
     }
 
     if (!targetAnnotationId) return result;
+
+        // 🔗 groupId 상속 (핵심)
+    if (activeAnnotation) {
+        const parent = document.querySelector(
+            `.annotation[data-id="${activeAnnotation.id}"]`
+        ) as HTMLElement | null;
+
+        const quoteEl = document.querySelector(
+            `.annotation.quote[data-id="${targetAnnotationId}"]`
+        ) as HTMLElement | null;
+
+        if (parent && quoteEl) {
+            const inheritedGroupId = parent.dataset.groupId ?? parent.dataset.id;
+            quoteEl.dataset.groupId = inheritedGroupId;
+        }
+    }
+
 
     // ✅ 기존 입력 UI 제거 (겹침 방지)
     if (activeCommentInputId) {

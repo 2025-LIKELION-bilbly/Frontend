@@ -1,70 +1,57 @@
-// src/components/DeleteHighlightModal.tsx
+import NextBtn from "../../../components/NextBtn";
+import NextBtnTwo from "../../../components/NextBtnTwo";
+import * as S from "./DeleteHighlightModal.styles";
 
-import React from 'react';
-// import * as S from './Modal.styles'; // 스타일 파일 가정
+type Props = {
+    type: "highlight" | "quote" | "memo";
+    blocked?: boolean;
+    onCancel?: () => void;
+    onConfirm: () => void;
+};
 
-interface DeleteHighlightModalProps {
-    onConfirm: () => void; // '삭제 확인' 클릭 시
-    onCancel: () => void;  // '취소' 클릭 시
-}
+type AnnotationType = "highlight" | "quote" | "memo";
 
-const DeleteHighlightModal: React.FC<DeleteHighlightModalProps> = ({ 
-    onConfirm, 
-    onCancel 
-}) => {
-    // 모달 배경 클릭 방지 및 중앙 정렬을 위한 기본 스타일
-    const modalStyle: React.CSSProperties = {
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        zIndex: 2000,
-    };
+const TITLE_MAP: Record<AnnotationType, string> = {
+    highlight: "형광펜을 \n 삭제하실건가요?",
+    quote: "코멘트를 \n 삭제하실건가요?",
+    memo: "메모를 \n삭제하실건가요?",
+};
 
-    const contentStyle: React.CSSProperties = {
-        backgroundColor: 'white',
-        padding: '20px',
-        borderRadius: '12px',
-        textAlign: 'center',
-        boxShadow: '0 4px 15px rgba(0,0,0,0.3)',
-        minWidth: '280px',
-    };
+const BLOCKED_MESSAGE_MAP: Record<AnnotationType, string> = {
+    highlight: "삭제된 형광펜은 복구할 수 없습니다",
+    quote: "저장하지 않은 코멘트는 삭제돼요",
+    memo: "저장하지 않은 코멘트는 삭제돼요",
+};
 
-    const buttonStyle: React.CSSProperties = {
-        margin: '0 10px',
-        padding: '8px 16px',
-        borderRadius: '6px',
-        cursor: 'pointer',
-        border: 'none',
-        fontWeight: 'bold',
-    };
 
+const DeleteHighlightModal = ({
+    type,
+    blocked = false,
+    onCancel,
+    onConfirm,
+}: Props) => {
     return (
-        <div style={modalStyle}>
-            <div style={contentStyle}>
-                <h3>하이라이트 삭제</h3>
-                <p>정말 이 형광펜을 삭제하시겠습니까?</p>
-                <div style={{ marginTop: '20px' }}>
-                    <button 
-                        onClick={onCancel}
-                        style={{ ...buttonStyle, backgroundColor: '#eee' }}
-                    >
-                        취소
-                    </button>
-                    <button 
-                        onClick={onConfirm}
-                        style={{ ...buttonStyle, backgroundColor: '#ff6b6b', color: 'white' }}
-                    >
-                        삭제 확인
-                    </button>
-                </div>
-            </div>
-        </div>
+        <S.Backdrop>
+            <S.Sheet>
+                <S.MainBox>
+                        <>
+                            <S.Title>{TITLE_MAP[type]}</S.Title>
+                            <S.Subtitle>{BLOCKED_MESSAGE_MAP[type]}</S.Subtitle>
+                        </>
+                </S.MainBox>
+
+                {blocked ? (
+                    <NextBtn label="확인" onClick={onConfirm} />
+                ) : (
+                    <NextBtnTwo
+                        leftLabel="취소"
+                        rightLabel="확인"
+                        onLeftClick={onCancel!}
+                        onRightClick={onConfirm}
+                    />
+                )}
+            </S.Sheet>
+        </S.Backdrop>
     );
 };
 

@@ -9,6 +9,8 @@ import ModeToggle from "../components/ModeToggle";
 import ProgressBar from "../components/ProgressBar";
 import ToolBar from "../components/ToolBar";
 import DeleteHighlightModal from "../components/DeleteHighlightModal"; 
+import DeleteAlertModal from "../components/DeleteAlterModal";
+
 import { showMemoPopup } from "../../../utils/memoPopup";
 // 코멘트 유틸리티 (applyComment는 이제 1개의 인수만 받도록 처리)
 import { applyComment, removeComment, updateCommentMarker } from "../../../utils/comment"; 
@@ -20,25 +22,36 @@ import { applyMemo, removeMemo } from "../../../utils/memo";
 // 통합된 주석 상태 타입 import
 import type { AnnotationType } from "../../../utils/annotation.core";
 
+
 import { getBgColor, toBackendColor } from "../../../styles/ColorUtils";
 
 import { createGlobalStyle } from "styled-components";
 
 export const AnnotationStyle = createGlobalStyle`
-  .annotation.memo {
-    position: relative;
-    border-bottom: 1px solid #c93b4d;
-    padding-bottom: 2px;
-    top: 100%;
-  }
+    .annotation.memo {
+        position: relative;
+        border-bottom: 1px solid #c93b4d;
+        padding-bottom: 2px;
+        top: 100%;
+    }
 
-  .annotation.memo .memo-icon {
-    display: inline-flex;
-    margin-left: 4px;
-    vertical-align: middle;
-    cursor: pointer;
-    user-select: none;
-  }
+    .annotation.memo .memo-line {
+    position: absolute;
+    left: 0;
+    right: 14px;
+    bottom: -6px;    
+    height: 2px;
+    background: #c93b4d;
+    }
+
+    .annotation.memo .memo-icon {
+        position: absolute;
+        bottom: -2px;  
+        width: 12px;
+        height: 12px;
+        cursor: pointer;
+}
+
 `;
 
 type Mode = "focus" | "together";
@@ -83,6 +96,30 @@ interface ActiveAnnotation {
 const ReadingBookPage = () => {
     const { bookId } = useParams<{ bookId: string }>();
 
+    const [deleteBlockedType, setDeleteBlockedType] =
+    useState<AnnotationType | null>(null);
+
+    // 🔥 임시 로그인 유저 (나중에 auth에서 교체)
+    const MY_OWNER_ID = "me";
+
+    /**
+     * 다른 사람(ownerId !== me)이 단 코멘트가 연결돼 있는지 검사
+     */
+    const hasLinkedCommentFromOthers = (annotationId: string) => {
+        const el = document.querySelector(
+            `.annotation[data-id="${annotationId}"]`
+        ) as HTMLElement | null;
+
+        if (!el) return false;
+
+        const comments = el.querySelectorAll(".comment-wrapper");
+
+        return Array.from(comments).some(comment => {
+            return (comment as HTMLElement).dataset.ownerId !== MY_OWNER_ID;
+        });
+    };
+
+
     const [toolbarPos, setToolbarPos] = useState<{ top: number; left: number } | null>(null);
 
     const [mode, setMode] = useState<Mode>("focus");
@@ -90,12 +127,17 @@ const ReadingBookPage = () => {
         () => localStorage.getItem("hideReadingWarning") !== "true"
     );
 
+    // 통합된 삭제 모달 상태
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+
+
+
     const [pages, setPages] = useState<string[]>([]);
     const [page, setPage] = useState(0);
     const [showUI, setShowUI] = useState(false);
 
-    // 통합된 삭제 모달 상태
-    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    
     
     // 통합된 activeAnnotation 상태 (클릭된 하이라이트/코멘트 관리)
     const [activeAnnotation, setActiveAnnotation] = useState<ActiveAnnotation | null>(null); 
@@ -114,11 +156,11 @@ const ReadingBookPage = () => {
     const cssColor = getBgColor(selectedBgKey);
     const backendColor = toBackendColor(selectedBgKey); 
 
-    // ⭐ 드래그 시점의 selection range 저장
+    // 드래그 시점의 selection range 저장
     const lastSelectionRangeRef = useRef<Range | null>(null);
 
 
-    // ⭐ 새로 추가된 상태: 메모 입력 박스 상태
+    // 새로 추가된 상태: 메모 입력 박스 상태
     const [memoInputState, setMemoInputState] = useState<{ 
         id: string; 
         position: { top: number; left: number }; 
@@ -413,35 +455,65 @@ const ReadingBookPage = () => {
             console.error("삭제할 activeAnnotation이 없습니다.");
             return;
         }
-        
-        // 메모 입력창이 열려있다면 닫습니다.
+
+        if (hasLinkedCommentFromOthers(activeAnnotation.id)) {
+            setShowDeleteModal(false);
+            setDeleteBlockedType(activeAnnotation.type);
+        return;
+    }
+
+
+
+        // // 🔥 [1] DOM에서 현재 annotation element 찾기
+        // const el = document.querySelector(
+        //     `.annotation[data-id="${activeAnnotation.id}"]`
+        // ) as HTMLElement | null;
+
+        // // 🔥 [2] groupId 추출
+        // const groupId = el?.dataset.groupId;
+
+        // // 🔥 [3] 같은 groupId 안에 quote(코멘트)가 있는지 검사
+        // if (groupId) {
+        //     const hasComment = document.querySelector(
+        //         `.annotation.quote[data-group-id="${groupId}"]`
+        //     );
+
+        //     if (hasComment) {
+        //         setShowDeleteModal(false);
+        //         alert(
+        //             activeAnnotation.type === "highlight"
+        //                 ? "코멘트가 달린 형광펜은 삭제할 수 없어요"
+        //                 : activeAnnotation.type === "memo"
+        //                 ? "코멘트가 달린 메모는 삭제할 수 없어요"
+        //                 : "코멘트가 달린 코멘트는 삭제할 수 없어요"
+        //         );
+        //         return; // ❗❗ 여기서 삭제 중단
+        //     }
+        // }
+
+        // 실제 삭제
         setMemoInputState(null);
 
-        console.log(`${activeAnnotation.type} ID ${activeAnnotation.id} 삭제를 진행합니다.`);
+        
 
         switch (activeAnnotation.type) {
-            case 'highlight':
+            case "highlight":
                 removeHighlight(activeAnnotation.id);
                 break;
-            case 'quote':
+            case "quote":
                 removeComment(activeAnnotation.id);
                 break;
-            case 'memo':
+            case "memo":
                 removeMemo(activeAnnotation.id);
-                break;
-            default:
-                console.warn(`Unknown annotation type: ${activeAnnotation.type}`);
                 break;
         }
 
-        console.log(`[DELETE] ${activeAnnotation.type} ID ${activeAnnotation.id}`);
-
-        // CRITICAL FIX: 여기서만 상태를 초기화해야 합니다.
         setActiveAnnotation(null);
         setToolbarPos(null);
-        setShowDeleteModal(false);
+        // setShowDeleteModal(false);
         setIsDeleteUiActive(false);
     };
+
 
     // ⭐ 3. 메모 버튼 클릭 (메모 입력 UI 활성화)
 
@@ -505,12 +577,22 @@ const handleMemo = () => {
                     <WarningModal onClose={() => setShowWarning(false)} />
                 )}
                 
-                {showDeleteModal && (
+                {showDeleteModal && activeAnnotation && (
                     <DeleteHighlightModal
-                        onConfirm={handleDeleteAnnotation} 
+                        type={activeAnnotation.type}   // ⭐ 이 줄이 핵심
+                        onConfirm={handleDeleteAnnotation}
                         onCancel={() => setShowDeleteModal(false)}
                     />
+                    )}
+
+
+                {deleteBlockedType && (
+                    <DeleteAlertModal
+                        type={deleteBlockedType}
+                        onConfirm={() => setDeleteBlockedType(null)}
+                    />
                 )}
+
                 
                 {showUI && (
                     <ReadingHeader
