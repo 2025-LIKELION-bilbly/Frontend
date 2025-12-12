@@ -1,20 +1,113 @@
 // utils/comment.ts
 
-import { surroundSelection, removeAnnotation } from "./annotation.core";
-import type { AnnotationResult } from "./annotation.core";
+import { surroundSelection, removeAnnotation, surroundElement } from "./annotation.core";
+import type { AnnotationResult, ActiveAnnotation } from "./annotation.core";
+
+// ⭐ 1. 컨테이너 셀렉터 정의 (ReadingBookPage.tsx의 ContainerRef가 가리키는 요소의 ID나 클래스를 사용해야 합니다)
+// 예시: <S.Container id="reading-page-container" ... /> 로 가정
+const READING_CONTAINER_SELECTOR = '#reading-page-container'; 
+
+/**
+ * 주어진 ID를 가진 하이라이트 그룹 중 가장 마지막 줄의 컨테이너 상대 좌표를 계산합니다.
+ */
+const getLastLinePosition = (annotationId: string) => {
+    // ReadingBookPage의 Container Ref와 동일한 요소를 문서에서 찾습니다.
+    const containerEl = document.querySelector(READING_CONTAINER_SELECTOR) as HTMLElement;
+    if (!containerEl) {
+        console.error("독서 페이지 컨테이너 요소를 찾을 수 없습니다:", READING_CONTAINER_SELECTOR);
+        return null;
+    }
+
+    // 1. 해당 ID를 가진 모든 주석 span을 찾습니다.
+    const allSpans = document.querySelectorAll(`.annotation[data-id="${annotationId}"]`);
+    if (allSpans.length === 0) return null;
+    
+    let lastRect: DOMRect | null = null;
+    let maxBottom = -1;
+
+    // 2. 모든 span을 순회하며 뷰포트 기준 bottom 값이 가장 큰 rect를 찾습니다.
+    allSpans.forEach(span => {
+        const rects = span.getClientRects();
+        for (let i = 0; i < rects.length; i++) {
+            const rect = rects[i];
+            // 뷰포트 하단 경계가 가장 아래 있는 rect를 찾습니다.
+            if (rect.bottom > maxBottom) {
+                maxBottom = rect.bottom;
+                lastRect = rect;
+            }
+        }
+    });
+
+    if (lastRect) {
+        // ⭐ 3. 타입 안정성을 위해 lastRect를 DOMRect로 단언합니다.
+        const rect = lastRect as DOMRect; 
+        const containerRect = containerEl.getBoundingClientRect();
+        
+        // 4. Container 기준 상대 좌표로 변환
+        // top: 마지막 줄 bottom - 컨테이너 top + 컨테이너 스크롤 위치 + 여백(10px)
+        const top = rect.bottom - containerRect.top + containerEl.scrollTop + 10; 
+        
+        // left: 하이라이트 시작 위치 + 여백(16px) (가독성을 위해 약간 우측으로 이동)
+        const left = rect.left - containerRect.left + 16;
+        
+        return { top, left };
+    }
+
+    return null;
+};
 
 /**
  * 코멘트/인용 주석을 적용하고 입력 요소를 표시합니다.
+ * @param activeAnnotation - 현재 클릭된 주석 정보 (중첩 코멘트 생성 시 사용)
  */
-export const applyComment = (): AnnotationResult | null => {
+export const applyComment = (activeAnnotation?: ActiveAnnotation | null): AnnotationResult | null => {
+    const selection = window.getSelection();
+    
     const style: React.CSSProperties = {
-        backgroundColor: 'rgba(255, 107, 107, 0.3)', 
-        borderBottom: '2px solid #ff6b6b',
         cursor: 'pointer',
     };
-    // surroundSelection에 isCommentInput: true를 전달하여 입력 요소 활성화
-    // content는 저장되지 않은 상태이므로 undefined를 전달
-    return surroundSelection('quote', style, undefined, true); 
+    
+    let result: AnnotationResult | null = null;
+    let targetAnnotationId: string | null = null;
+
+    // 1. 선택 영역이 있는 경우 (새로운 드래그)
+    if (selection && selection.toString().trim()) {
+        result = surroundSelection('quote', style, undefined, true); 
+        if (result) {
+            targetAnnotationId = result.id;
+        }
+    } 
+    
+    // 2. Active Annotation이 존재하는 경우 (하이라이트 클릭 후 코멘트 버튼 클릭)
+    else if (activeAnnotation) {
+        const targetElement = document.querySelector(`.annotation[data-id="${activeAnnotation.id}"]`);
+        
+        if (targetElement) {
+            console.log(`[INFO] 중첩 코멘트 생성 시도: Target ID ${activeAnnotation.id}`);
+            
+            result = surroundElement(targetElement as HTMLElement, 'quote', style, undefined, true); 
+            if (result) {
+                targetAnnotationId = result.id;
+            }
+        }
+    }
+
+    // ⭐ 3. 코멘트 입력창 위치 조정 (공통 로직: 입력창이 생성된 후 위치를 조정)
+    if (targetAnnotationId) {
+        const position = getLastLinePosition(targetAnnotationId);
+        // commentWrapper는 surroundSelection/surroundElement 내부에서 생성되어 DOM에 삽입됩니다.
+        const commentWrapper = document.querySelector(`div.comment-wrapper[data-id="${targetAnnotationId}"]`) as HTMLElement;
+
+        if (position && commentWrapper) {
+            // 인라인 스타일로 위치 강제 적용
+            commentWrapper.style.position = 'absolute';
+            commentWrapper.style.top = `${position.top}px`;
+            commentWrapper.style.left = `${position.left}px`;
+            commentWrapper.style.width = '250px'; // 너비 설정은 필요에 따라 조정하세요.
+        }
+    }
+    
+    return result; 
 };
 
 /**
@@ -29,20 +122,28 @@ export const updateCommentMarker = (annotationId: string, content: string): void
     const span = document.querySelector(`span.annotation[data-id="${annotationId}"]`);
     if (!span || !span.parentNode) return;
 
-    // ⭐ 3. 새로운 마커를 담을 comment-wrapper 생성 (일관성 유지)
+    // ⭐ 3. 새로운 마커를 담을 comment-wrapper 생성 및 위치 조정
     const newWrapper = document.createElement('div');
     newWrapper.classList.add('comment-wrapper');
     newWrapper.dataset.id = annotationId;
     
     // 4. 새로운 마커(content) 요소 생성
     const newMarker = document.createElement('span');
-    newMarker.classList.add('comment-marker');
     newMarker.innerText = content;
     
     newWrapper.appendChild(newMarker);
 
     // 5. 텍스트 노드(span) 바로 뒤에 새로운 wrapper를 삽입
     span.insertAdjacentElement('afterend', newWrapper);
+    
+    // ⭐ 6. 최종 마커 위치 재설정 (저장 후에도 위치가 유지되도록)
+    const position = getLastLinePosition(annotationId);
+    if (position && newWrapper) {
+        newWrapper.style.position = 'absolute';
+        newWrapper.style.top = `${position.top}px`;
+        newWrapper.style.left = `${position.left}px`;
+        newWrapper.style.width = '250px'; 
+    }
     
     // TODO: 백엔드에 업데이트된 내용(content) 저장 API 호출
 };
@@ -52,8 +153,6 @@ export const updateCommentMarker = (annotationId: string, content: string): void
  */
 export const removeComment = (commentId: string): void => {
     // annotation.core.ts의 removeAnnotation 함수가
-    // 주석 span과 함께 comment-wrapper도 제거하도록 수정되었으므로,
-    // 여기서 추가적인 DOM 제거 로직(wrapper.remove())은 필요 없습니다.
-    
+    // 주석 span과 함께 comment-wrapper도 제거하도록 수정되었다고 가정합니다.
     removeAnnotation(commentId);
 };

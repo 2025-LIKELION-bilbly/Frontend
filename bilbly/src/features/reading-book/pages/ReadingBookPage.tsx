@@ -1,3 +1,5 @@
+// ReadingBookPage.tsx (최종 수정: 타입 오류 해결 및 위치 로직 간소화)
+
 import { useEffect, useState, useMemo, useRef } from "react";
 import { useParams } from "react-router-dom"; 
 import * as S from "./ReadingBookPage.styles";
@@ -8,7 +10,7 @@ import ProgressBar from "../components/ProgressBar";
 import ToolBar from "../components/ToolBar";
 import DeleteHighlightModal from "../components/DeleteHighlightModal"; 
 
-// 코멘트 유틸리티 (인라인 입력/업데이트 포함)
+// 코멘트 유틸리티 (applyComment는 이제 1개의 인수만 받도록 처리)
 import { applyComment, removeComment, updateCommentMarker } from "../../../utils/comment"; 
 
 // 하이라이트 유틸리티
@@ -77,7 +79,12 @@ const ReadingBookPage = () => {
     
     // 통합된 activeAnnotation 상태 (클릭된 하이라이트/코멘트 관리)
     const [activeAnnotation, setActiveAnnotation] = useState<ActiveAnnotation | null>(null); 
+    
+    // 새로 추가된 상태: 삭제 UI 표시 여부 (재클릭 시 true)
+    const [isDeleteUiActive, setIsDeleteUiActive] = useState(false); 
 
+    // Container DOM 요소에 대한 Ref 추가
+    const containerRef = useRef<HTMLDivElement>(null); 
     const measureRef = useRef<HTMLDivElement>(null);
 
     const touchStartX = useRef(0);
@@ -85,9 +92,9 @@ const ReadingBookPage = () => {
 
     const selectedBgKey = "userMint";
     const cssColor = getBgColor(selectedBgKey);
-    const backendColor = toBackendColor(selectedBgKey); // backendColor 이제 사용됨
+    const backendColor = toBackendColor(selectedBgKey); 
 
-    const fullText = useMemo( // fullText 이제 paginateText 호출 시 사용됨
+    const fullText = useMemo( 
         () =>
             `
         책 내용이 들어가는 자리 ...
@@ -99,12 +106,11 @@ const ReadingBookPage = () => {
     // 페이지 자동 분리
     useEffect(() => {
         if (!measureRef.current) return;
-        // fullText와 measureRef가 paginateText 내에서 사용됩니다.
         const generated = paginateText(fullText, measureRef); 
         setPages(generated);
     }, [fullText]);
     
-    // 코멘트 저장 이벤트 리스너 등록 (컴포넌트 마운트 시 한 번만 실행)
+    // 코멘트 저장 이벤트 리스너 등록 
     useEffect(() => {
         const setupCommentListener = () => {
             const handleSaveClick = (e: Event) => {
@@ -140,11 +146,11 @@ const ReadingBookPage = () => {
 
 
     // 스와이프
-    const handleTouchStart = (e: React.TouchEvent) => { // touchStartX 이제 사용됨
+    const handleTouchStart = (e: React.TouchEvent) => { 
         touchStartX.current = e.touches[0].clientX;
     };
 
-    const handleTouchEnd = (e: React.TouchEvent) => { // touchEndX 이제 사용됨
+    const handleTouchEnd = (e: React.TouchEvent) => { 
         touchEndX.current = e.changedTouches[0].clientX;
         const diff = touchEndX.current - touchStartX.current;
 
@@ -152,6 +158,29 @@ const ReadingBookPage = () => {
 
         if (diff > 0) setPage(prev => Math.max(prev - 1, 0));
         else setPage(prev => Math.min(prev + 1, pages.length - 1));
+    };
+
+    /**
+     * 툴바 위치를 Container 기준으로 계산하는 함수
+     * @param rect - 주석 요소 또는 선택 영역의 getBoundingClientRect() 값
+     * @returns Container 내부의 { top, left } 좌표
+     */
+    const calculateToolbarPosition = (rect: DOMRect) => {
+        if (!containerRef.current) {
+            // Container Ref가 없을 경우 기존 window.scrollY 기반 위치 반환 (Fallback)
+            return {
+                top: rect.top + window.scrollY - 8,
+                left: rect.left + rect.width / 2,
+            };
+        }
+
+        const containerRect = containerRef.current.getBoundingClientRect();
+
+        // 툴바 위치 계산 로직 수정 (Container 기준 상대 좌표)
+        const top = rect.top - containerRect.top + containerRef.current.scrollTop - 8;
+        const left = rect.left - containerRect.left + rect.width / 2;
+        
+        return { top, left };
     };
 
 
@@ -164,13 +193,20 @@ const ReadingBookPage = () => {
         }
 
         setActiveAnnotation(null); 
+        // 삭제 모드 초기화
+        setIsDeleteUiActive(false); 
         
-        const rect = selection.getRangeAt(0).getBoundingClientRect();
+        // ⭐ 수정: 선택 영역의 모든 줄 경계(rects)를 가져와 마지막 줄을 사용합니다.
+        const range = selection.getRangeAt(0);
+        const clientRects = range.getClientRects();
+        
+        if (clientRects.length === 0) return;
+        
+        // 핵심: clientRects에서 가장 마지막 라인 (마지막 요소)의 경계를 사용합니다.
+        const lastRect = clientRects[clientRects.length - 1];
 
-        setToolbarPos({
-            top: rect.top + window.scrollY - 4,
-            left: rect.left + rect.width / 2,
-        });
+        // 툴바 위치 계산 함수를 마지막 라인의 경계(DOMRect)로 호출합니다.
+        setToolbarPos(calculateToolbarPosition(lastRect as DOMRect));
     };
 
 
@@ -187,12 +223,13 @@ const ReadingBookPage = () => {
             if (!annotationId || !annotationType) return false;
 
             const rect = annotationEl.getBoundingClientRect();
-            setToolbarPos({
-                top: rect.top + window.scrollY - 8,
-                left: rect.left + rect.width / 2,
-            });
+            
+            // 툴바 위치 계산 함수 사용
+            setToolbarPos(calculateToolbarPosition(rect));
 
+            // 1차 클릭: activeAnnotation 설정, 삭제 UI 비활성화
             setActiveAnnotation({ id: annotationId, type: annotationType });
+            setIsDeleteUiActive(false);
 
             console.log(`클릭한 ${annotationType} ID:`, annotationId);
             return true;
@@ -211,6 +248,8 @@ const ReadingBookPage = () => {
 
         setToolbarPos(null);
         setActiveAnnotation(null); 
+        // 삭제 모드 초기화
+        setIsDeleteUiActive(false);
         
         const rect = e.currentTarget.getBoundingClientRect();
         const x = e.clientX - rect.left;
@@ -222,32 +261,109 @@ const ReadingBookPage = () => {
     };
 
 
+    // 새로 추가: 툴바 아이콘 재클릭 시 삭제 모드로 전환하는 로직
+    const handleToolbarIconClick = (type: AnnotationType): boolean => {
+        // 1. 주석이 선택된 상태이고,
+        // 2. 클릭한 아이콘의 타입이 현재 선택된 주석의 타입과 같다면,
+        if (activeAnnotation && activeAnnotation.type === type) {
+            // 삭제 UI 활성화 (두 번째 클릭)
+            setIsDeleteUiActive(true);
+            return true; // 생성 로직 실행 방지
+        }
+        // 주석이 선택되지 않았거나 타입이 다르다면 생성 로직을 실행합니다.
+        return false;
+    };
+
+
     // 1. 드래그 후 새로운 하이라이트 적용 (생성)
     const handleHighlight = () => {
+        // CRITICAL FIX: 하이라이트 중첩 생성은 복잡하므로, Active 상태일 때 상태를 초기화하고 리턴하여 
+        // 새로운 드래그를 유도합니다.
+        if (activeAnnotation) {
+            setToolbarPos(null);
+            setActiveAnnotation(null);
+            setIsDeleteUiActive(false);
+            return; 
+        }
+        
         const result = applyHighlight(cssColor); 
         setToolbarPos(null);
         setActiveAnnotation(null); 
+        setIsDeleteUiActive(false); 
 
         if (result) {
             console.log(`[POST] 하이라이트 생성 ID: ${result.id}, 색상: ${backendColor}`);
         }
     };
     
+    
     // 2. 코멘트 버튼 클릭 (인라인 입력 UI 활성화)
     const handleCommentClick = () => {
-        const result = applyComment();
+
+        // 1. 드래그 선택 영역이 있는 경우 (새 코멘트 생성 시도)
+        if (!activeAnnotation) {
+            
+            // ⭐ 타입 오류를 피하기 위해 position 인수를 제거하고,
+            // 코멘트 위치 계산은 applyComment 유틸리티 함수 내부에서 처리되도록 합니다.
+            const result = applyComment(null); 
+            
+            setToolbarPos(null);
+            setActiveAnnotation(null); 
+            setIsDeleteUiActive(false); 
+
+            if (result) {
+                console.log("새 코멘트 입력 UI 활성화:", result.id);
+            } else {
+                console.log("코멘트 생성 실패: 선택 영역 없음");
+            }
+            return;
+        }
+        
+        // 2. 기존 주석(highlight)이 Active 상태인 경우 (클릭 후 코멘트 버튼)
+        if (activeAnnotation.type === 'highlight') {
+            const groupId = activeAnnotation.id; 
+            
+            // 2-1. 중복 코멘트 확인 로직
+            const allHighlightSpansInGroup = document.querySelectorAll(`.annotation[data-id="${groupId}"]`);
+            
+            let isCommentAlreadyPresent = false;
+            allHighlightSpansInGroup.forEach(span => {
+                if (span.querySelector('.comment-wrapper')) {
+                    isCommentAlreadyPresent = true;
+                }
+            });
+
+            if (isCommentAlreadyPresent) {
+                console.log(`코멘트 생성 실패: 그룹 ID ${groupId}에 이미 코멘트가 존재합니다.`);
+                setToolbarPos(null);
+                setActiveAnnotation(null);
+                setIsDeleteUiActive(false); 
+                return; // 중복 생성 방지
+            }
+        }
+        
+        // 3. 코멘트가 없는 하이라이트인 경우 또는 기존 코멘트(quote)를 클릭한 경우
+        // ⭐ position 인수를 제거하고, applyComment 유틸리티 함수에 책임을 넘깁니다.
+        const result = applyComment(activeAnnotation);
+        
         setToolbarPos(null);
         setActiveAnnotation(null); 
+        setIsDeleteUiActive(false); 
         
         if (result) {
-             console.log("코멘트 입력 UI 활성화:", result.id);
+            console.log("코멘트 입력 UI 활성화 (위치 지정):", result.id);
+        } else {
+            console.log("코멘트 생성 실패");
         }
     };
 
     
     // 3. 통합된 삭제 처리 로직
     const handleDeleteAnnotation = () => {
-        if (!activeAnnotation) return;
+        if (!activeAnnotation) {
+            console.error("삭제할 activeAnnotation이 없습니다.");
+            return;
+        }
 
         console.log(`${activeAnnotation.type} ID ${activeAnnotation.id} 삭제를 진행합니다.`);
 
@@ -265,14 +381,18 @@ const ReadingBookPage = () => {
 
         console.log(`[DELETE] ${activeAnnotation.type} ID ${activeAnnotation.id}`);
 
+        // CRITICAL FIX: 여기서만 상태를 초기화해야 합니다.
         setActiveAnnotation(null);
         setToolbarPos(null);
         setShowDeleteModal(false);
+        setIsDeleteUiActive(false);
     };
 
 
     return (
         <S.Container
+            // Container Ref 연결
+            ref={containerRef}
             onMouseUp={handleMouseUp}
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
@@ -297,12 +417,25 @@ const ReadingBookPage = () => {
                 />
             )}
             
+            {/* ToolBar는 Container 내부에 렌더링되므로, Container를 벗어나지 않습니다. */}
             <ToolBar 
                 position={toolbarPos} 
-                onHighlight={handleHighlight} 
-                onComment={handleCommentClick}
+                onHighlight={() => {
+                    if (activeAnnotation && activeAnnotation.type === 'highlight') {
+                        if (handleToolbarIconClick('highlight')) return;
+                    }
+                    handleHighlight(); 
+                }} 
+                onComment={() => {
+                    if (activeAnnotation && activeAnnotation.type === 'quote') {
+                        if (handleToolbarIconClick('quote')) return;
+                    }
+                    handleCommentClick(); 
+                }}
                 
                 activeAnnotation={activeAnnotation}
+                isDeleteUiActive={isDeleteUiActive} 
+
                 onDeleteClick={() => {
                     setToolbarPos(null); 
                     setShowDeleteModal(true); 
@@ -328,7 +461,7 @@ const ReadingBookPage = () => {
             )}
 
             <div
-                ref={measureRef} // measureRef 이제 사용됨
+                ref={measureRef} 
                 style={{
                     position: "absolute",
                     visibility: "hidden",
