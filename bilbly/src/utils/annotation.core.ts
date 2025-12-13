@@ -86,7 +86,7 @@ export const surroundSelection = (
     const text = selection.toString();
 
     const id = `${type[0]}-${generateUniqueId()}`;
-    const groupId = id; // 기본값: 자기 자신
+    const groupId = id; // 기본값: 자기 자신, 나중에 연동시 highlightIde
     const span = document.createElement("span");
 
     span.classList.add("annotation", type);

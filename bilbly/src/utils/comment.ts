@@ -1,85 +1,62 @@
-// utils/comment.ts
-
 import { surroundSelection, surroundElement } from "./annotation.core";
 import type { AnnotationResult, ActiveAnnotation } from "./annotation.core";
+// import { applyMemo } from "./memo";
+
 
 const READING_CONTAINER_SELECTOR = ".reading-page-container";
 
 let activeCommentInputId: string | null = null;
 
+const COMMENT_LIMIT = 25;
 
 
-
-
-
-/**
- * 주어진 ID를 가진 하이라이트 그룹 중 가장 마지막 줄의 컨테이너 상대 좌표를 계산합니다.
- */
+// 위치 계산
 const getLastLinePosition = (annotationId: string) => {
-    // ReadingBookPage의 Container Ref와 동일한 요소를 문서에서 찾습니다.
-    const containerEl = document.querySelector(READING_CONTAINER_SELECTOR) as HTMLElement;
-    if (!containerEl) {
-        console.error("독서 페이지 컨테이너 요소를 찾을 수 없습니다:", READING_CONTAINER_SELECTOR);
-        return null;
-    }
+    const containerEl = document.querySelector(
+        READING_CONTAINER_SELECTOR
+    ) as HTMLElement | null;
+    if (!containerEl) return null;
 
-    // 1. 해당 ID를 가진 모든 주석 span을 찾습니다.
-    const allSpans = document.querySelectorAll(`.annotation[data-id="${annotationId}"]`);
-    if (allSpans.length === 0) return null;
-    
+    const allSpans = document.querySelectorAll(
+        `.annotation[data-id="${annotationId}"]`
+    );
+    if (!allSpans.length) return null;
+
     let lastRect: DOMRect | null = null;
     let maxBottom = -1;
 
-    // 2. 모든 span을 순회하며 뷰포트 기준 bottom 값이 가장 큰 rect를 찾습니다.
     allSpans.forEach(span => {
         const rects = span.getClientRects();
-        for (let i = 0; i < rects.length; i++) {
-            const rect = rects[i];
-            // 뷰포트 하단 경계가 가장 아래 있는 rect를 찾습니다.
-            if (rect.bottom > maxBottom) {
-                maxBottom = rect.bottom;
-                lastRect = rect;
-            }
+        Array.from(rects).forEach(rect => {
+        if (rect.bottom > maxBottom) {
+            maxBottom = rect.bottom;
+            lastRect = rect;
         }
+        });
     });
 
-    if (lastRect) {
-        // ⭐ 3. 타입 안정성을 위해 lastRect를 DOMRect로 단언합니다.
-        const rect = lastRect as DOMRect; 
-        const containerRect = containerEl.getBoundingClientRect();
-        
-        // 4. Container 기준 상대 좌표로 변환
-        // top: 마지막 줄 bottom - 컨테이너 top + 컨테이너 스크롤 위치 + 여백(10px)
-        const top = rect.bottom - containerRect.top + containerEl.scrollTop-2; 
-        
-        // left: 하이라이트 시작 위치 + 여백(16px) (가독성을 위해 약간 우측으로 이동)
-        const left = rect.left - containerRect.left + 16;
-        
-        return { top, left };
-    }
+    if (!lastRect) return null;
 
-    return null;
+    const rect = lastRect as DOMRect;
+    const containerRect = containerEl.getBoundingClientRect();
+    return {
+        top: rect.bottom - containerRect.top + containerEl.scrollTop - 2,
+        left: rect.left - containerRect.left + 16,
+    };
 };
 
-/**
- * 코멘트/인용 주석을 적용하고 입력 요소를 표시합니다.
- * @param activeAnnotation - 현재 클릭된 주석 정보 (중첩 코멘트 생성 시 사용)
- */
+/* ----------------------------------
+ * 코멘트 생성 + textarea overlay
+ * ---------------------------------- */
 export const applyComment = (
-
-    
     activeAnnotation?: ActiveAnnotation | null
     ): AnnotationResult | null => {
     const selection = window.getSelection();
-
-    const style: React.CSSProperties = {
-        cursor: "pointer",
-    };
+    const style: React.CSSProperties = { cursor: "pointer" };
 
     let result: AnnotationResult | null = null;
     let targetAnnotationId: string | null = null;
 
-    // 1. quote span 생성
     if (selection && selection.toString().trim()) {
         result = surroundSelection("quote", style);
         if (result) targetAnnotationId = result.id;
@@ -96,35 +73,26 @@ export const applyComment = (
 
     if (!targetAnnotationId) return result;
 
-        // 🔗 groupId 상속 (핵심)
-    if (activeAnnotation) {
-        const parent = document.querySelector(
-            `.annotation[data-id="${activeAnnotation.id}"]`
-        ) as HTMLElement | null;
-
-        const quoteEl = document.querySelector(
-            `.annotation.quote[data-id="${targetAnnotationId}"]`
-        ) as HTMLElement | null;
-
-        if (parent && quoteEl) {
-            const inheritedGroupId = parent.dataset.groupId ?? parent.dataset.id;
-            quoteEl.dataset.groupId = inheritedGroupId;
-        }
-    }
-
-
-    // ✅ 기존 입력 UI 제거 (겹침 방지)
-    if (activeCommentInputId) {
-        document.querySelector(".comment-input-wrapper")?.remove();
+    if (activeCommentInputId && activeCommentInputId !== targetAnnotationId) {
+        document
+        .querySelector(
+            `.comment-input-wrapper[data-id="${activeCommentInputId}"]`
+        )
+        ?.remove();
     }
     activeCommentInputId = targetAnnotationId;
 
-    // ✅ container 기준 overlay 생성
     const container = document.querySelector(
         READING_CONTAINER_SELECTOR
     ) as HTMLElement | null;
-    if (!container) {
-        console.error("독서 페이지 컨테이너 요소를 찾을 수 없습니다");
+    if (!container) return result;
+
+    // 이미 열려 있으면 다시 만들지 않음
+    if (
+        document.querySelector(
+        `.comment-input-wrapper[data-id="${targetAnnotationId}"]`
+        )
+    ) {
         return result;
     }
 
@@ -133,67 +101,128 @@ export const applyComment = (
 
     const wrapper = document.createElement("div");
     wrapper.className = "comment-input-wrapper";
+    wrapper.dataset.id = targetAnnotationId;
     wrapper.style.position = "absolute";
     wrapper.style.top = `${position.top}px`;
     wrapper.style.left = `${position.left}px`;
     wrapper.style.width = "250px";
     wrapper.style.zIndex = "999";
+    wrapper.addEventListener("click", e => e.stopPropagation());
 
     wrapper.innerHTML = `
         <textarea class="comment-input" placeholder="여기에 코멘트를 입력하세요"></textarea>
-        <button class="comment-save-btn">저장</button>
     `;
 
     container.appendChild(wrapper);
 
+    const textarea = wrapper.querySelector(
+    ".comment-input"
+    ) as HTMLTextAreaElement;
+
+
+    textarea.addEventListener("input", () => {
+    const value = textarea.value;
+
+    if (value.length <= COMMENT_LIMIT) return;
+
+    const annotationId = wrapper.dataset.id;
+    if (!annotationId) return;
+
+    // 1️⃣ comment 입력 UI 제거
+    wrapper.remove();
+    activeCommentInputId = null;
+
+    // 2️⃣ quote annotation 찾기
+    const quoteEl = document.querySelector(
+        `.annotation.quote[data-id="${annotationId}"]`
+    ) as HTMLElement | null;
+
+    if (!quoteEl) return;
+    
+
+    // 3️⃣ 위치 계산 (memo popup 위치)
+    const position = getLastLinePosition(annotationId);
+    if (!position) return;
+
+    // 4️⃣ quote 제거 (텍스트만 남김)
+    const parent = quoteEl.parentNode;
+    if (!parent) return;
+
+    while (quoteEl.firstChild) {
+        parent.insertBefore(quoteEl.firstChild, quoteEl);
+    }
+    quoteEl.remove();
+    parent.normalize();
+
+    // 5️⃣ 🔥 memo popup을 "바로" 띄운다 (내용 포함)
+    import("./memoPopup").then(({ showMemoPopup }) => {
+        const container = document.querySelector(
+        READING_CONTAINER_SELECTOR
+        ) as HTMLElement;
+
+        showMemoPopup({
+        container,
+        top: position.top + 8,
+        left: position.left,
+        initialContent: value, // ⭐⭐⭐ 핵심
+        onSave: (content) => {
+            console.log("[POST] memo 저장:", content);
+        },
+        onCancel: () => {
+            console.log("메모 취소");
+        },
+        });
+    });
+    });
+
+
+
+
+
     return result;
 };
 
-
-/**
- * 저장 후 코멘트 마커를 업데이트하고 입력 요소를 제거합니다.
- */
+/* ----------------------------------
+ * 저장: 데이터만 저장 (DOM 변경 ❌)
+ * ---------------------------------- */
 export const updateCommentMarker = (
     annotationId: string,
     content: string
     ) => {
-    document.querySelector(".comment-input-wrapper")?.remove();
-    activeCommentInputId = null;
-
-    const span = document.querySelector(
+    const annotationEl = document.querySelector(
         `.annotation[data-id="${annotationId}"]`
     ) as HTMLElement | null;
-    if (!span) return;
 
-    span.dataset.content = content;
+    if (!annotationEl) return;
 
-  // TODO: marker UI (아이콘, underline 등)
+    annotationEl.dataset.content = content;
+    // ❗ textarea 유지
 };
 
-
-/**
- * 코멘트 주석과 그와 관련된 모든 DOM 요소를 제거합니다.
- */
+/* ----------------------------------
+ * 코멘트 삭제
+ * ---------------------------------- */
 export const removeComment = (commentId: string): void => {
-  // 1️⃣ comment 입력 UI 제거 (🔥 핵심)
-  document.querySelector(".comment-input-wrapper")?.remove();
-  activeCommentInputId = null;
+    // overlay 제거
+    document
+        .querySelector(`.comment-input-wrapper[data-id="${commentId}"]`)
+        ?.remove();
 
-  // 2️⃣ quote annotation 제거
-  const el = document.querySelector(
-    `.annotation.quote[data-id="${commentId}"]`
-  ) as HTMLElement | null;
+    activeCommentInputId = null;
 
-  if (!el) return;
+    // annotation unwrap
+    const el = document.querySelector(
+        `.annotation.quote[data-id="${commentId}"]`
+    ) as HTMLElement | null;
 
-  const parent = el.parentNode;
-  if (!parent) return;
+    if (!el || !el.parentNode) return;
 
-  // 텍스트만 남기고 annotation 제거
-  const text = document.createTextNode(el.textContent || "");
-  parent.insertBefore(text, el);
-  el.remove();
-
-  parent.normalize();
+    const parent = el.parentNode;
+    const text = document.createTextNode(el.textContent || "");
+    parent.insertBefore(text, el);
+    el.remove();
+    parent.normalize();
 };
+
+
 

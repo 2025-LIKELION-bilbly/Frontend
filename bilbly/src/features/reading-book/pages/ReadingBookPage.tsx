@@ -11,6 +11,7 @@ import ToolBar from "../components/ToolBar";
 import DeleteHighlightModal from "../components/DeleteHighlightModal"; 
 import DeleteAlertModal from "../components/DeleteAlterModal";
 
+
 import { showMemoPopup } from "../../../utils/memoPopup";
 // 코멘트 유틸리티 (applyComment는 이제 1개의 인수만 받도록 처리)
 import { applyComment, removeComment, updateCommentMarker } from "../../../utils/comment"; 
@@ -26,6 +27,9 @@ import type { AnnotationType } from "../../../utils/annotation.core";
 import { getBgColor, toBackendColor } from "../../../styles/ColorUtils";
 
 import { createGlobalStyle } from "styled-components";
+
+
+
 
 export const AnnotationStyle = createGlobalStyle`
     .annotation.memo {
@@ -105,19 +109,20 @@ const ReadingBookPage = () => {
     /**
      * 다른 사람(ownerId !== me)이 단 코멘트가 연결돼 있는지 검사
      */
-    const hasLinkedCommentFromOthers = (annotationId: string) => {
-        const el = document.querySelector(
-            `.annotation[data-id="${annotationId}"]`
-        ) as HTMLElement | null;
+    const hasLinkedCommentFromOthers = (groupId: string) => {
+        const annotations = document.querySelectorAll(
+            `.annotation[data-group-id="${groupId}"]`
+        );
 
-        if (!el) return false;
+        return Array.from(annotations).some(annotation => {
+            const comments = annotation.querySelectorAll(".comment-wrapper");
 
-        const comments = el.querySelectorAll(".comment-wrapper");
-
-        return Array.from(comments).some(comment => {
-            return (comment as HTMLElement).dataset.ownerId !== MY_OWNER_ID;
+            return Array.from(comments).some(comment =>
+            (comment as HTMLElement).dataset.ownerId !== MY_OWNER_ID
+            );
         });
     };
+
 
 
     const [toolbarPos, setToolbarPos] = useState<{ top: number; left: number } | null>(null);
@@ -219,7 +224,6 @@ const ReadingBookPage = () => {
 
     // 상호작용 상태 초기화 함수 (기능 동시에 적용 가능하도록)
     const resetInteractionState = () => {
-        document.querySelector(".comment-input-wrapper")?.remove();
         setMemoInputState(null);
         setIsDeleteUiActive(false);
         setToolbarPos(null);
@@ -326,7 +330,46 @@ const ReadingBookPage = () => {
 
     // 페이지 클릭 UI 처리
     const handleContentClick = (e: React.MouseEvent<HTMLDivElement>) => {
-        // 메모 입력창이 열려있다면 닫지 않습니다. (MemoInputBox의 외부 클릭 로직이 처리합니다)
+          // 🔥 코멘트 입력 중이면 → 저장하고 끝
+        // if (saveCommentInline()) {
+        //     return;
+        // }
+        
+
+
+        const inputWrapper = document.querySelector(".comment-input-wrapper");
+            if (inputWrapper) {
+                const textarea = inputWrapper.querySelector(
+                ".comment-input"
+                ) as HTMLTextAreaElement | null;
+
+                const id = inputWrapper.getAttribute("data-id");
+
+                if (textarea && id && textarea.value.trim()) {
+                updateCommentMarker(id, textarea.value.trim());
+                }
+            }
+
+        // ✅ comment 입력 UI가 열려 있으면 "글 영역 클릭" 시 자동 저장
+        const wrapper = document.querySelector(
+            ".comment-input-wrapper"
+        ) as HTMLElement | null;
+
+        if (wrapper) {
+            const textarea = wrapper.querySelector(
+                ".comment-input"
+            ) as HTMLTextAreaElement | null;
+
+            const annotationId = wrapper.dataset.id; // ✅ comment.ts에서 dataset.id 넣어준 값
+
+            if (textarea && textarea.value.trim() && annotationId) {
+                updateCommentMarker(annotationId, textarea.value.trim());
+                console.log("[AUTO SAVE] comment:", annotationId, textarea.value.trim());
+            }
+
+        }
+
+        // ⬇️⬇️⬇️ 아래는 네 기존 코드 그대로 유지 ⬇️⬇️⬇️
         if (memoInputState) return;
 
         if (handleAnnotationClick(e)) return;
@@ -335,10 +378,9 @@ const ReadingBookPage = () => {
         if (selection && selection.toString().trim() !== "") return;
 
         setToolbarPos(null);
-        setActiveAnnotation(null); 
-        // 삭제 모드 초기화
+        setActiveAnnotation(null);
         setIsDeleteUiActive(false);
-        
+
         const rect = e.currentTarget.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const ratio = x / rect.width;
@@ -347,6 +389,7 @@ const ReadingBookPage = () => {
         else if (ratio > 0.75) setPage(p => Math.min(p + 1, pages.length - 1));
         else setShowUI(prev => !prev);
     };
+
 
 
     // 새로 추가: 툴바 아이콘 재클릭 시 삭제 모드로 전환하는 로직
@@ -456,40 +499,17 @@ const ReadingBookPage = () => {
             return;
         }
 
-        if (hasLinkedCommentFromOthers(activeAnnotation.id)) {
+        const el = document.querySelector(
+            `.annotation[data-id="${activeAnnotation.id}"]`
+        ) as HTMLElement | null;
+
+        const groupId = el?.dataset.groupId;
+
+        if (groupId && hasLinkedCommentFromOthers(groupId)) {
             setShowDeleteModal(false);
             setDeleteBlockedType(activeAnnotation.type);
-        return;
-    }
-
-
-
-        // // 🔥 [1] DOM에서 현재 annotation element 찾기
-        // const el = document.querySelector(
-        //     `.annotation[data-id="${activeAnnotation.id}"]`
-        // ) as HTMLElement | null;
-
-        // // 🔥 [2] groupId 추출
-        // const groupId = el?.dataset.groupId;
-
-        // // 🔥 [3] 같은 groupId 안에 quote(코멘트)가 있는지 검사
-        // if (groupId) {
-        //     const hasComment = document.querySelector(
-        //         `.annotation.quote[data-group-id="${groupId}"]`
-        //     );
-
-        //     if (hasComment) {
-        //         setShowDeleteModal(false);
-        //         alert(
-        //             activeAnnotation.type === "highlight"
-        //                 ? "코멘트가 달린 형광펜은 삭제할 수 없어요"
-        //                 : activeAnnotation.type === "memo"
-        //                 ? "코멘트가 달린 메모는 삭제할 수 없어요"
-        //                 : "코멘트가 달린 코멘트는 삭제할 수 없어요"
-        //         );
-        //         return; // ❗❗ 여기서 삭제 중단
-        //     }
-        // }
+            return;
+        }
 
         // 실제 삭제
         setMemoInputState(null);
