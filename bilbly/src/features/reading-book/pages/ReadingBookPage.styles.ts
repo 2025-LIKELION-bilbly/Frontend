@@ -99,31 +99,6 @@ export const Container = styled.div`
 `;
 
 
-export const ContentBox = styled.div`
-    padding-top: 60px;     
-    padding-bottom: 100px; 
-    font-size: 16px;
-    
-    // ⭐ 수정: line-height 값을 늘려서 본문 간격 확장
-    line-height: 30px; 
-    
-    color: #222;
-
-    height: 599px;         
-    overflow: hidden;
-    position: relative;
-    z-index: 1;
-
-    user-select: text;
-`;
-
-
-export const TextWrapper = styled.div`
-    min-height: 100%;
-    display: block;
-    user-select: text;
-`;
-
 
 export const ToggleWrapper = styled.div<{ $showUI: boolean }>`
     position: fixed;
@@ -133,3 +108,44 @@ export const ToggleWrapper = styled.div<{ $showUI: boolean }>`
     transition: bottom 0.25s ease;
     z-index: 20;
 `;
+
+export const ContentBox = styled.div`
+    padding-top: 60px;     
+    padding-bottom: 100px; 
+    padding-left: 20px;
+    padding-right: 20px;
+
+
+    font-family: 'Pretendard', sans-serif;
+    font-size: 16px;
+    line-height: 30px;
+    color: #222;
+
+    height: 599px;          
+    overflow: hidden;
+
+    display: flex;
+    flex-direction: column;
+
+    position: relative;
+    z-index: 1;
+    user-select: text;
+`;
+
+export const TextWrapper = styled.div`
+    flex: 1;
+    width: 100%;
+    
+    display: block;
+    user-select: text;
+
+    /* ⭐⭐⭐ 핵심 수정: 책처럼 가득 차게 보이게 하는 설정 ⭐⭐⭐ */
+    text-align: justify;           /* 좌우 정렬을 맞춤 (양쪽 정렬) */
+    text-justify: inter-character; /* 글자 사이 간격을 조절하여 정렬 (한국어에 적합) */
+    
+    word-break: break-all;         /* 단어가 길어도 줄바꿈하여 빈 공간 최소화 (취향에 따라 keep-all로 변경 가능) */    /* 원본의 줄바꿈은 유지하되, 긴 줄은 자동 줄바꿈 */
+    
+    letter-spacing: -0.02em;       /* 자간을 살짝 좁혀 텍스트 밀도감을 높임 */
+`;
+
+// ... (나머지 스타일 유지)

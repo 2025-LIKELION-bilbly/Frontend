@@ -175,8 +175,13 @@ const ReadingBookPage = () => {
     const fullText = useMemo( 
         () =>
             `
-        책 내용이 들어가는 자리 ...
-        책 내용이 들어가는 자리 ...
+책 내용이 들어가는 자리 책 내용이 들어가는 자리책 내용이 들어가는 자리책 내용이 들어가는 자리책 내용이 들어가는 자리책 내용이 들어가는 자리책 내용이 들어가는 자리책 내용이 들어가는 자리
+
+책 내용이 들어가는 자리 책 내용이 들어가는 자리책 내용이 들어가는 자리책 내용이 들어가는 자리책 내용이 들어가는 자리책 내용이 들어가는 자리책 내용이 들어가는 자리책 내용이 들어가는 자리
+
+책 내용이 들어가는 자리 책 내용이 들어가는 자리책 내용이 들어가는 자리책 내용이 들어가는 자리책 내용이 들어가는 자리책 내용이 들어가는 자리책 내용이 들어가는 자리책 내용이 들어가는 자리
+책 내용이 들어가는 자리 책 내용이 들어가는 자리책 내용이 들어가는 자리책 내용이 들어가는 자리책 내용이 들어가는 자리책 내용이 들어가는 자리책 내용이 들어가는 자리책 내용이 들어가는 자리책 내용이 들어가는 자리 책 내용이 
+책 내용이 들어가는 자리 책 내용이 들어가는 책 내용이 들어가는 자리 책 내용이 들어가는 자리책 내용이 들어가는
     `.repeat(100),
         []
     ); 
@@ -713,11 +718,24 @@ const handleMemo = () => {
                 <div
                     ref={measureRef} 
                     style={{
-                        position: "absolute",
+position: "absolute",
                         visibility: "hidden",
-                        width: "100%",
                         pointerEvents: "none",
-                        padding: "0 16px"
+                        
+                        // ✅ 실제 텍스트 영역과 동일한 너비와 패딩
+                        width: "100%", 
+                        padding: "0 16px", // S.ContentBox의 padding-left/right와 일치
+                        
+                        // ✅ 실제 텍스트 영역과 동일한 타이포그래피
+                        fontSize: "16px",
+                        lineHeight: "30px",
+                        fontFamily: "'Pretendard', sans-serif", // 사용하는 폰트와 일치시켜야 함
+                        
+                        // ✅ 새로 추가한 정렬 속성도 똑같이 적용
+                        textAlign: "justify",
+                        textJustify: "inter-character",
+                        wordBreak: "break-all",
+                        letterSpacing: "-0.02em"
                     }}
                 />
             </S.Container>
