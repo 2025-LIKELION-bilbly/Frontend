@@ -330,12 +330,6 @@ const ReadingBookPage = () => {
 
     // 페이지 클릭 UI 처리
     const handleContentClick = (e: React.MouseEvent<HTMLDivElement>) => {
-          // 🔥 코멘트 입력 중이면 → 저장하고 끝
-        // if (saveCommentInline()) {
-        //     return;
-        // }
-        
-
 
         const inputWrapper = document.querySelector(".comment-input-wrapper");
             if (inputWrapper) {

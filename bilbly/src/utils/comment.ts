@@ -1,228 +1,232 @@
 import { surroundSelection, surroundElement } from "./annotation.core";
 import type { AnnotationResult, ActiveAnnotation } from "./annotation.core";
-// import { applyMemo } from "./memo";
-
+import { applyMemo } from "./memo";
 
 const READING_CONTAINER_SELECTOR = ".reading-page-container";
+const COMMENT_LIMIT = 25;
 
 let activeCommentInputId: string | null = null;
 
-const COMMENT_LIMIT = 25;
-
-
-// 위치 계산
+/* -----------------------------
+ * 마지막 줄 위치 계산
+ * ----------------------------- */
 const getLastLinePosition = (annotationId: string) => {
-    const containerEl = document.querySelector(
-        READING_CONTAINER_SELECTOR
-    ) as HTMLElement | null;
-    if (!containerEl) return null;
+  const container = document.querySelector(
+    READING_CONTAINER_SELECTOR
+  ) as HTMLElement | null;
+  if (!container) return null;
 
-    const allSpans = document.querySelectorAll(
-        `.annotation[data-id="${annotationId}"]`
-    );
-    if (!allSpans.length) return null;
+  const spans = document.querySelectorAll(
+    `.annotation[data-id="${annotationId}"]`
+  );
+  if (!spans.length) return null;
 
-    let lastRect: DOMRect | null = null;
-    let maxBottom = -1;
+  let lastRect: DOMRect | null = null;
 
-    allSpans.forEach(span => {
-        const rects = span.getClientRects();
-        Array.from(rects).forEach(rect => {
-        if (rect.bottom > maxBottom) {
-            maxBottom = rect.bottom;
-            lastRect = rect;
-        }
-        });
+  spans.forEach(span => {
+    Array.from(span.getClientRects()).forEach(rect => {
+      if (!lastRect || rect.bottom > lastRect.bottom) {
+        lastRect = rect;
+      }
     });
+  });
 
-    if (!lastRect) return null;
+  if (!lastRect) return null;
 
-    const rect = lastRect as DOMRect;
-    const containerRect = containerEl.getBoundingClientRect();
-    return {
-        top: rect.bottom - containerRect.top + containerEl.scrollTop - 2,
-        left: rect.left - containerRect.left + 16,
-    };
+  const rect = lastRect as DOMRect;
+  const containerRect = container.getBoundingClientRect();
+
+  return {
+    top: rect.bottom - containerRect.top + container.scrollTop-2 ,
+    left: rect.left - containerRect.left,
+  };
 };
 
-/* ----------------------------------
- * 코멘트 생성 + textarea overlay
- * ---------------------------------- */
+/* -----------------------------
+ * 코멘트 생성
+ * ----------------------------- */
 export const applyComment = (
-    activeAnnotation?: ActiveAnnotation | null
-    ): AnnotationResult | null => {
-    const selection = window.getSelection();
-    const style: React.CSSProperties = { cursor: "pointer" };
+  activeAnnotation?: ActiveAnnotation | null
+): AnnotationResult | null => {
+  const selection = window.getSelection();
+  const style: React.CSSProperties = { cursor: "pointer" };
 
-    let result: AnnotationResult | null = null;
-    let targetAnnotationId: string | null = null;
+  let result: AnnotationResult | null = null;
+  let annotationId: string | null = null;
 
-    if (selection && selection.toString().trim()) {
-        result = surroundSelection("quote", style);
-        if (result) targetAnnotationId = result.id;
-    } else if (activeAnnotation) {
-        const el = document.querySelector(
-        `.annotation[data-id="${activeAnnotation.id}"]`
-        ) as HTMLElement | null;
-
-        if (el) {
-        result = surroundElement(el, "quote", style);
-        if (result) targetAnnotationId = result.id;
-        }
-    }
-
-    if (!targetAnnotationId) return result;
-
-    if (activeCommentInputId && activeCommentInputId !== targetAnnotationId) {
-        document
-        .querySelector(
-            `.comment-input-wrapper[data-id="${activeCommentInputId}"]`
-        )
-        ?.remove();
-    }
-    activeCommentInputId = targetAnnotationId;
-
-    const container = document.querySelector(
-        READING_CONTAINER_SELECTOR
-    ) as HTMLElement | null;
-    if (!container) return result;
-
-    // 이미 열려 있으면 다시 만들지 않음
-    if (
-        document.querySelector(
-        `.comment-input-wrapper[data-id="${targetAnnotationId}"]`
-        )
-    ) {
-        return result;
-    }
-
-    const position = getLastLinePosition(targetAnnotationId);
-    if (!position) return result;
-
-    const wrapper = document.createElement("div");
-    wrapper.className = "comment-input-wrapper";
-    wrapper.dataset.id = targetAnnotationId;
-    wrapper.style.position = "absolute";
-    wrapper.style.top = `${position.top}px`;
-    wrapper.style.left = `${position.left}px`;
-    wrapper.style.width = "250px";
-    wrapper.style.zIndex = "999";
-    wrapper.addEventListener("click", e => e.stopPropagation());
-
-    wrapper.innerHTML = `
-        <textarea class="comment-input" placeholder="여기에 코멘트를 입력하세요"></textarea>
-    `;
-
-    container.appendChild(wrapper);
-
-    const textarea = wrapper.querySelector(
-    ".comment-input"
-    ) as HTMLTextAreaElement;
-
-
-    textarea.addEventListener("input", () => {
-    const value = textarea.value;
-
-    if (value.length <= COMMENT_LIMIT) return;
-
-    const annotationId = wrapper.dataset.id;
-    if (!annotationId) return;
-
-    // 1️⃣ comment 입력 UI 제거
-    wrapper.remove();
-    activeCommentInputId = null;
-
-    // 2️⃣ quote annotation 찾기
-    const quoteEl = document.querySelector(
-        `.annotation.quote[data-id="${annotationId}"]`
-    ) as HTMLElement | null;
-
-    if (!quoteEl) return;
-    
-
-    // 3️⃣ 위치 계산 (memo popup 위치)
-    const position = getLastLinePosition(annotationId);
-    if (!position) return;
-
-    // 4️⃣ quote 제거 (텍스트만 남김)
-    const parent = quoteEl.parentNode;
-    if (!parent) return;
-
-    while (quoteEl.firstChild) {
-        parent.insertBefore(quoteEl.firstChild, quoteEl);
-    }
-    quoteEl.remove();
-    parent.normalize();
-
-    // 5️⃣ 🔥 memo popup을 "바로" 띄운다 (내용 포함)
-    import("./memoPopup").then(({ showMemoPopup }) => {
-        const container = document.querySelector(
-        READING_CONTAINER_SELECTOR
-        ) as HTMLElement;
-
-        showMemoPopup({
-        container,
-        top: position.top + 8,
-        left: position.left,
-        initialContent: value, // ⭐⭐⭐ 핵심
-        onSave: (content) => {
-            console.log("[POST] memo 저장:", content);
-        },
-        onCancel: () => {
-            console.log("메모 취소");
-        },
-        });
-    });
-    });
-
-
-
-
-
-    return result;
-};
-
-/* ----------------------------------
- * 저장: 데이터만 저장 (DOM 변경 ❌)
- * ---------------------------------- */
-export const updateCommentMarker = (
-    annotationId: string,
-    content: string
-    ) => {
-    const annotationEl = document.querySelector(
-        `.annotation[data-id="${annotationId}"]`
-    ) as HTMLElement | null;
-
-    if (!annotationEl) return;
-
-    annotationEl.dataset.content = content;
-    // ❗ textarea 유지
-};
-
-/* ----------------------------------
- * 코멘트 삭제
- * ---------------------------------- */
-export const removeComment = (commentId: string): void => {
-    // overlay 제거
-    document
-        .querySelector(`.comment-input-wrapper[data-id="${commentId}"]`)
-        ?.remove();
-
-    activeCommentInputId = null;
-
-    // annotation unwrap
+  // 1️⃣ selection 기반
+  if (selection && selection.toString().trim()) {
+    result = surroundSelection("quote", style);
+    if (result) annotationId = result.id;
+  }
+  // 2️⃣ 기존 annotation 기반
+  else if (activeAnnotation) {
     const el = document.querySelector(
-        `.annotation.quote[data-id="${commentId}"]`
+      `.annotation[data-id="${activeAnnotation.id}"]`
     ) as HTMLElement | null;
 
-    if (!el || !el.parentNode) return;
+    if (el) {
+      result = surroundElement(el, "quote", style);
+      if (result) annotationId = result.id;
+    }
+  }
 
-    const parent = el.parentNode;
-    const text = document.createTextNode(el.textContent || "");
-    parent.insertBefore(text, el);
-    el.remove();
-    parent.normalize();
+  if (!annotationId) return result;
+
+  // 기존 코멘트 입력 제거
+  if (activeCommentInputId && activeCommentInputId !== annotationId) {
+    document
+      .querySelector(
+        `.comment-input-wrapper[data-id="${activeCommentInputId}"]`
+      )
+      ?.remove();
+  }
+  activeCommentInputId = annotationId;
+
+  const container = document.querySelector(
+    READING_CONTAINER_SELECTOR
+  ) as HTMLElement | null;
+  if (!container) return result;
+
+  // 이미 열려 있으면 종료
+  if (
+    document.querySelector(
+      `.comment-input-wrapper[data-id="${annotationId}"]`
+    )
+  ) {
+    return result;
+  }
+
+  const position = getLastLinePosition(annotationId);
+  if (!position) return result;
+
+  // textarea overlay
+  const wrapper = document.createElement("div");
+  wrapper.className = "comment-input-wrapper";
+  wrapper.dataset.id = annotationId;
+  wrapper.style.position = "absolute";
+  wrapper.style.top = `${position.top}px`;
+  wrapper.style.left = `${position.left}px`;
+  wrapper.style.width = "70%";
+  wrapper.style.zIndex = "999";
+  wrapper.addEventListener("click", e => e.stopPropagation());
+
+  wrapper.innerHTML = `
+    <textarea
+      class="comment-input"
+      placeholder="여기에 코멘트를 입력하세요"
+      style="width:100%; resize:none;"
+    ></textarea>
+  `;
+
+  container.appendChild(wrapper);
+
+  const textarea = wrapper.querySelector(
+    ".comment-input"
+  ) as HTMLTextAreaElement;
+
+
+/* ===============================
+ * 🔥 25자 초과 → 메모 전환 (최종)
+ * =============================== */
+textarea.addEventListener("input", () => {
+  const value = textarea.value;
+  if (value.length <= COMMENT_LIMIT) return;
+
+  const quoteEl = document.querySelector(
+    `.annotation.quote[data-id="${annotationId}"]`
+  ) as HTMLElement | null;
+  if (!quoteEl) return;
+
+  // 1️⃣ selection 복구 (applyMemo 필수)
+  const range = document.createRange();
+  range.selectNodeContents(quoteEl);
+
+  const sel = window.getSelection();
+  sel?.removeAllRanges();
+  sel?.addRange(range);
+
+  // 2️⃣ textarea 제거
+  wrapper.remove();
+  activeCommentInputId = null;
+
+  // 3️⃣ 메모 생성 (underline + svg)
+  const memoResult = applyMemo();
+  if (!memoResult) return;
+
+  const memoEl = document.querySelector(
+    `.annotation.memo[data-id="${memoResult.id}"]`
+  ) as HTMLElement | null;
+  if (!memoEl) return;
+
+  // 4️⃣ 입력하던 내용 저장
+  memoEl.dataset.content = value;
+
+  
+
+  // 5️⃣ 메모 위치 계산
+  const position = getLastLinePosition(memoResult.id);
+  if (!position) return;
+
+  // 6️⃣ 🔥 memoPopup 즉시 오픈
+  import("./memoPopup").then(({ showMemoPopup }) => {
+    const container = document.querySelector(
+      READING_CONTAINER_SELECTOR
+    ) as HTMLElement;
+
+    showMemoPopup({
+      container,
+      top: position.top + 6,
+      left: position.left,
+      initialContent: value,
+      onSave: content => {
+        memoEl.dataset.content = content;
+      },
+      onCancel: () => {
+        memoEl.remove();
+      },
+    });
+  });
+});
+
+
+  return result;
 };
 
+/* -----------------------------
+ * 코멘트 저장 (DOM 변경 ❌)
+ * ----------------------------- */
+export const updateCommentMarker = (
+  annotationId: string,
+  content: string
+) => {
+  const el = document.querySelector(
+    `.annotation[data-id="${annotationId}"]`
+  ) as HTMLElement | null;
 
+  if (!el) return;
+  el.dataset.content = content;
+};
 
+/* -----------------------------
+ * 코멘트 삭제
+ * ----------------------------- */
+export const removeComment = (commentId: string) => {
+  document
+    .querySelector(`.comment-input-wrapper[data-id="${commentId}"]`)
+    ?.remove();
+
+  activeCommentInputId = null;
+
+  const el = document.querySelector(
+    `.annotation.quote[data-id="${commentId}"]`
+  ) as HTMLElement | null;
+
+  if (!el || !el.parentNode) return;
+
+  const parent = el.parentNode;
+  const text = document.createTextNode(el.textContent || "");
+  parent.insertBefore(text, el);
+  el.remove();
+  parent.normalize();
+};

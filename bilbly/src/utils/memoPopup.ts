@@ -81,6 +81,10 @@ export const showMemoPopup = ({
   wrapper.appendChild(counter);
   container.appendChild(wrapper);
 
+  wrapper.addEventListener("click", e => {
+    e.stopPropagation();
+  });
+  
   textarea.focus();
 
   /* ---------------- outside click ---------------- */
@@ -99,8 +103,9 @@ export const showMemoPopup = ({
   };
 
   setTimeout(() => {
-    document.addEventListener("click", handleClickOutside);
-  });
+    document.addEventListener("click", handleClickOutside, { once: false });
+  }, 0);
+
 
   return cleanup;
 };
