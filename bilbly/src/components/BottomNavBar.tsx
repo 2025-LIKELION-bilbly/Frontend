@@ -37,6 +37,10 @@ function BottomNavBar() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  if (location.pathname === '/exchange/start') {
+    return null;
+  }
+  
   const isHome = location.pathname.includes('/main');
   const isMeeting = location.pathname.includes('/meeting');
   const isMyPage = location.pathname.includes('/mypage');

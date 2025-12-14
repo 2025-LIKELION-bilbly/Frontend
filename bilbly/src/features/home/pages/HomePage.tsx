@@ -5,11 +5,11 @@ import * as S from './HomePage.styles';
 import Header from '../../../components/Header'; 
 
 // Home Components
-import MeetingSelector from '../components/MeetingSelector';
-import CategoryTabs from '../components/CategoryTabs';
-import BookCarousel from '../components/BookCarousel';
-import BookmarkGraph from '../components/BookmarkGraph';
-import MoreMeetings from '../components/MoreMeetings';
+import MeetingSelector from './MeetingSelector';
+import CategoryTabs from './CategoryTabs';
+import BookCarousel from './BookCarousel';
+import BookmarkGraph from './BookmarkGraph';
+import MoreMeetings from './MoreMeetings';
 
 function HomePage() {
   const [currentBookId, setCurrentBookId] = useState<number>(1);
