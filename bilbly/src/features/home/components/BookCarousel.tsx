@@ -1,10 +1,9 @@
-// src/features/home/components/BookCarousel.tsx
-
 import React, { useState, useRef, useEffect } from 'react';
 import * as S from './BookCarousel.styles';
 
 import BookCover1 from '../../../assets/book_cover_1.jpg';
 import BookCover2 from '../../../assets/book_cover_2.jpg'; 
+
 
 const books = [
   {
@@ -19,7 +18,7 @@ const books = [
     id: 2,
     src: BookCover2,
     alt: '기적',
-    isLocked: true,
+    isLocked: true, // 잠금 상태 표시
     userInfo: {
       label: '강',
       name: '닉네임이여덟글자',
@@ -38,28 +37,34 @@ const books = [
   },
 ];
 
-function BookCarousel() {
-  // 현재 활성화된 책의 ID (기본값 1)
+// 부모에게 상태를 전달하기 위한 Props 정의
+interface BookCarouselProps {
+  onSlideChange?: (id: number) => void;
+}
+
+function BookCarousel({ onSlideChange }: BookCarouselProps) {
   const [activeId, setActiveId] = useState<number>(1);
-  
   const scrollRef = useRef<HTMLDivElement>(null);
   const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
 
-  // 👇 [핵심 로직] 스크롤 감지하여 activeId 변경
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          // 화면의 60% 이상 들어오면 '활성'으로 간주
           if (entry.isIntersecting) {
             const id = Number(entry.target.getAttribute('data-id'));
             setActiveId(id);
+            
+            // ✅ 슬라이드가 변경되면 부모(HomePage)에게 알림
+            if (onSlideChange) {
+              onSlideChange(id);
+            }
           }
         });
       },
       {
         root: scrollRef.current,
-        threshold: 0.6, // 감도 조절 (0.6 ~ 0.7 추천)
+        threshold: 0.6,
       }
     );
 
@@ -68,9 +73,8 @@ function BookCarousel() {
     });
 
     return () => observer.disconnect();
-  }, []);
+  }, [onSlideChange]);
 
-  // 👇 클릭 시 해당 책으로 스크롤 이동하는 함수
   const scrollToItem = (index: number) => {
     const item = itemRefs.current[index];
     if (item) {
@@ -86,7 +90,6 @@ function BookCarousel() {
     <S.Container>
       <S.ScrollContainer ref={scrollRef}>
         {books.map((book, index) => {
-          // 현재 책이 활성 상태인지 확인
           const isActive = book.id === activeId;
 
           return (
@@ -103,7 +106,6 @@ function BookCarousel() {
                 <S.BookCoverImage src={book.src} alt={book.alt} />
               </S.CoverWrapper>
 
-              {/* 👇 활성 상태($isActive)일 때만 정보 표시 */}
               <S.HiddenInfo $isActive={isActive}>
                 {book.progress !== undefined && (
                   <>

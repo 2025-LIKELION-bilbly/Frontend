@@ -3,7 +3,7 @@ import { ThemeProvider } from 'styled-components';
 
 import GlobalStyle from './styles/GlobalStyle';
 import { theme } from './styles/theme'; // theme 불러오기
-
+//home-page 홈 페이지
 import HomePage from './features/home/pages/HomePage';
 
 // meeting-select 페이지
@@ -20,7 +20,7 @@ import SelectBookShow from './features/meeting/pages/meeting-join-page/SelectBoo
 
 // 책 고르기 페이지
 import SelectBookListPage from './features/SelectBookListPage';
-
+import BottomNavBar from './components/BottomNavBar';
 
 // 테스트용 - 책 시작 버튼 페이지
 import ReadingTestStart from './features/ReadingTestStart';
@@ -60,6 +60,7 @@ function App() {
           <Route path="/reading/:bookId/:pageNumber" element={<ReadingBookPage />} />
 
         </Routes>
+        <BottomNavBar />
       </BrowserRouter>
     </ThemeProvider>
   );

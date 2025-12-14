@@ -9,8 +9,6 @@ export const Container = styled.div`
 
 export const ScrollContainer = styled.div`
   display: flex;
-  
-  /* 👇 [수정] 책들을 수직 방향 '가운데'로 정렬 (살짝 올라오는 효과) */
   align-items: center; 
   
   gap: 24px;
@@ -38,10 +36,8 @@ export const BookItem = styled.div<{ $isActive: boolean }>`
 
   transition: transform 0.3s ease, opacity 0.3s ease;
   
-  /* 👇 [수정] 크기가 변할 때 '중앙'을 기준으로 변하게 설정 */
+
   transform-origin: center center;
-  
-  /* 활성 상태면 1배, 아니면 0.8배 축소 */
   transform: ${props => props.$isActive ? 'scale(1)' : 'scale(0.8)'};
   opacity: ${props => props.$isActive ? 1 : 0.5};
 `;
@@ -56,9 +52,7 @@ export const CoverWrapper = styled.div<{ $isActive?: boolean }>`
   border: 1px solid #DBDBDB;
   box-sizing: border-box;
   
-  /* 👇 [수정] 쉐도우 효과 삭제 */
-  /* box-shadow: ... ; (삭제됨) */
-  /* transition: box-shadow 0.3s ease; (삭제됨) */
+
 `;
 
 export const BookCoverImage = styled.img`
@@ -158,7 +152,23 @@ export const HiddenInfo = styled.div<{ $isActive: boolean }>`
   transition: opacity 0.3s ease;
   
   opacity: ${props => props.$isActive ? 1 : 0};
-  
-  /* 정보가 안 보일 때는 클릭 안 되게 */
   pointer-events: ${props => props.$isActive ? 'auto' : 'none'};
+`;
+export const IntroCardWrapper = styled.div<{ $isActive?: boolean }>`
+  width: 100%;
+  aspect-ratio: 1 / 1.5;
+  
+  background-color: #FAFAFA;
+  border: 1px dashed #DBDBDB;
+  border-radius: 4px;
+  box-sizing: border-box;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.3s;
+  ${props => props.$isActive && `
+    background-color: #EFEFEF;
+    border-color: #999;
+  `}
 `;
