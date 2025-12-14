@@ -1,22 +1,20 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import * as S from './StartExchangePage.styles';
-
-
-// 이미지 재사용
+import * as S from './ExchangeNewStartPage.styles'; 
 import BookCover1 from '../../../assets/book_cover_1.jpg';
 import BookCover2 from '../../../assets/book_cover_2.jpg';
 
-function StartExchangePage() {
+function ExchangeNewStartPage() {
   const navigate = useNavigate();
 
-  const handleBack = () => {
-    navigate(-1); // 뒤로 가기
+  const handleGoHome = () => {
+    navigate('/main');
   };
 
-  const handleStart = () => {
-    console.log("교환독서 시작!");
-    navigate('/reading-test-start'); 
+  const handleSelectBook = () => {
+    // 책 고르는 페이지로 이동 (예: 책장, 검색 등)
+    console.log("책 고르러 가기");
+    // navigate('/bookshelf'); // 필요시 주석 해제
   };
 
   return (
@@ -24,45 +22,46 @@ function StartExchangePage() {
 
       <S.TitleSection>
         <S.MainTitle>
-          아직 책을 고르지 않은<br />
-          모임원이 있어요
+          새로 시작할<br />
+          책을 골라주세요
         </S.MainTitle>
         <S.SubTitle>
-          책을 고르지 못한 모임원은<br />
-          랜덤으로 책이 결정돼요
+          3일 안으로 책을 고르지 않으면<br />
+          랜덤으로 책이 배정돼요
         </S.SubTitle>
       </S.TitleSection>
 
       <S.BookGrid>
-        {/* 책 1 */}
         <S.BookWrapper>
           <S.BookImage src={BookCover1} alt="Book 1" />
           <S.Nickname>닉네임</S.Nickname>
         </S.BookWrapper>
 
-        {/* 책 2 */}
         <S.BookWrapper>
           <S.BookImage src={BookCover2} alt="Book 2" />
           <S.Nickname>닉네임</S.Nickname>
         </S.BookWrapper>
 
-        {/* 책 안 고른 사람 (Placeholder) */}
         <S.BookWrapper>
-          <S.BookPlaceholder>
-            책<br/>고르는 중
-          </S.BookPlaceholder>
+          <S.BookImage src={BookCover1} alt="Book 3" />
           <S.Nickname>닉네임</S.Nickname>
         </S.BookWrapper>
       </S.BookGrid>
 
-      {/* 하단 버튼 */}
       <S.ButtonGroup>
-        <S.Button onClick={handleBack}>뒤로가기</S.Button>
-        <S.Button $primary onClick={handleStart}>시작하기</S.Button>
+        {/* 홈으로 버튼 */}
+        <S.Button onClick={handleGoHome}>
+          홈으로
+        </S.Button>
+        
+        {/* 주황색 책 고르기 버튼 */}
+        <S.Button $primary onClick={handleSelectBook}>
+          책 고르기
+        </S.Button>
       </S.ButtonGroup>
 
     </S.Container>
   );
 }
 
-export default StartExchangePage;
+export default ExchangeNewStartPage;

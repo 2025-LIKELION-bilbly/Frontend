@@ -45,6 +45,8 @@ export const BookImageContainer = styled.div`
   gap: 24px;
   padding: 36px 0;
   width: 100%;
+  border-top: 1px solid #100F0F;
+  border-bottom: 1px solid #100F0F;
 `;
 
 export const BookWrapper = styled.div`
