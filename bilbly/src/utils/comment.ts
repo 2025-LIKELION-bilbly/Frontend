@@ -5,7 +5,6 @@ import { applyMemo } from "./memo";
 const READING_CONTAINER_SELECTOR = ".reading-page-container";
 const COMMENT_LIMIT = 25;
 
-let activeCommentInputId: string | null = null;
 
 /* -----------------------------
  * 마지막 줄 위치 계산
@@ -73,15 +72,7 @@ export const applyComment = (
 
   if (!annotationId) return result;
 
-  // 기존 코멘트 입력 제거
-  if (activeCommentInputId && activeCommentInputId !== annotationId) {
-    document
-      .querySelector(
-        `.comment-input-wrapper[data-id="${activeCommentInputId}"]`
-      )
-      ?.remove();
-  }
-  activeCommentInputId = annotationId;
+
 
   const container = document.querySelector(
     READING_CONTAINER_SELECTOR
@@ -148,7 +139,7 @@ textarea.addEventListener("input", () => {
 
   // 2️⃣ textarea 제거
   wrapper.remove();
-  activeCommentInputId = null;
+
 
   // 3️⃣ 메모 생성 (underline + svg)
   const memoResult = applyMemo();
@@ -216,7 +207,7 @@ export const removeComment = (commentId: string) => {
     .querySelector(`.comment-input-wrapper[data-id="${commentId}"]`)
     ?.remove();
 
-  activeCommentInputId = null;
+
 
   const el = document.querySelector(
     `.annotation.quote[data-id="${commentId}"]`

@@ -336,19 +336,6 @@ const ReadingBookPage = () => {
     // 페이지 클릭 UI 처리
     const handleContentClick = (e: React.MouseEvent<HTMLDivElement>) => {
 
-        const inputWrapper = document.querySelector(".comment-input-wrapper");
-            if (inputWrapper) {
-                const textarea = inputWrapper.querySelector(
-                ".comment-input"
-                ) as HTMLTextAreaElement | null;
-
-                const id = inputWrapper.getAttribute("data-id");
-
-                if (textarea && id && textarea.value.trim()) {
-                updateCommentMarker(id, textarea.value.trim());
-                }
-            }
-
         // ✅ comment 입력 UI가 열려 있으면 "글 영역 클릭" 시 자동 저장
         const wrapper = document.querySelector(
             ".comment-input-wrapper"
