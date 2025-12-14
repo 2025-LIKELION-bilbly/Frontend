@@ -1,5 +1,5 @@
 import styled from "styled-components";
-import BackgroundPattern from "../../../../assets/background_pattern.png"; 
+import BackgroundPattern from "../../../assets/background_pattern.png"; 
 
 export const Backdrop = styled.div`
     position: fixed;
@@ -16,9 +16,11 @@ export const Sheet = styled.div`
     display: flex;
     background: #f8f5f0;
     width: 392px;
-    padding: 36px 16px;
-    gap: 29px;
+    padding: 28px 16px 20px 16px;
+    gap: 24px;
+
     flex-direction: column;
+    justify-content: center;   
     align-items: center;
     border-top: 1px solid var(--Stroke-primary, #100F0F);
     animation: none;
@@ -63,8 +65,7 @@ export const Sheet = styled.div`
 export const MainBox = styled.div`
     display: flex;
     flex-direction: column;
-    align-items: center;
-    align-self: stretch;
+    gap: 12px;
 `;
 
 export const Title = styled.div`
@@ -74,17 +75,29 @@ export const Title = styled.div`
     font-style: normal;
     font-weight: 600;
     line-height: 30px; 
+    white-space: pre-line;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    align-items: center;
 `;
 
 export const Subtitle = styled.div`
-    margin-top: 12px;
-    color: var(--text-primary, #100F0F);
+    color: var(--text-secondary, #595959);
     text-align: center;
+    white-space: pre-line;
+    display:flex;
+    justify-content: center;
+    align-items: center;
+
+    /* Body/S */
     font-family: Pretendard;
-    font-size: 16px;
+    font-size: 12px;
     font-style: normal;
     font-weight: 400;
-    line-height: 24px; 
+    line-height: 18px; /* 150% */
+    letter-spacing: -0.5px;
 `;
 
 export const MemberRow = styled.div`
