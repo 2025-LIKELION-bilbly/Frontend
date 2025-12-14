@@ -1,4 +1,4 @@
-import { theme } from "../styles/GlobalStyle"; // 경로는 프로젝트에 맞게 수정
+import { theme } from "../styles/GlobalStyle"; 
 
 export const COLOR_OPTIONS = [
     { label: "rose", bgKey: "userRose", textKey: "textRose" },
@@ -11,9 +11,27 @@ export const COLOR_OPTIONS = [
     { label: "violet", bgKey: "userViolet", textKey: "textViolet" },
 ] as const;
 
-// bgKey로 textKey를 자동 찾는 함수
 export const getTextColorFromBg = (bgKey: string) => {
-    const option = COLOR_OPTIONS.find((opt) => opt.bgKey === bgKey);
-    if (!option) return theme.colors.textPrimary; // fallback
-    return theme.colors[option.textKey];
+    const found = COLOR_OPTIONS.find((opt) => opt.bgKey === bgKey);
+
+    if (!found) return theme.colors.textPrimary; // fallback
+
+    return theme.colors[found.textKey];
 };
+
+export type BgKey = typeof COLOR_OPTIONS[number]["bgKey"];
+
+export const getBgColor = (bgKey: BgKey) => theme.colors[bgKey];
+
+export const BGKEY_TO_BACKEND: Record<BgKey, string> = {
+    userRose: "RED",
+    userBlue: "BLUE",
+    userGreen: "GREEN",
+    userLime: "YELLOW",
+    userViolet: "PURPLE",
+    userBrown: "ORANGE",
+    userPink: "PINK",
+    userMint: "CYAN",
+};
+
+export const toBackendColor = (bgKey: BgKey) => BGKEY_TO_BACKEND[bgKey];

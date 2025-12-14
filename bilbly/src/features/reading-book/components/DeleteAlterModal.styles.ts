@@ -1,5 +1,5 @@
 import styled from "styled-components";
-import BackgroundPattern from "../../../../assets/background_pattern.png"; 
+import BackgroundPattern from "../../../assets/background_pattern.png"; 
 
 export const Backdrop = styled.div`
     position: fixed;
@@ -79,6 +79,7 @@ export const Title = styled.div`
 export const Subtitle = styled.div`
     margin-top: 12px;
     color: var(--text-primary, #100F0F);
+    white-space: pre-line;
     text-align: center;
     font-family: Pretendard;
     font-size: 16px;

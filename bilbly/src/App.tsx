@@ -30,6 +30,14 @@ import SelectBookShow from './features/meeting/pages/meeting-join-page/SelectBoo
 import SelectBookListPage from './features/SelectBookListPage';
 import BottomNavBar from './components/BottomNavBar';
 
+// 테스트용 - 책 시작 버튼 페이지
+import ReadingTestStart from './features/ReadingTestStart';
+
+// 책 읽기 페이지
+import ReadingBookPage from "./features/reading-book/pages/ReadingBookPage";
+
+
+
 function App() {
   return (
     <ThemeProvider theme={theme}>
@@ -58,8 +66,14 @@ function App() {
           <Route path="/meeting/join/:code/selectbookshow" element={<SelectBookShow />} /> 
 
           {/* 책 고르기 경로 */}
-          <Route path="/meeting/join/:code/selectbooklist" element={<SelectBookListPage />}/>
+          <Route path="/:code/selectbooklist" element={<SelectBookListPage />}/> // 책 선택 - 책 리스트 임시 경로
           
+          {/* 테스트용-책 시작 버튼 경로 */}
+          <Route path="/reading-test-start" element={<ReadingTestStart />} />
+
+          {/* 책 읽기 경로 */}
+          <Route path="/reading/:bookId/:pageNumber" element={<ReadingBookPage />} />
+
         </Routes>
         
         {/* 하단 네비게이션 바 (모든 페이지에 보임) */}
