@@ -42,17 +42,19 @@ export const CardContainer = styled.div`
 `;
 
 export const Card = styled.div`
-   flex-basis: calc((100% - 24px) / 3);
-   height: 160px;
-   border: 1px solid #100F0F;
-   display: flex;
-   flex-direction: column;
-   align-items: center;    
-   justify-content: flex-start;
-   gap: 12px;
-   padding: 12px 12px 10px 12px;
-   transition: transform 0.3s ease;
-   flex-shrink: 0; 
+  flex-basis: 30%; 
+  box-sizing: border-box;
+  height: 160px;
+  border: 1px solid #100F0F;
+  display: flex;
+  flex-direction: column;
+  align-items: center;    
+  justify-content: flex-start;
+  gap: 12px;
+  
+  padding: 12px 12px 10px 12px;
+  transition: transform 0.3s ease;
+  flex-shrink: 0;
 `;
 
 // 상단 원
@@ -71,10 +73,16 @@ export const CardText = styled.p<{ $isBlurred?: boolean }>`
   color: #100F0F;
   margin: 0;
   line-height: 21px;
+  letter-spacing: -0.5px;
   width: 100%;
   height: 62px;
+  box-sizing: border-box;
   text-align: center; 
-
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  word-break: break-all; 
+  white-space: pre-wrap;
   filter: ${props => props.$isBlurred ? 'blur(3.5px)' : 'none'};
   user-select: ${props => props.$isBlurred ? 'none' : 'auto'};
 `;

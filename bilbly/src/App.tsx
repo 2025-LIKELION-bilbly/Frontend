@@ -10,7 +10,14 @@ import LandingPage from './features/landing/pages/LandingPage';
 import StartExchangePage from './features/landing/pages/StartExchangePage';
 //모임원용 페이지
 import StartExchangeMemberPage from './features/landing/pages/StartExchangeMemberPage';
-
+//교환독서 시작
+import ReadingTestStart from './features/landing/pages/ReadingTestStart';
+// 교환 페이지 
+import ExchangePage from './features/exchange/pages/ExchangePage';
+// 교환 결과 페이지
+import ExchangeResultPage from './features/exchange/pages/ExchangeResultPage';
+//교환 새로 선택 페이지
+import ExchangeNewStartPage from './features/exchange/pages/ExchangeNewStartPage';
 // home-page 홈 페이지
 import HomePage from './features/home/pages/HomePage';
 
@@ -30,8 +37,6 @@ import SelectBookShow from './features/meeting/pages/meeting-join-page/SelectBoo
 import SelectBookListPage from './features/SelectBookListPage';
 import BottomNavBar from './components/BottomNavBar';
 
-// 테스트용 - 책 시작 버튼 페이지
-import ReadingTestStart from './features/ReadingTestStart';
 
 // 책 읽기 페이지
 import ReadingBookPage from "./features/reading-book/pages/ReadingBookPage";
@@ -52,7 +57,16 @@ function App() {
           
           {/*모임원용 페이지  */}
           <Route path="/exchange/start/member" element={<StartExchangeMemberPage />} />
-
+          {/*교환독서 시작 페이지  */}
+          <Route path="/reading-test-start" element={<ReadingTestStart />} />
+          {/*교환 페이지  */}
+          <Route path="/exchange" element={<ExchangePage />} />
+          {/* 교환 결과 페이지 */}
+          <Route path="/exchange/result" element={<ExchangeResultPage />} />
+          {/* 교환 새로 선택 페이지 */}
+          <Route path="/exchange/new-start" element={<ExchangeNewStartPage />} />
+          
+          {/* 홈 페이지 */}
           <Route path="/main" element={<HomePage />} />
           <Route path="/meeting" element={<MeetingSelect />} />
 
@@ -68,8 +82,6 @@ function App() {
           {/* 책 고르기 경로 */}
           <Route path="/:code/selectbooklist" element={<SelectBookListPage />}/> // 책 선택 - 책 리스트 임시 경로
           
-          {/* 테스트용-책 시작 버튼 경로 */}
-          <Route path="/reading-test-start" element={<ReadingTestStart />} />
 
           {/* 책 읽기 경로 */}
           <Route path="/reading/:bookId/:pageNumber" element={<ReadingBookPage />} />

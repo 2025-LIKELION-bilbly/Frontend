@@ -35,7 +35,6 @@ function LandingPage() {
       <MeetingSelector />
       <CategoryTabs />
       
-      <S.Divider />
       
       <S.BookImageContainer>
         <S.BookWrapper>
@@ -56,7 +55,6 @@ function LandingPage() {
         </S.BookWrapper>
       </S.BookImageContainer>
       
-      <S.Divider />
 
       {/* 1. 교환독서 섹션 */}
       <S.BottomSection>

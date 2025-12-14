@@ -1,83 +1,69 @@
 import styled from 'styled-components';
-import backgroundPattern from '../assets/background_pattern.png';
 
 export const BottomBackground = styled.div`
   position: fixed;
-  bottom: 0;
-  
-  /* 화면 정중앙 강제 정렬 */
+  bottom: 30px; 
   left: 50%;
   transform: translateX(-50%);
+  z-index: 1000;
   
-  width: 100%;
-  max-width: 393px; 
-  
-  height: auto;
-  padding: 16px 0;
-  background-color: #FFFCF8;
+  /* width: auto; -> NavPill의 고정 너비를 따르도록 auto나 fit-content 유지 */
+  width: auto; 
   display: flex;
   justify-content: center;
-  align-items: center;
-  
-  z-index: 1000;
-
-  &::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-image: url(${backgroundPattern});
-    background-repeat: repeat;
-    opacity: 0.1; 
-    mix-blend-mode: multiply;
-    z-index: -1;
-    pointer-events: none;
-  }
 `;
 
-export const NavPill = styled.nav`
-  width: fit-content; 
-  height: 61px;
-  
-  background-color: #100F0F;
-  border-radius: 30.5px;
-  
+export const NavPill = styled.div`
+  /* ✅ 피그마 코드 반영 */
   display: flex;
-  justify-content: center; 
-  align-items: center;
-  gap: 24px; 
   
-  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.25);
+  /* 너비 215px 고정 */
+  width: 215px; 
+  
+  /* 패딩: 상하 8px, 좌우 16px */
   padding: 8px 16px; 
-  box-sizing: border-box; 
+  
+  /* 내부 아이템 정렬 및 간격 */
+  justify-content: center;
+  align-items: center;
+  gap: 24px; /* 아이템 사이 간격 24px */
+
+  /* 스타일: 배경 검정, 둥근 모서리 */
+  background: #100F0F; 
+  border-radius: 100px; 
+  
+  /* 그림자 */
+  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.2);
+  
+  /* 패딩과 테두리를 너비에 포함 (안전장치) */
+  box-sizing: border-box;
 `;
 
 export const NavItem = styled.div<{ $isActive?: boolean }>`
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-
-  /* 아이콘 배경 원 크기 */
-  width: 45px;
-  height: 45px;
-  border-radius: 50%;
-
-  /* [색상 로직] 
-     활성화(true) -> 배경: 흰색(#FFFCF8), 아이콘: 검은색(#100F0F)
-     비활성(false) -> 배경: 투명, 아이콘: 흰색(#FFFCF8) 
-  */
-  background-color: ${props => props.$isActive ? '#FFFCF8' : 'transparent'};
-  color: ${props => props.$isActive ? '#100F0F' : '#FFFCF8'};
   
-  /* 비활성일 때 살짝 흐리게 */
-  opacity: ${props => props.$isActive ? 1 : 0.5};
+  /* 아이콘 터치 영역 크기 (44x44) */
+  width: 44px;
+  height: 44px;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
 
-  transition: all 0.3s ease;
+  /* 선택된 아이콘 스타일: 흰색 배경 원 */
+  ${props => props.$isActive && `
+    background: #FFFFFF; 
+    border-radius: 50%;
+  `}
 
   &:hover {
-    opacity: 1;
+    opacity: 0.9;
+  }
+  
+  /* SVG 아이콘 크기 */
+  img, svg {
+    display: block;
+    width: 24px;  
+    height: 24px;
   }
 `;

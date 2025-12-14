@@ -39,7 +39,6 @@ function StartExchangeMemberPage() {
       <MeetingSelector />
       <CategoryTabs />
       
-      <S.Divider />
       
       {/* 책 이미지 영역 */}
       <S.BookImageContainer>
@@ -66,7 +65,6 @@ function StartExchangeMemberPage() {
         </S.BookWrapper>
       </S.BookImageContainer>
       
-      <S.Divider />
 
       {/* 상태에 따라 하단 내용 변경 */}
       {hasSelectedBook ? (
