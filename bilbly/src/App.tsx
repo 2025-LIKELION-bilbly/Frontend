@@ -3,7 +3,15 @@ import { ThemeProvider } from 'styled-components';
 
 import GlobalStyle from './styles/GlobalStyle';
 import { theme } from './styles/theme'; // theme 불러오기
-//home-page 홈 페이지
+
+// 모임 시작전 페이지 (인트로)
+import LandingPage from './features/landing/pages/LandingPage';
+// 모임장용 2번째 페이지 (교환독서 시작)
+import StartExchangePage from './features/landing/pages/StartExchangePage';
+//모임원용 페이지
+import StartExchangeMemberPage from './features/landing/pages/StartExchangeMemberPage';
+
+// home-page 홈 페이지
 import HomePage from './features/home/pages/HomePage';
 
 // meeting-select 페이지
@@ -12,17 +20,15 @@ import MeetingSelect from './features/meeting/pages/MeetingSelectPage';
 // meeting-create 페이지
 import MeetingCreateFlow from './features/meeting/pages/meeting-create-page/MeetingCreateFlow';
 
-//meeting-join 페이지
-import MeetingJoinCode from './features/meeting/pages/meeting-join-page/MeetingJoinCodePage'
-import MeetingJoinNickname from './features/meeting/pages/meeting-join-page/MeetingJoinNicknamePage'
-import MeetingJoinColor from './features/meeting/pages/meeting-join-page/MeetingJoinColorPage'
-import SelectBookShow from './features/meeting/pages/meeting-join-page/SelectBookShowPage'
+// meeting-join 페이지
+import MeetingJoinCode from './features/meeting/pages/meeting-join-page/MeetingJoinCodePage';
+import MeetingJoinNickname from './features/meeting/pages/meeting-join-page/MeetingJoinNicknamePage';
+import MeetingJoinColor from './features/meeting/pages/meeting-join-page/MeetingJoinColorPage';
+import SelectBookShow from './features/meeting/pages/meeting-join-page/SelectBookShowPage';
 
 // 책 고르기 페이지
 import SelectBookListPage from './features/SelectBookListPage';
 import BottomNavBar from './components/BottomNavBar';
-
-
 
 function App() {
   return (
@@ -30,7 +36,15 @@ function App() {
       <GlobalStyle />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Navigate to="/main" />} />
+          {/* 기본 경로: 랜딩 페이지 */}
+          <Route path="/" element={<LandingPage />} />
+          
+          {/* 모임장용 페이지 */}
+          <Route path="/exchange/start" element={<StartExchangePage />} />
+          
+          {/*모임원용 페이지  */}
+          <Route path="/exchange/start/member" element={<StartExchangeMemberPage />} />
+
           <Route path="/main" element={<HomePage />} />
           <Route path="/meeting" element={<MeetingSelect />} />
 
@@ -43,12 +57,12 @@ function App() {
           <Route path="/meeting/join/:code/3" element={<MeetingJoinColor />} />
           <Route path="/meeting/join/:code/selectbookshow" element={<SelectBookShow />} /> 
 
-      
           {/* 책 고르기 경로 */}
-          <Route path="/meeting/join/:code/selectbooklist" element={<SelectBookListPage />}/> // 📚 책 선택 - 책 리스트 임시 경로
-          
+          <Route path="/meeting/join/:code/selectbooklist" element={<SelectBookListPage />}/>
           
         </Routes>
+        
+        {/* 하단 네비게이션 바 (모든 페이지에 보임) */}
         <BottomNavBar />
       </BrowserRouter>
     </ThemeProvider>
