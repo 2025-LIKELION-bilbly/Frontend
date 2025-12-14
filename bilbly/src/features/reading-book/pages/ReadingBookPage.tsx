@@ -2,6 +2,9 @@
 
 import { useEffect, useState, useMemo, useRef } from "react";
 import { useParams } from "react-router-dom"; 
+
+// import { highlightAPI } from "../../../services/highlightAPI";
+
 import * as S from "./ReadingBookPage.styles";
 import ReadingHeader from "../components/ReadingHeader";
 import WarningModal from "../components/WarningModel";
@@ -10,6 +13,8 @@ import ProgressBar from "../components/ProgressBar";
 import ToolBar from "../components/ToolBar";
 import DeleteHighlightModal from "../components/DeleteHighlightModal"; 
 import DeleteAlertModal from "../components/DeleteAlterModal";
+import OverlapToTogetherModal from "../components/overlap/OverlapToTogetherModal";
+import CommentThread from "../components/comment/CommentThread";
 
 
 import { showMemoPopup } from "../../../utils/memoPopup";
@@ -17,17 +22,22 @@ import { showMemoPopup } from "../../../utils/memoPopup";
 import { applyComment, removeComment, updateCommentMarker } from "../../../utils/comment"; 
 
 // 하이라이트 유틸리티
-import { applyHighlight, removeHighlight } from "../../../utils/highlight"; 
+import { applyHighlight, restoreHighlight, removeHighlight} from "../../../utils/highlight"; 
+
+import {
+    findOverlappingHighlights,
+    type HighlightRange,
+} from "../../../utils/highlightOverlap";
+
 // ⭐ removeMemo import 포함 확인
 import { applyMemo, removeMemo } from "../../../utils/memo";
 // 통합된 주석 상태 타입 import
 import type { AnnotationType } from "../../../utils/annotation.core";
 
 
-import { getBgColor, toBackendColor } from "../../../styles/ColorUtils";
+import { getBgColor } from "../../../styles/ColorUtils";
 
 import { createGlobalStyle } from "styled-components";
-
 
 
 
@@ -89,6 +99,29 @@ const paginateText = (
     if (currentText.trim()) pages.push(currentText);
     return pages;
 };
+// ✅ 페이지 기준 offset 계산 함수 (여기 그대로 추가)
+const getPageOffsetFromRange = (
+  range: Range,
+  container: HTMLElement
+) => {
+  const walker = document.createTreeWalker(
+    container,
+    NodeFilter.SHOW_TEXT,
+    null
+  );
+
+  let offset = 0;
+  let node: Text | null;
+
+  while ((node = walker.nextNode() as Text | null)) {
+    if (node === range.startContainer) {
+      return offset + range.startOffset;
+    }
+    offset += node.textContent?.length ?? 0;
+  }
+
+  return offset;
+};
 
 
 // 통합된 주석 상태 타입 정의
@@ -126,14 +159,24 @@ const ReadingBookPage = () => {
 
 
     const [toolbarPos, setToolbarPos] = useState<{ top: number; left: number } | null>(null);
-
     const [mode, setMode] = useState<Mode>("focus");
+
+    const [overlapTargets, setOverlapTargets] = useState<HighlightRange[]>([]);
+    // ✅ 모든 하이라이트의 "진짜 원본"
+    const [highlights, setHighlights] = useState<HighlightRange[]>([]);
+
+    const [showOverlapModal, setShowOverlapModal] = useState(false);
+
     const [showWarning, setShowWarning] = useState(
         () => localStorage.getItem("hideReadingWarning") !== "true"
     );
+    const [focusCommentHighlightId, setFocusCommentHighlightId] = useState<string | null>(null);
+
+
 
     // 통합된 삭제 모달 상태
-    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
+
 
 
 
@@ -158,8 +201,7 @@ const ReadingBookPage = () => {
     const touchEndX = useRef(0);
 
     const selectedBgKey = "userMint";
-    const cssColor = getBgColor(selectedBgKey);
-    const backendColor = toBackendColor(selectedBgKey); 
+    const cssColor = getBgColor(selectedBgKey); 
 
     // 드래그 시점의 selection range 저장
     const lastSelectionRangeRef = useRef<Range | null>(null);
@@ -185,6 +227,21 @@ const ReadingBookPage = () => {
     `.repeat(100),
         []
     ); 
+
+
+    // 👉 TODO: 나중에 서버에서 가져올 데이터 -> 이걸 통해 수정한다
+    const allHighlightsFromServer: HighlightRange[] = useMemo(() => {
+    return [
+        {
+        highlightId: "1",
+        memberId: 2,
+        page: page,
+        startOffset: 0,
+        endOffset: 100,
+        },
+    ];
+    }, [page]);
+
 
     // 페이지 자동 분리
     useEffect(() => {
@@ -221,6 +278,33 @@ const ReadingBookPage = () => {
         setupCommentListener();
     }, []);
     
+    useEffect(() => {
+    // 1️⃣ 기존 DOM 하이라이트 전부 제거
+    document
+        .querySelectorAll(".annotation.highlight")
+        .forEach(el => el.replaceWith(document.createTextNode(el.textContent || "")));
+
+    // 2️⃣ 현재 페이지 + 현재 모드에 맞는 하이라이트만 다시 그림
+    highlights
+        .filter(h => {
+        if (h.page !== page) return false;
+        if (mode === "focus") return h.memberId === 1; // 내 것만
+        return true; // together 모드
+        })
+        .forEach(h => {
+        console.log("restore try", h);
+        if (!textRef.current) return;
+
+        restoreHighlight({
+        container: textRef.current,
+        id: String(h.highlightId),
+        startOffset: h.startOffset,
+        endOffset: h.endOffset,
+        color: cssColor,
+        });
+    });
+    }, [page, mode, highlights, cssColor]);
+
 
     const percent = useMemo(() => {
         if (pages.length <= 1) return 100;
@@ -277,31 +361,51 @@ const ReadingBookPage = () => {
 
     // 드래그 후 텍스트 선택 시 툴바 표시
     const handleMouseUp = () => {
-        const selection = window.getSelection();
+    const selection = window.getSelection();
 
-        if (!selection || selection.toString().trim() === "") {
-            return;
+    if (!selection || selection.toString().trim() === "") return;
+
+    const range = selection.getRangeAt(0);
+
+    const startOffset = range.startOffset;
+    const endOffset = range.endOffset;
+
+    /* ===============================
+    * 1️⃣ 집중모드 + 겹침 검사
+    * =============================== */
+    if (mode === "focus") {
+        const overlapped = findOverlappingHighlights(
+        page,                // 현재 페이지
+        startOffset,
+        endOffset,
+        allHighlightsFromServer
+        );
+
+        if (overlapped.length > 0) {
+        selection.removeAllRanges(); // selection 제거
+        setOverlapTargets(overlapped);
+        setShowOverlapModal(true);
+        setToolbarPos(null);         // 툴바 안 뜨게
+        return;                      // ⭐ 여기서 종료
         }
+    }
 
-        lastSelectionRangeRef.current = selection.getRangeAt(0).cloneRange();
+    /* ===============================
+    * 2️⃣ 기존 툴바 로직 (그대로 유지)
+    * =============================== */
+    lastSelectionRangeRef.current = range.cloneRange();
 
-        setActiveAnnotation(null); 
-        // 삭제 모드 초기화
-        setIsDeleteUiActive(false); 
-        
-        // ⭐ 수정: 선택 영역의 모든 줄 경계(rects)를 가져와 마지막 줄을 사용합니다.
-        const range = selection.getRangeAt(0);
-        const clientRects = range.getClientRects();
-        
-        if (clientRects.length === 0) return;
-        
-        // 핵심: clientRects에서 가장 마지막 라인 (마지막 요소)의 경계를 사용합니다.
-        const lastRect = clientRects[clientRects.length - 1];
+    setActiveAnnotation(null);
+    setIsDeleteUiActive(false);
 
-        // 툴바 위치 계산 함수를 마지막 라인의 경계(DOMRect)로 호출합니다.
-        setToolbarPos(calculateToolbarPosition(lastRect as DOMRect));
+    const clientRects = range.getClientRects();
+    if (clientRects.length === 0) return;
+
+    const lastRect = clientRects[clientRects.length - 1];
+    setToolbarPos(calculateToolbarPosition(lastRect as DOMRect));
     };
 
+    const textRef = useRef<HTMLDivElement>(null);
 
     // 통합된 주석 클릭 시 toolbar 표시 및 ID 저장
     const handleAnnotationClick = (e: React.MouseEvent) => {
@@ -391,28 +495,32 @@ const ReadingBookPage = () => {
 
 
     // 1. 드래그 후 새로운 하이라이트 적용 (생성)
-    const handleHighlight = () => {
+const handleHighlight = () => {
+  if (!lastSelectionRangeRef.current || !textRef.current) return;
 
-        if (activeAnnotation) {
-            setToolbarPos(null);
-            setActiveAnnotation(null);
-            setIsDeleteUiActive(false);
-            return; 
-        }
-        
-        const result = applyHighlight(cssColor); 
+  const range = lastSelectionRangeRef.current;
 
-        resetInteractionState();
-        
-        setToolbarPos(null);
-        setActiveAnnotation(null); 
-        setIsDeleteUiActive(false); 
+  // ✅ 페이지 전체 기준 offset
+  const start = getPageOffsetFromRange(range, textRef.current);
+  const end = start + range.toString().length;
 
-        if (result) {
-            console.log(`[POST] 하이라이트 생성 ID: ${result.id}, 색상: ${backendColor}`);
-        }
-    };
-    
+  const result = applyHighlight(cssColor);
+  if (!result) return;
+
+  setHighlights(prev => [
+    ...prev,
+    {
+      highlightId: result.id,
+      memberId: 1,
+      page,
+      startOffset: start,
+      endOffset: end,
+    },
+  ]);
+
+  resetInteractionState();
+};
+
     
     // 2. 코멘트 버튼 클릭 (인라인 입력 UI 활성화)
     const handleCommentClick = () => {
@@ -420,62 +528,93 @@ const ReadingBookPage = () => {
 
         if (memoInputState) return;
 
-        // 1. 드래그 선택 영역이 있는 경우 (새 코멘트 생성 시도)
-        if (!activeAnnotation) {
-            
-            // ⭐ 타입 오류를 피하기 위해 position 인수를 제거하고,
-            // 코멘트 위치 계산은 applyComment 유틸리티 함수 내부에서 처리되도록 합니다.
-            const result = applyComment(null); 
-            
-            setToolbarPos(null);
-            setActiveAnnotation(null); 
-            setIsDeleteUiActive(false); 
-
-            if (result) {
-                console.log("새 코멘트 입력 UI 활성화:", result.id);
-            } else {
-                console.log("코멘트 생성 실패: 선택 영역 없음");
-            }
+        // 🔴 드래그된 영역이 없는 경우
+        if (!lastSelectionRangeRef.current) {
+            console.log("드래그된 영역 없음");
             return;
         }
-        
-        // 2. 기존 주석(highlight)이 Active 상태인 경우 (클릭 후 코멘트 버튼)
-        if (activeAnnotation.type === 'highlight') {
-            const groupId = activeAnnotation.id; 
-            
-            // 2-1. 중복 코멘트 확인 로직
-            const allHighlightSpansInGroup = document.querySelectorAll(`.annotation[data-id="${groupId}"]`);
-            
+
+        /* =================================================
+        * 1️⃣ activeAnnotation이 없는 경우
+        * 👉 자동 하이라이트 생성 + 코멘트
+        * ================================================= */
+        if (!activeAnnotation) {
+            // ✅ 1-1. 자동 하이라이트 생성
+            const highlightResult = applyHighlight(cssColor);
+
+            if (!highlightResult) {
+                console.log("하이라이트 생성 실패");
+                return;
+            }
+
+            console.log("자동 하이라이트 생성:", highlightResult.id);
+
+            // ✅ 1-2. 방금 만든 하이라이트에 코멘트 생성
+            const commentResult = applyComment({
+                id: highlightResult.id,
+                type: "highlight",
+            });
+
+            setToolbarPos(null);
+            setActiveAnnotation(null);
+            setIsDeleteUiActive(false);
+
+            if (commentResult) {
+                console.log("코멘트 입력 UI 활성화:", commentResult.id);
+            } else {
+                console.log("코멘트 생성 실패");
+            }
+
+            return;
+        }
+
+        /* =================================================
+        * 2️⃣ 기존 하이라이트가 Active 상태인 경우
+        * (❗ 기존 로직 그대로 유지)
+        * ================================================= */
+        if (activeAnnotation.type === "highlight") {
+            const groupId = activeAnnotation.id;
+
+            // 2-1. 중복 코멘트 확인 로직 (기존)
+            const allHighlightSpansInGroup = document.querySelectorAll(
+                `.annotation[data-id="${groupId}"]`
+            );
+
             let isCommentAlreadyPresent = false;
             allHighlightSpansInGroup.forEach(span => {
-                if (span.querySelector('.comment-wrapper')) {
+                if (span.querySelector(".comment-wrapper")) {
                     isCommentAlreadyPresent = true;
                 }
             });
 
             if (isCommentAlreadyPresent) {
-                console.log(`코멘트 생성 실패: 그룹 ID ${groupId}에 이미 코멘트가 존재합니다.`);
+                console.log(
+                    `코멘트 생성 실패: 그룹 ID ${groupId}에 이미 코멘트가 존재합니다.`
+                );
                 setToolbarPos(null);
                 setActiveAnnotation(null);
-                setIsDeleteUiActive(false); 
-                return; // 중복 생성 방지
+                setIsDeleteUiActive(false);
+                return; // ❌ 중복 생성 방지
             }
         }
-        
-        // 3. 코멘트가 없는 하이라이트인 경우 또는 기존 코멘트(quote)를 클릭한 경우
-        // ⭐ position 인수를 제거하고, applyComment 유틸리티 함수에 책임을 넘깁니다.
+
+        /* =================================================
+        * 3️⃣ 기존 코멘트(quote) 클릭 상태 등
+        * (기존 로직 그대로)
+        * ================================================= */
         const result = applyComment(activeAnnotation);
-        
+
         setToolbarPos(null);
-        setActiveAnnotation(null); 
-        setIsDeleteUiActive(false); 
-        
+        setActiveAnnotation(null);
+        setIsDeleteUiActive(false);
+
         if (result) {
             console.log("코멘트 입력 UI 활성화 (위치 지정):", result.id);
         } else {
             console.log("코멘트 생성 실패");
         }
     };
+
 
     
     // 3. 통합된 삭제 처리 로직
@@ -518,6 +657,15 @@ const ReadingBookPage = () => {
         setToolbarPos(null);
         // setShowDeleteModal(false);
         setIsDeleteUiActive(false);
+    };
+
+
+    const handleConfirmOverlap = () => {
+        const targetHighlightId = overlapTargets[0].highlightId;
+
+        setMode("together");                  // 1️⃣ 모드 전환
+        setShowOverlapModal(false);           // 2️⃣ 모달 닫기
+        setFocusCommentHighlightId(targetHighlightId); // 3️⃣ 자동 포커스 지정    
     };
 
 
@@ -566,8 +714,6 @@ const handleMemo = () => {
 
 };
 
-
-
     return (
         <>
             <AnnotationStyle />
@@ -582,6 +728,8 @@ const handleMemo = () => {
                 {showWarning && (
                     <WarningModal onClose={() => setShowWarning(false)} />
                 )}
+
+
                 
                 {showDeleteModal && activeAnnotation && (
                     <DeleteHighlightModal
@@ -590,6 +738,15 @@ const handleMemo = () => {
                         onCancel={() => setShowDeleteModal(false)}
                     />
                     )}
+
+
+                {showOverlapModal && (
+                    <OverlapToTogetherModal
+                        highlights={overlapTargets}
+                        onConfirm={handleConfirmOverlap}
+                        onCancel={() => setShowOverlapModal(false)}
+                    />
+                )}
 
 
                 {deleteBlockedType && (
@@ -685,12 +842,20 @@ const handleMemo = () => {
                 />
 
                 <S.ContentBox onClick={handleContentClick}>
-                    <S.TextWrapper>{pages[page]}</S.TextWrapper>
+                    <S.TextWrapper ref={textRef}>{pages[page]}</S.TextWrapper>
                 </S.ContentBox>
 
                 <S.ToggleWrapper $showUI={showUI}>
                     <ModeToggle mode={mode} onChangeMode={setMode} />
                 </S.ToggleWrapper>
+
+                {mode === "together" && focusCommentHighlightId && (
+                    <CommentThread
+                        highlightId={focusCommentHighlightId}
+                        autoFocus
+                    />
+                )}
+
 
                 {showUI && pages.length > 1 && (
                     <ProgressBar
