@@ -20,7 +20,7 @@ export interface Annotation {
   content?: string; // quote / memo 내용
   groupId?: string; // 연결용 (ex. highlight ↔ quote)
   parentId?: string;
-  comment?: string;
+  comments?: Comment[];
 }
 
 
@@ -106,3 +106,24 @@ export function isValidRange(range: TextRange): boolean {
   return range.start >= 0 && range.end > range.start;
 }
 
+
+
+export interface Comment {
+  id: string;
+  content: string;
+  isMine: boolean;
+}
+
+export interface Annotation {
+  id: string;
+  type: AnnotationType;
+  isMine: boolean;
+  range: {
+    start: number;
+    end: number;
+  };
+  text: string;
+  page: number;
+  color?: string;
+  comments?: Comment[]; // ✅ 추가
+}

@@ -98,6 +98,7 @@ const ReadingBookPage = () => {
   useState<Annotation | null>(null);
 const [showCommentEntry, setShowCommentEntry] = useState(false);
 
+
 const [commentAnchorPos, setCommentAnchorPos] =
   useState<{ top: number; left: number } | null>(null);
 
@@ -523,9 +524,9 @@ const handleMemo = () => {
     }}
     onSubmit={content => {
       console.log("POST comment", content);
-      setCommentTarget(null);
-      setShowCommentEntry(false);
-      setCommentAnchorPos(null);
+      // setCommentTarget(null);
+      // setShowCommentEntry(false);
+      // setCommentAnchorPos(null);
     }}
   />
 )}

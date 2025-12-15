@@ -14,7 +14,9 @@ import { otherUserAnnotationsMock } from "../mocks/annotation.mock";
  * - 페이지 이동 / 재렌더 시 기준 데이터
  */
 let annotations: Annotation[] = [];
-
+export function setAnnotations(next: Annotation[]) {
+  annotations = next;
+}
 /* ===============================
  * Annotation 생성
  * (highlight / comment / memo 공통)
