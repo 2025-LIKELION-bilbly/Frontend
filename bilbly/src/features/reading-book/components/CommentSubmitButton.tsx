@@ -7,7 +7,6 @@ const CommentSubmitButton = ({ onClick }: CommentSubmitButtonProps) => {
     <button
       onClick={onClick}
       style={{
-        marginTop: 16,
         padding: "14px",
         width: "100%",
         borderRadius: "999px",

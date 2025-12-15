@@ -8,7 +8,7 @@ export const otherUserAnnotationsMock: Annotation[] = [
   {
     id: "other-1",
     type: "highlight",
-    text: "자리 책 내용이",
+    text: "자리 책 내ㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㅇㄴㅇㄴㅇㄴㅇㄴㅇㄴㅇ용이",
     page: 0,
     isMine: false,
     range: { start: 5, end: 13 },
