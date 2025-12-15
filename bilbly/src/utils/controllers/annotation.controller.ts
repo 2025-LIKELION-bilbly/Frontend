@@ -15,12 +15,13 @@ let annotations: Annotation[] = [];
  * Annotation 생성 (highlight / quote 전용)
  * =============================== */
 export function createAnnotation(
-  root: HTMLElement,
+root: HTMLElement,
   params: {
     type: "highlight" | "quote";
     color?: string;
     content?: string;
     groupId?: string;
+    page: number; // ✅ 추가
   }
 ): Annotation | null {
   const result = getTextRangeFromSelection(root);
@@ -30,18 +31,22 @@ export function createAnnotation(
     type: params.type,
     text: result.text,
     range: result.range,
+    page: params.page, 
     color: params.color,
     content: params.content,
   });
 
+  annotation.page = params.page;
   if (params.groupId) {
     annotation.groupId = params.groupId;
   }
 
   annotations = addAnnotation(annotations, annotation);
 
-  // 🔥 항상 전체 재렌더 (memo는 관여 안 함)
-  renderAnnotations(root, annotations);
+  // ✅ highlight만 재렌더
+  if (annotation.type === "highlight") {
+    renderAnnotations(root, annotations);
+}
 
   return annotation;
 }

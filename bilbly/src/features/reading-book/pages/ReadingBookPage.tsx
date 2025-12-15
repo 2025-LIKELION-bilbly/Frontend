@@ -18,6 +18,9 @@ import { applyMemo } from "../../../utils/memo";
 
 import { createGlobalStyle } from "styled-components";
 import { getBgColor, toBackendColor } from "../../../styles/ColorUtils";
+import { getAnnotations } from "../../../utils/controllers/annotation.controller";
+import { renderAnnotations } from "../../../utils/annotation/annotation.renderer";
+
 
 
 import {
@@ -122,6 +125,20 @@ const ReadingBookPage = () => {
       didPaginateRef.current = false;
     };
   }, [fullText]);
+
+
+
+useLayoutEffect(() => {
+  if (!containerRef.current) return;
+
+  const annotations = getAnnotations().filter(
+    a => a.page === page
+  );
+
+  renderAnnotations(containerRef.current, annotations);
+}, [page]);
+
+
 
   const percent = useMemo(() => {
     if (pages.length <= 1) return 100;
@@ -231,6 +248,7 @@ const ReadingBookPage = () => {
     const annotation = createAnnotation(containerRef.current, {
       type: "highlight",
       color: cssColor,
+      page,
     });
 
     if (annotation) {
@@ -252,17 +270,28 @@ const handleComment = () => {
   if (!containerRef.current) return;
 
   // 1️⃣ 사용할 하이라이트 id 결정
-  let annotationId = activeAnnotation?.id;
+  let annotationId =
+  activeAnnotation?.type === "highlight"
+    ? activeAnnotation.id
+    : undefined;
+
 
   // 없으면 새로 생성
   if (!annotationId) {
     const newAnnotation = createAnnotation(containerRef.current, {
       type: "highlight",
       color: cssColor,
+      page,
     });
 
     if (!newAnnotation) return;
     annotationId = newAnnotation.id;
+
+     setActiveAnnotation({
+    id: newAnnotation.id,
+    type: "highlight",
+    annotation: newAnnotation,
+  });
   }
 
   // 2️⃣ highlight DOM 찾기

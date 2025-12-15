@@ -17,6 +17,7 @@ export interface Annotation {
   type: AnnotationType;
   range: TextRange;
   text: string;
+  page: number;  
   color?: string;
   content?: string; // quote / memo 내용
   groupId?: string; // 연결용 (ex. highlight ↔ quote)
@@ -43,6 +44,7 @@ export function createAnnotationFromSelection(
     type: AnnotationType;
     text: string;
     range: TextRange;
+    page: number; 
     color?: string;
     content?: string;
   }
@@ -54,6 +56,7 @@ export function createAnnotationFromSelection(
     type: params.type,
     text: params.text,
     range: params.range,
+    page: params.page,  
     color: params.color,
     content: params.content,
     groupId: id,

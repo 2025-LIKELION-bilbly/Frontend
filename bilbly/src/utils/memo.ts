@@ -3,13 +3,16 @@ import { showMemoPopup } from "./memoPopup";
 
 const CONTAINER_SELECTOR = ".reading-page-container";
 
+/* ======================================================
+ * Memo 생성 (DOM 전용 / annotation 시스템 ❌)
+ * ====================================================== */
 export const applyMemo = () => {
   const selection = window.getSelection();
   if (!selection || !selection.toString().trim()) return null;
 
   const range = selection.getRangeAt(0);
 
-  // 🔥 memo 중첩 방지
+  // 🔒 memo 중첩 방지
   const parent =
     range.startContainer.nodeType === Node.ELEMENT_NODE
       ? (range.startContainer as HTMLElement)
@@ -34,6 +37,7 @@ export const applyMemo = () => {
     return null;
   }
 
+  /* ---------- memo icon ---------- */
   const icon = document.createElement("span");
   icon.className = "memo-icon";
   icon.innerHTML = `
@@ -48,14 +52,16 @@ export const applyMemo = () => {
   />
 </svg>
 `;
-
   icon.style.cursor = "pointer";
   icon.style.marginLeft = "4px";
 
   span.appendChild(icon);
 
+  /* ---------- popup ---------- */
   const openPopup = () => {
-    const container = document.querySelector(CONTAINER_SELECTOR) as HTMLElement;
+    const container = document.querySelector(
+      CONTAINER_SELECTOR
+    ) as HTMLElement | null;
     if (!container) return;
 
     const rect = span.getBoundingClientRect();
@@ -73,10 +79,10 @@ export const applyMemo = () => {
     });
   };
 
-  // 🔥 메모 버튼 누르면 바로 팝업
+  // 🔥 생성 직후 바로 팝업
   openPopup();
 
-  // 아이콘 클릭 → 수정
+  // 🔁 아이콘 클릭 → 수정
   icon.addEventListener("click", e => {
     e.stopPropagation();
     openPopup();
@@ -85,6 +91,9 @@ export const applyMemo = () => {
   return { id };
 };
 
+/* ======================================================
+ * Memo 삭제
+ * ====================================================== */
 export const removeMemo = (memoId: string) => {
   const el = document.querySelector(
     `.annotation.memo[data-id="${memoId}"]`
@@ -96,3 +105,56 @@ export const removeMemo = (memoId: string) => {
   el.parentNode.insertBefore(text, el);
   el.remove();
 };
+
+/* ======================================================
+ * Memo 저장 수집
+ * ====================================================== */
+export function collectMemos() {
+  const memoEls = document.querySelectorAll<HTMLElement>(".annotation.memo");
+
+  return Array.from(memoEls).map(el => ({
+    id: el.dataset.id!,
+    text: el.textContent || "",
+    content: el.dataset.content || "",
+  }));
+}
+
+/* ======================================================
+ * Memo 복원
+ * ====================================================== */
+export function restoreMemos(
+  container: HTMLElement,
+  memos: {
+    id: string;
+    text: string;
+    content?: string;
+  }[]
+) {
+  memos.forEach(memo => {
+    // ⚠️ 단순 매칭 (현재 구조 기준)
+    const target = Array.from(
+      container.querySelectorAll("span")
+    ).find(el => el.textContent === memo.text);
+
+    if (!target || target.closest(".annotation.memo")) return;
+
+    const span = document.createElement("span");
+    span.className = "annotation memo";
+    span.dataset.id = memo.id;
+    span.dataset.content = memo.content || "";
+    span.style.borderBottom = "1px solid #c93b4d";
+    span.style.paddingBottom = "2px";
+
+    target.parentNode?.insertBefore(span, target);
+    span.appendChild(target);
+
+    // 아이콘 복원
+    const icon = document.createElement("span");
+    icon.className = "memo-icon";
+    icon.innerHTML = "📝";
+    icon.style.marginLeft = "4px";
+    icon.style.cursor = "pointer";
+
+    span.appendChild(icon);
+  });
+}
