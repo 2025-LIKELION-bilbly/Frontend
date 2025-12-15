@@ -245,6 +245,9 @@ const ReadingBookPage = () => {
     setToolbarPos(null);
   };
 
+
+
+  
 const handleComment = () => {
   if (!containerRef.current) return;
 
