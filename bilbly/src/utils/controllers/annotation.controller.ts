@@ -6,6 +6,8 @@ import {
 } from "../annotation/annotation.core";
 import { getTextRangeFromSelection } from "../annotation/selection.adapter";
 import { renderAnnotations } from "../annotation/annotation.renderer";
+import { otherUserAnnotationsMock } from "../mocks/annotation.mock";
+
 
 /**
  * 🔥 전역 annotation 상태
@@ -30,14 +32,19 @@ export function createAnnotation(
   const result = getTextRangeFromSelection(root);
   if (!result) return null;
 
-  const annotation = createAnnotationFromSelection({
+const annotation: Annotation = {
+  ...createAnnotationFromSelection({
     type: params.type,
     text: result.text,
     range: result.range,
     page: params.page,
     color: params.color,
     content: params.content,
-  });
+  }),
+  isMine: true, // 🔥 내가 만든 것
+};
+
+
 
   if (params.groupId) {
     annotation.groupId = params.groupId;
@@ -67,5 +74,5 @@ export function deleteAnnotation(root: HTMLElement, id: string) {
  * 조회
  * =============================== */
 export function getAnnotations() {
-  return annotations;
+  return [...annotations, ...otherUserAnnotationsMock];
 }

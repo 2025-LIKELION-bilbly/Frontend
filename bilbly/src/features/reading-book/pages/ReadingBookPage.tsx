@@ -6,6 +6,8 @@ import {
   useMemo,
   useRef,
 } from "react";
+// import { createComment } from "../../../api/comment.api";
+
 import { useParams } from "react-router-dom";
 import * as S from "./ReadingBookPage.styles";
 import ReadingHeader from "../components/ReadingHeader";
@@ -21,6 +23,9 @@ import { getBgColor, toBackendColor } from "../../../styles/ColorUtils";
 import { getAnnotations } from "../../../utils/controllers/annotation.controller";
 import { renderAnnotations } from "../../../utils/annotation/annotation.renderer";
 
+
+import CommentEntryButton from "../components/CommentEntryButton";
+import CommentThread from "../components/CommentThread";
 
 
 import {
@@ -89,11 +94,22 @@ const ReadingBookPage = () => {
   const selectedBgKey = "userMint";
   const cssColor = getBgColor(selectedBgKey);
   const backendColor = toBackendColor(selectedBgKey);
+  const [commentTarget, setCommentTarget] =
+  useState<Annotation | null>(null);
+const [showCommentEntry, setShowCommentEntry] = useState(false);
+
+const [commentAnchorPos, setCommentAnchorPos] =
+  useState<{ top: number; left: number } | null>(null);
+
+
+
+
 
   const fullText = useMemo(
     () => "책 내용이 들어가는 자리 ".repeat(500),
     []
   );
+
 
   /* -----------------------------
    * Pagination
@@ -128,15 +144,23 @@ const ReadingBookPage = () => {
 
 
 
+  
+
 useLayoutEffect(() => {
   if (!containerRef.current) return;
 
-  const annotations = getAnnotations().filter(
+  let annotations = getAnnotations().filter(
     a => a.page === page
   );
 
+  // 🔥 집중모드에서는 "내 annotation만"
+  if (mode === "focus") {
+    annotations = annotations.filter(a => a.isMine);
+  }
+
   renderAnnotations(containerRef.current, annotations);
-}, [page]);
+}, [page, mode]);
+
 
 
 
@@ -212,32 +236,53 @@ useLayoutEffect(() => {
     setIsDeleteUiActive(false);
   };
 
-  const handleAnnotationClick = (e: React.MouseEvent) => {
-    const el = (e.target as HTMLElement).closest(
-      ".annotation[data-id]"
-    ) as HTMLElement | null;
+const handleAnnotationClick = (e: React.MouseEvent) => {
+  const el = (e.target as HTMLElement).closest(
+    ".annotation[data-id]"
+  ) as HTMLElement | null;
 
-    if (!el || !containerRef.current) return false;
+  if (!el || !containerRef.current) return false;
 
-    const rect = el.getBoundingClientRect();
-    const containerRect = containerRef.current.getBoundingClientRect();
+  const annotationId = el.dataset.id!;
+  const annotation = getAnnotations().find(a => a.id === annotationId);
+  if (!annotation) return false;
 
-    setToolbarPos({
-      top:
-        rect.top -
-        containerRect.top +
-        containerRef.current.scrollTop -
-        8,
-      left: rect.left - containerRect.left + rect.width / 2,
-    });
+  // 🔥 위치 계산
+  const rect = el.getBoundingClientRect();
+  const containerRect = containerRef.current.getBoundingClientRect();
 
-    setActiveAnnotation({
-      id: el.dataset.id!,
-      type: el.dataset.type as AnnotationType,
-    });
+  setCommentAnchorPos({
+    top:
+      rect.bottom -
+      containerRect.top +
+      containerRef.current.scrollTop +
+      8,
+    left: rect.left - containerRect.left,
+  });
 
+  // 🔥 여기서 버튼 띄우는 로직
+  if (mode === "together" && !annotation.isMine) {
+    setCommentTarget(annotation);
+    setShowCommentEntry(true);
     return true;
-  };
+  }
+
+  // 내 annotation
+  setActiveAnnotation({
+    id: annotation.id,
+    type: annotation.type,
+    annotation,
+  });
+
+  console.log("mode:", mode);
+console.log("annotation.isMine:", annotation.isMine);
+console.log("showCommentEntry:", showCommentEntry);
+  return true;
+};
+
+
+
+
 
   /* -----------------------------
    * Annotation Actions
@@ -455,6 +500,39 @@ const handleMemo = () => {
           onConfirm={() => setDeleteBlockedType(null)}
         />
       )}
+
+
+      {/* 1️⃣ 다른 사용자 하이라이트 클릭 시 */}
+{showCommentEntry && commentTarget && commentAnchorPos && (
+  <CommentEntryButton
+    top={commentAnchorPos.top}
+    left={commentAnchorPos.left}
+    onClick={() => setShowCommentEntry(false)}
+  />
+)}
+
+{!showCommentEntry && commentTarget && commentAnchorPos && (
+  <CommentThread
+    annotation={commentTarget}
+    top={commentAnchorPos.top}
+    left={commentAnchorPos.left}
+    onClose={() => {
+      setCommentTarget(null);
+      setShowCommentEntry(false);
+      setCommentAnchorPos(null);
+    }}
+    onSubmit={content => {
+      console.log("POST comment", content);
+      setCommentTarget(null);
+      setShowCommentEntry(false);
+      setCommentAnchorPos(null);
+    }}
+  />
+)}
+
+
+
+
     </>
   );
 };

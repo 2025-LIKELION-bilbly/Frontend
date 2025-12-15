@@ -1,10 +1,3 @@
-// annotation.core.ts
-// ✅ 역할: Annotation 상태 모델 + 순수 로직 (DOM 직접 조작 ❌)
-
-/* ==============================
- * Types
- * ============================== */
-
 export type AnnotationType = "highlight" | "quote" | "memo";
 
 export interface TextRange {
@@ -15,6 +8,7 @@ export interface TextRange {
 export interface Annotation {
   id: string;
   type: AnnotationType;
+  isMine: boolean;
   range: {
     start: number;
     end: number;
@@ -60,6 +54,7 @@ export function createAnnotationFromSelection(
   return {
     id,
     type: params.type,
+    isMine: true, 
     text: params.text,
     range: params.range,
     page: params.page,  
@@ -111,11 +106,3 @@ export function isValidRange(range: TextRange): boolean {
   return range.start >= 0 && range.end > range.start;
 }
 
-/* ==============================
- * ⚠️ 이 파일에서 하지 않는 것
- * ------------------------------
- * - window.getSelection ❌
- * - Range.surroundContents ❌
- * - document.createElement ❌
- * - dataset 조작 ❌
- * ============================== */
