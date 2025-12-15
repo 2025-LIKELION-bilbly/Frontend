@@ -19,18 +19,20 @@ export const removeHighlight = (highlightId: string): void => {
 }; 
 
 export const restoreHighlight = ({
-    container,
     id,
     startOffset,
     endOffset,
     color,
+    container,
     }: {
-    container: HTMLElement;
     id: string;
     startOffset: number;
     endOffset: number;
     color: string;
+    container: HTMLElement;
     }) => {
+    if (!container) return;
+
     const walker = document.createTreeWalker(
         container,
         NodeFilter.SHOW_TEXT,
@@ -38,43 +40,36 @@ export const restoreHighlight = ({
     );
 
     let currentOffset = 0;
-    let startNode: Text | null = null;
-    let endNode: Text | null = null;
-    let startNodeOffset = 0;
-    let endNodeOffset = 0;
-
-    let node: Text | null;
+    let node: Text | null = null;
 
     while ((node = walker.nextNode() as Text | null)) {
-        const len = node.textContent?.length ?? 0;
+        const nodeLength = node.textContent?.length ?? 0;
+        const nodeStart = currentOffset;
+        const nodeEnd = currentOffset + nodeLength;
 
-        if (!startNode && currentOffset + len >= startOffset) {
-        startNode = node;
-        startNodeOffset = startOffset - currentOffset;
+        // 이 노드가 하이라이트 범위와 겹치면
+        if (nodeEnd > startOffset && nodeStart < endOffset) {
+        const range = document.createRange();
+
+        const start = Math.max(0, startOffset - nodeStart);
+        const end = Math.min(nodeLength, endOffset - nodeStart);
+
+        range.setStart(node, start);
+        range.setEnd(node, end);
+
+        const span = document.createElement("span");
+        span.className = "annotation highlight";
+        span.dataset.id = id;
+        span.dataset.type = "highlight";
+        span.style.backgroundColor = color;
+        span.style.borderRadius = "3px";
+        span.style.padding = "2px 0";
+
+        range.extractContents();
+        range.insertNode(span);
         }
 
-        if (!endNode && currentOffset + len >= endOffset) {
-        endNode = node;
-        endNodeOffset = endOffset - currentOffset;
-        break;
-        }
-
-        currentOffset += len;
+        currentOffset += nodeLength;
     }
-
-    if (!startNode || !endNode) return;
-
-    const range = document.createRange();
-    range.setStart(startNode, startNodeOffset);
-    range.setEnd(endNode, endNodeOffset);
-
-    const span = document.createElement("span");
-    span.className = "annotation highlight";
-    span.dataset.id = id;
-    span.dataset.type = "highlight";
-    span.style.backgroundColor = color;
-    span.style.borderRadius = "3px";
-    span.style.padding = "2px 0";
-
-    range.surroundContents(span);
 };
+

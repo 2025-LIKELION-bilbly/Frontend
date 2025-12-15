@@ -278,32 +278,35 @@ const ReadingBookPage = () => {
         setupCommentListener();
     }, []);
     
-    useEffect(() => {
-    // 1️⃣ 기존 DOM 하이라이트 전부 제거
+useEffect(() => {
+    if (!textRef.current) return;
+
+    // 페이지 이동 or 모드 변경 시에만 복원
     document
         .querySelectorAll(".annotation.highlight")
-        .forEach(el => el.replaceWith(document.createTextNode(el.textContent || "")));
+        .forEach(el =>
+        el.replaceWith(document.createTextNode(el.textContent || ""))
+        );
 
-    // 2️⃣ 현재 페이지 + 현재 모드에 맞는 하이라이트만 다시 그림
     highlights
         .filter(h => {
-        if (h.page !== page) return false;
-        if (mode === "focus") return h.memberId === 1; // 내 것만
-        return true; // together 모드
+            if (h.page !== page) return false;
+            if (mode === "focus") return h.memberId === 1;
+            return true;
         })
         .forEach(h => {
-        console.log("restore try", h);
         if (!textRef.current) return;
 
         restoreHighlight({
-        container: textRef.current,
-        id: String(h.highlightId),
-        startOffset: h.startOffset,
-        endOffset: h.endOffset,
-        color: cssColor,
+            id: String(h.highlightId),
+            startOffset: h.startOffset,
+            endOffset: h.endOffset,
+            color: cssColor,
+            container: textRef.current!,
         });
     });
-    }, [page, mode, highlights, cssColor]);
+}, [page, mode]); // 🔥 highlights 제거
+
 
 
     const percent = useMemo(() => {
@@ -496,29 +499,30 @@ const ReadingBookPage = () => {
 
     // 1. 드래그 후 새로운 하이라이트 적용 (생성)
 const handleHighlight = () => {
-  if (!lastSelectionRangeRef.current || !textRef.current) return;
+    if (!lastSelectionRangeRef.current || !textRef.current) return;
 
-  const range = lastSelectionRangeRef.current;
+    const range = lastSelectionRangeRef.current;
 
-  // ✅ 페이지 전체 기준 offset
-  const start = getPageOffsetFromRange(range, textRef.current);
-  const end = start + range.toString().length;
+    // ✅ 페이지 전체 기준 offset
+    const start = getPageOffsetFromRange(range, textRef.current);
+    const end = start + range.toString().length;
 
-  const result = applyHighlight(cssColor);
-  if (!result) return;
+    const result = applyHighlight(cssColor);
+    if (!result) return;
 
-  setHighlights(prev => [
-    ...prev,
-    {
-      highlightId: result.id,
-      memberId: 1,
-      page,
-      startOffset: start,
-      endOffset: end,
-    },
-  ]);
+    // ✅ "진짜 데이터"는 여기만
+    setHighlights(prev => [
+        ...prev,
+        {
+        highlightId: result.id,
+        memberId: 1,
+        page,
+        startOffset: start,
+        endOffset: end,
+        },
+    ]);
 
-  resetInteractionState();
+    resetInteractionState();
 };
 
     
