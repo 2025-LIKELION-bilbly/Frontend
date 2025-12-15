@@ -1,6 +1,4 @@
-// utils/controllers/annotation.controller.ts
-
-import type { Annotation } from "../annotation/annotation.core";
+import type { Annotation, AnnotationType } from "../annotation/annotation.core";
 import {
   createAnnotationFromSelection,
   addAnnotation,
@@ -9,19 +7,24 @@ import {
 import { getTextRangeFromSelection } from "../annotation/selection.adapter";
 import { renderAnnotations } from "../annotation/annotation.renderer";
 
+/**
+ * 🔥 전역 annotation 상태
+ * - 페이지 이동 / 재렌더 시 기준 데이터
+ */
 let annotations: Annotation[] = [];
 
 /* ===============================
- * Annotation 생성 (highlight / quote 전용)
+ * Annotation 생성
+ * (highlight / comment / memo 공통)
  * =============================== */
 export function createAnnotation(
-root: HTMLElement,
+  root: HTMLElement,
   params: {
-    type: "highlight" | "quote";
-    color?: string;
-    content?: string;
+    type: AnnotationType;          // ✅ highlight | comment | memo
+    page: number;                  // ✅ 페이지 필수
+    color?: string;                // highlight
+    content?: string;              // comment / memo
     groupId?: string;
-    page: number; // ✅ 추가
   }
 ): Annotation | null {
   const result = getTextRangeFromSelection(root);
@@ -31,22 +34,23 @@ root: HTMLElement,
     type: params.type,
     text: result.text,
     range: result.range,
-    page: params.page, 
+    page: params.page,
     color: params.color,
     content: params.content,
   });
 
-  annotation.page = params.page;
   if (params.groupId) {
     annotation.groupId = params.groupId;
   }
 
   annotations = addAnnotation(annotations, annotation);
 
-  // ✅ highlight만 재렌더
-  if (annotation.type === "highlight") {
-    renderAnnotations(root, annotations);
-}
+  /**
+   * 🔥 핵심
+   * - 항상 전체 annotations 기준으로 렌더
+   * - renderer 내부에서 page 필터링
+   */
+  renderAnnotations(root, annotations);
 
   return annotation;
 }

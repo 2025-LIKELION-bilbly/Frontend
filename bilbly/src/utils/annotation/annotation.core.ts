@@ -15,14 +15,20 @@ export interface TextRange {
 export interface Annotation {
   id: string;
   type: AnnotationType;
-  range: TextRange;
+  range: {
+    start: number;
+    end: number;
+  };
   text: string;
   page: number;  
+
   color?: string;
   content?: string; // quote / memo 내용
   groupId?: string; // 연결용 (ex. highlight ↔ quote)
+  parentId?: string;
   comment?: string;
 }
+
 
 /* ==============================
  * Internal helpers

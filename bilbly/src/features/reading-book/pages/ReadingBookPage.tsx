@@ -267,47 +267,31 @@ useLayoutEffect(() => {
 
   
 const handleComment = () => {
-  if (!containerRef.current) return;
+  if (!containerRef.current || !lastSelectionRangeRef.current) return;
 
-  // 1️⃣ 사용할 하이라이트 id 결정
-  let annotationId =
-  activeAnnotation?.type === "highlight"
-    ? activeAnnotation.id
-    : undefined;
+  // 🔥 selection 복구
+  const sel = window.getSelection();
+  sel?.removeAllRanges();
+  sel?.addRange(lastSelectionRangeRef.current);
 
-
-  // 없으면 새로 생성
-  if (!annotationId) {
-    const newAnnotation = createAnnotation(containerRef.current, {
-      type: "highlight",
-      color: cssColor,
-      page,
-    });
-
-    if (!newAnnotation) return;
-    annotationId = newAnnotation.id;
-
-     setActiveAnnotation({
-    id: newAnnotation.id,
+  // 🔥 highlight 생성 (없으면)
+  const annotation = createAnnotation(containerRef.current, {
     type: "highlight",
-    annotation: newAnnotation,
+    page,
   });
-  }
 
-  // 2️⃣ highlight DOM 찾기
+  if (!annotation) return;
+
   const highlightEl = document.querySelector(
-    `.annotation.highlight[data-id="${annotationId}"]`
+    `.annotation.highlight[data-id="${annotation.id}"]`
   ) as HTMLElement | null;
 
   if (!highlightEl) return;
 
-  // 이미 입력 중이면 중복 방지
+  // 중복 입력 방지
   if (highlightEl.querySelector(".inline-comment-input")) return;
 
-  // 기존 저장된 코멘트 있으면 제거 (선택)
-  highlightEl.querySelector(".inline-comment")?.remove();
-
-  // 3️⃣ textarea 생성 (떠 있는 상태)
+  // textarea 생성
   const textarea = document.createElement("textarea");
   textarea.className = "inline-comment-input";
   textarea.placeholder = "코멘트를 입력하세요";
@@ -319,60 +303,69 @@ const handleComment = () => {
   // 높이 자동 조절
   const resize = () => {
     textarea.style.height = "auto";
-    textarea.style.height = `${textarea.scrollHeight}px`;
+    textarea.style.height = textarea.scrollHeight + "px";
   };
   textarea.addEventListener("input", resize);
   resize();
 
-  // 4️⃣ 저장 로직
   const save = () => {
     const value = textarea.value.trim();
     textarea.remove();
-
     if (!value) return;
 
+    // 🔥 annotation 데이터에 저장
+    annotation.content = value;
+
+    // 🔥 화면 표시
     const span = document.createElement("span");
     span.className = "inline-comment";
     span.textContent = value;
-
     highlightEl.appendChild(span);
   };
 
   textarea.addEventListener("blur", save);
-
   textarea.addEventListener("keydown", e => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      textarea.blur(); // 저장
+      textarea.blur();
     }
-
     if (e.key === "Escape") {
-      textarea.remove(); // 취소
+      textarea.remove();
     }
   });
 
   setToolbarPos(null);
+  setActiveAnnotation(null);
 };
 
 
 
 
-    const handleMemo = () => {
-    if (!lastSelectionRangeRef.current) return;
 
-    // 🔥 마지막 드래그 selection 복구
-    const sel = window.getSelection();
-    sel?.removeAllRanges();
-    sel?.addRange(lastSelectionRangeRef.current);
+const handleMemo = () => {
+  if (!lastSelectionRangeRef.current) return;
 
-    // 🔥 메모 생성 (아이콘 + popup은 memo.ts가 책임짐)
-    applyMemo();
+  const sel = window.getSelection();
+  if (!sel) return;
 
-    // UI 정리
-    setActiveAnnotation(null);
-    setToolbarPos(null);
-    setIsDeleteUiActive(false);
-    };
+  // 🔥 기존 selection 완전 초기화
+  sel.removeAllRanges();
+
+  // 🔥 마지막 드래그 selection 복구
+  sel.addRange(lastSelectionRangeRef.current);
+
+  // 🔥 memo 생성 (popup + icon은 memo.ts에서 처리)
+  const result = applyMemo();
+
+  // ❗ 실패하면 아무 것도 정리하지 않음
+  if (!result) return;
+
+  // UI 정리
+  setActiveAnnotation(null);
+  setToolbarPos(null);
+  setIsDeleteUiActive(false);
+};
+
 
 
   const handleDelete = () => {
