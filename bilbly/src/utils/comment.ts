@@ -1,113 +1,82 @@
-import { surroundSelection, surroundElement } from "./annotation.core";
-import type { AnnotationResult, ActiveAnnotation } from "./annotation.core";
-import { applyMemo } from "./memo";
+// utils/comment.ts
+// 역할: highlight에 종속된 comment UI 관리 (DOM overlay)
+// ❌ 텍스트를 감싸지 않음
+// ❌ annotation 생성하지 않음
 
-const READING_CONTAINER_SELECTOR = ".reading-page-container";
-const COMMENT_LIMIT = 25;
+// const READING_CONTAINER_SELECTOR = ".reading-page-container";
 
+/* ==============================
+ * Types
+ * ============================== */
 
-/* -----------------------------
- * 마지막 줄 위치 계산
- * ----------------------------- */
-const getLastLinePosition = (annotationId: string) => {
-  const container = document.querySelector(
-    READING_CONTAINER_SELECTOR
-  ) as HTMLElement | null;
-  if (!container) return null;
+interface OpenCommentParams {
+  container: HTMLElement;
+  annotationId: string; // 🔥 highlight id
+  top: number;
+  left: number;
+  initialContent?: string;
+}
 
-  const spans = document.querySelectorAll(
-    `.annotation[data-id="${annotationId}"]`
+/* ==============================
+ * Open Comment Input
+ * ============================== */
+
+export function openCommentInput({
+  container,
+  annotationId,
+  top,
+  left,
+  initialContent = "",
+}: OpenCommentParams) {
+  // 이미 열려 있으면 중복 생성 방지
+  const existing = document.querySelector(
+    `.comment-input-wrapper[data-id="${annotationId}"]`
   );
-  if (!spans.length) return null;
+  if (existing) return;
 
-  let lastRect: DOMRect | null = null;
-
-  spans.forEach(span => {
-    Array.from(span.getClientRects()).forEach(rect => {
-      if (!lastRect || rect.bottom > lastRect.bottom) {
-        lastRect = rect;
-      }
-    });
-  });
-
-  if (!lastRect) return null;
-
-  const rect = lastRect as DOMRect;
-  const containerRect = container.getBoundingClientRect();
-
-  return {
-    top: rect.bottom - containerRect.top + container.scrollTop-2 ,
-    left: rect.left - containerRect.left,
-  };
-};
-
-/* -----------------------------
- * 코멘트 생성
- * ----------------------------- */
-export const applyComment = (
-  activeAnnotation?: ActiveAnnotation | null
-): AnnotationResult | null => {
-  const selection = window.getSelection();
-  const style: React.CSSProperties = { cursor: "pointer" };
-
-  let result: AnnotationResult | null = null;
-  let annotationId: string | null = null;
-
-  // 1️⃣ selection 기반
-  if (selection && selection.toString().trim()) {
-    result = surroundSelection("quote", style);
-    if (result) annotationId = result.id;
-  }
-  // 2️⃣ 기존 annotation 기반
-  else if (activeAnnotation) {
-    const el = document.querySelector(
-      `.annotation[data-id="${activeAnnotation.id}"]`
-    ) as HTMLElement | null;
-
-    if (el) {
-      result = surroundElement(el, "quote", style);
-      if (result) annotationId = result.id;
-    }
-  }
-
-  if (!annotationId) return result;
-
-
-
-  const container = document.querySelector(
-    READING_CONTAINER_SELECTOR
-  ) as HTMLElement | null;
-  if (!container) return result;
-
-  // 이미 열려 있으면 종료
-  if (
-    document.querySelector(
-      `.comment-input-wrapper[data-id="${annotationId}"]`
-    )
-  ) {
-    return result;
-  }
-
-  const position = getLastLinePosition(annotationId);
-  if (!position) return result;
-
-  // textarea overlay
   const wrapper = document.createElement("div");
   wrapper.className = "comment-input-wrapper";
   wrapper.dataset.id = annotationId;
+
   wrapper.style.position = "absolute";
-  wrapper.style.top = `${position.top}px`;
-  wrapper.style.left = `${position.left}px`;
+  wrapper.style.top = `${top}px`;
+  wrapper.style.left = `${left}px`;
   wrapper.style.width = "70%";
   wrapper.style.zIndex = "999";
+  wrapper.style.background = "#fff";
+  wrapper.style.border = "1px solid #ddd";
+  wrapper.style.borderRadius = "6px";
+  wrapper.style.padding = "8px";
+  wrapper.style.boxShadow = "0 2px 8px rgba(0,0,0,0.1)";
+
   wrapper.addEventListener("click", e => e.stopPropagation());
 
   wrapper.innerHTML = `
     <textarea
       class="comment-input"
       placeholder="여기에 코멘트를 입력하세요"
-      style="width:100%; resize:none;"
-    ></textarea>
+      style="
+        width: 100%;
+        resize: none;
+        border: none;
+        outline: none;
+        font-size: 14px;
+      "
+      rows="2"
+    >${initialContent}</textarea>
+
+    <div style="text-align: right; margin-top: 6px;">
+      <button
+        class="comment-save-btn"
+        style="
+          font-size: 12px;
+          padding: 4px 8px;
+          cursor: pointer;
+        "
+      >
+        저장
+      </button>
+    </div>
   `;
 
   container.appendChild(wrapper);
@@ -116,108 +85,68 @@ export const applyComment = (
     ".comment-input"
   ) as HTMLTextAreaElement;
 
+  textarea.focus();
+}
 
-/* ===============================
- * 🔥 25자 초과 → 메모 전환 (최종)
- * =============================== */
-textarea.addEventListener("input", () => {
-  const value = textarea.value;
-  if (value.length <= COMMENT_LIMIT) return;
+/* ==============================
+ * Save Comment
+ * ============================== */
 
-  const quoteEl = document.querySelector(
-    `.annotation.quote[data-id="${annotationId}"]`
-  ) as HTMLElement | null;
-  if (!quoteEl) return;
-
-  // 1️⃣ selection 복구 (applyMemo 필수)
-  const range = document.createRange();
-  range.selectNodeContents(quoteEl);
-
-  const sel = window.getSelection();
-  sel?.removeAllRanges();
-  sel?.addRange(range);
-
-  // 2️⃣ textarea 제거
-  wrapper.remove();
-
-
-  // 3️⃣ 메모 생성 (underline + svg)
-  const memoResult = applyMemo();
-  if (!memoResult) return;
-
-  const memoEl = document.querySelector(
-    `.annotation.memo[data-id="${memoResult.id}"]`
-  ) as HTMLElement | null;
-  if (!memoEl) return;
-
-  // 4️⃣ 입력하던 내용 저장
-  memoEl.dataset.content = value;
-
-  
-
-  // 5️⃣ 메모 위치 계산
-  const position = getLastLinePosition(memoResult.id);
-  if (!position) return;
-
-  // 6️⃣ 🔥 memoPopup 즉시 오픈
-  import("./memoPopup").then(({ showMemoPopup }) => {
-    const container = document.querySelector(
-      READING_CONTAINER_SELECTOR
-    ) as HTMLElement;
-
-    showMemoPopup({
-      container,
-      top: position.top + 6,
-      left: position.left,
-      initialContent: value,
-      onSave: content => {
-        memoEl.dataset.content = content;
-      },
-      onCancel: () => {
-        memoEl.remove();
-      },
-    });
-  });
-});
-
-
-  return result;
-};
-
-/* -----------------------------
- * 코멘트 저장 (DOM 변경 ❌)
- * ----------------------------- */
-export const updateCommentMarker = (
+/**
+ * comment 저장
+ * - 실제 텍스트는 highlight의 dataset에 저장
+ */
+export function updateCommentContent(
   annotationId: string,
   content: string
-) => {
-  const el = document.querySelector(
-    `.annotation[data-id="${annotationId}"]`
+) {
+  const highlightEl = document.querySelector(
+    `.annotation.highlight[data-id="${annotationId}"]`
   ) as HTMLElement | null;
 
-  if (!el) return;
-  el.dataset.content = content;
-};
+  if (!highlightEl) return;
 
-/* -----------------------------
- * 코멘트 삭제
- * ----------------------------- */
-export const removeComment = (commentId: string) => {
+  highlightEl.dataset.comment = content;
+}
+
+/* ==============================
+ * Close / Remove Comment UI
+ * ============================== */
+
+export function closeCommentInput(annotationId: string) {
   document
-    .querySelector(`.comment-input-wrapper[data-id="${commentId}"]`)
+    .querySelector(`.comment-input-wrapper[data-id="${annotationId}"]`)
     ?.remove();
+}
 
+/**
+ * comment 삭제
+ * - highlight는 유지
+ * - comment UI + 데이터만 제거
+ */
+export function removeComment(annotationId: string) {
+  closeCommentInput(annotationId);
 
-
-  const el = document.querySelector(
-    `.annotation.quote[data-id="${commentId}"]`
+  const highlightEl = document.querySelector(
+    `.annotation.highlight[data-id="${annotationId}"]`
   ) as HTMLElement | null;
 
-  if (!el || !el.parentNode) return;
+  if (!highlightEl) return;
 
-  const parent = el.parentNode;
-  const text = document.createTextNode(el.textContent || "");
-  parent.insertBefore(text, el);
-  el.remove();
-  parent.normalize();
-};
+  delete highlightEl.dataset.comment;
+}
+
+/* ==============================
+ * Utility
+ * ============================== */
+
+/**
+ * highlight에 comment가 있는지 확인
+ */
+export function hasComment(annotationId: string): boolean {
+  const el = document.querySelector(
+    `.annotation.highlight[data-id="${annotationId}"]`
+  ) as HTMLElement | null;
+
+  return Boolean(el?.dataset.comment);
+}

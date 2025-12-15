@@ -4,7 +4,7 @@ import CommentSvg from "@/assets/comment.svg?react";
 import MemoSvg from "@/assets/memo.svg?react";
 
 
-import type { AnnotationType } from "../../../utils/annotation.core";
+import type { AnnotationType } from "../../../utils/annotation/annotation.core";
 
 // 기본 버튼 스타일 (삭제 버튼의 기반이 될 수 있도록 정의)
 const BaseButton = styled.button`
