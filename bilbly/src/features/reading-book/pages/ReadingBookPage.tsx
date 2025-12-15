@@ -14,6 +14,7 @@ import ProgressBar from "../components/ProgressBar";
 import ToolBar from "../components/ToolBar";
 import DeleteHighlightModal from "../components/DeleteHighlightModal";
 import DeleteAlertModal from "../components/DeleteAlterModal";
+import { applyMemo } from "../../../utils/memo";
 
 import { createGlobalStyle } from "styled-components";
 import { getBgColor, toBackendColor } from "../../../styles/ColorUtils";
@@ -324,27 +325,23 @@ const handleComment = () => {
 
 
 
-  const handleMemo = () => {
-    if (!containerRef.current || !lastSelectionRangeRef.current) return;
+    const handleMemo = () => {
+    if (!lastSelectionRangeRef.current) return;
 
+    // 🔥 마지막 드래그 selection 복구
     const sel = window.getSelection();
     sel?.removeAllRanges();
     sel?.addRange(lastSelectionRangeRef.current);
 
-    const annotation = createAnnotation(containerRef.current, {
-      type: "memo",
-    });
+    // 🔥 메모 생성 (아이콘 + popup은 memo.ts가 책임짐)
+    applyMemo();
 
-    if (annotation) {
-      setActiveAnnotation({
-        id: annotation.id,
-        type: "memo",
-        annotation,
-      });
-    }
-
+    // UI 정리
+    setActiveAnnotation(null);
     setToolbarPos(null);
-  };
+    setIsDeleteUiActive(false);
+    };
+
 
   const handleDelete = () => {
     if (!containerRef.current || !activeAnnotation) return;
