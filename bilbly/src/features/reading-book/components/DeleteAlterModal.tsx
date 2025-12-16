@@ -1,6 +1,6 @@
 import * as S from "./DeleteAlterModal.styles";
 import NextBtn from "../../../components/NextBtn";
-import type { AnnotationType } from "../../../utils/annotation.core";
+import type { AnnotationType } from "../../../utils/annotation/annotation.core";
 
 type Props = {
     type: AnnotationType;
