@@ -167,13 +167,14 @@ const ReadingBookPage = () => {
       a => a.page === page
     );
 
-    // 🔥 집중모드에서는 "내 annotation만"
+    // 🔥 여기
     if (mode === "focus") {
       annotations = annotations.filter(a => a.isMine);
     }
 
     renderAnnotations(containerRef.current, annotations);
   }, [page, mode]);
+
 
 
 
@@ -261,38 +262,57 @@ const handleAnnotationClick = (e: React.MouseEvent) => {
   const annotation = getAnnotations().find(a => a.id === annotationId);
   if (!annotation) return false;
 
-  // 🔥 위치 계산
   const rect = el.getBoundingClientRect();
   const containerRect = containerRef.current.getBoundingClientRect();
 
-  setCommentAnchorPos({
+  const anchorPos = {
     top:
       rect.bottom -
       containerRect.top +
       containerRef.current.scrollTop +
       8,
     left: rect.left - containerRect.left,
-  });
+  };
 
-  // 🔥 여기서 버튼 띄우는 로직
-  if (mode === "together" && !annotation.isMine) {
+  /* ===============================
+   * 🔥 남의 annotation → 무조건 코멘트 버튼
+   * =============================== */
+  if (!annotation.isMine) {
     setCommentTarget(annotation);
+    setCommentAnchorPos(anchorPos);
     setShowCommentEntry(true);
-    return true;
+
+    // ❌ 툴바 / 삭제 / 선택 상태 전부 제거
+    setToolbarPos(null);
+    setActiveAnnotation(null);
+    setIsDeleteUiActive(false);
+
+    return true; // 🔥 여기서 끝
   }
 
-  // 내 annotation
+  /* ===============================
+   * 🔥 내 annotation → 기존 툴바 로직
+   * =============================== */
+  setToolbarPos({
+    top:
+      rect.top -
+      containerRect.top +
+      containerRef.current.scrollTop -
+      8,
+    left: rect.left - containerRect.left + rect.width / 2,
+  });
+
   setActiveAnnotation({
     id: annotation.id,
     type: annotation.type,
     annotation,
   });
 
-  console.log("mode:", mode);
-console.log("annotation.isMine:", annotation.isMine);
-console.log("showCommentEntry:", showCommentEntry);
+  setIsDeleteUiActive(true);
   return true;
 };
+
+
 
 
 
@@ -335,20 +355,20 @@ const handleComment = () => {
 
   // highlight 생성 (없으면)
   const annotation = createAnnotation(containerRef.current, {
-    type: "highlight",
+    type: "quote",
     page,
   });
 
   if (!annotation) return;
 
-  const highlightEl = document.querySelector(
-    `.annotation.highlight[data-id="${annotation.id}"]`
+  const commentEl = document.querySelector(
+    `.annotation.quote[data-id="${annotation.id}"]`
   ) as HTMLElement | null;
 
-  if (!highlightEl) return;
+  if (!commentEl) return;
 
   // 중복 입력 방지
-  if (highlightEl.querySelector(".inline-comment-input")) return;
+  if (commentEl.querySelector(".inline-comment-input")) return;
 
   // textarea 생성
   const textarea = document.createElement("textarea");
@@ -356,7 +376,7 @@ const handleComment = () => {
   textarea.placeholder = "코멘트를 입력하세요";
   textarea.rows = 1;
 
-  highlightEl.appendChild(textarea);
+  commentEl.appendChild(textarea);
   textarea.focus();
 
   // 높이 자동 조절
@@ -374,24 +394,23 @@ const handleComment = () => {
 
     // annotation 데이터에 저장
     annotation.content = value;
+    if (containerRef.current === null) return;
+
+// ❌ DOM에 span 붙이지 않음
+// ⭕ renderAnnotations가 책임지게 함
+
+  renderAnnotations(containerRef.current, getAnnotations());
 
     // 화면 표시
-    const span = document.createElement("span");
-    span.className = "inline-comment";
-    span.textContent = value;
-    highlightEl.appendChild(span);
+    // const span = document.createElement("span");
+    // span.className = "inline-comment";
+    // span.textContent = value;
+    // commentEl.appendChild(span);
+    
   };
 
   textarea.addEventListener("blur", save);
-  textarea.addEventListener("keydown", e => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      textarea.blur();
-    }
-    if (e.key === "Escape") {
-      textarea.remove();
-    }
-  });
+
 
   setToolbarPos(null);
   setActiveAnnotation(null);
@@ -428,6 +447,9 @@ const handleMemo = () => {
   const handleDelete = () => {
     if (!containerRef.current || !activeAnnotation) return;
 
+    // 🔥 남의 annotation은 삭제 불가
+    if (!activeAnnotation.annotation?.isMine) return;
+
     deleteAnnotation(containerRef.current, activeAnnotation.id);
 
     setActiveAnnotation(null);
@@ -435,6 +457,7 @@ const handleMemo = () => {
     setIsDeleteUiActive(false);
     setShowDeleteModal(false);
   };
+
 
   /* -----------------------------
    * Render
@@ -475,11 +498,16 @@ const handleMemo = () => {
           position={toolbarPos}
           activeAnnotation={activeAnnotation}
           isDeleteUiActive={isDeleteUiActive}
+
+          // 🔥 여기서 판단
+          canDelete={!!activeAnnotation?.annotation?.isMine}
+
           onHighlight={handleHighlight}
           onComment={handleComment}
           onMemo={handleMemo}
           onDeleteClick={() => setShowDeleteModal(true)}
         />
+
 
         <S.ContentBox onClick={handleContentClick}>
           <S.TextWrapper>{pages[page]}</S.TextWrapper>

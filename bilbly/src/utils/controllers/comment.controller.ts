@@ -7,23 +7,19 @@ import {
 import { getTextRangeFromSelection } from "../annotation/selection.adapter";
 import { renderAnnotations } from "../annotation/annotation.renderer";
 
-/* ===============================
- * 내부 상태
- * =============================== */
+
 let annotations: Annotation[] = [];
 
-/* ===============================
- * LocalStorage key
- * =============================== */
+
 const STORAGE_KEY = "reading-annotations";
 
 /* ===============================
  * Annotation 생성 (highlight / quote 전용)
  * =============================== */
-export function createAnnotation(
+export function createComment(
   root: HTMLElement,
   params: {
-    type: "highlight" | "quote";
+    type: "quote" ;
     color?: string;
     content?: string;
     page: number; 
@@ -48,10 +44,10 @@ export function createAnnotation(
 
   annotations = addAnnotation(annotations, annotation);
 
-  // 🔥 항상 전체 재렌더 (memo는 관여 ❌)
+  
   renderAnnotations(root, annotations);
 
-  // ✅ 생성 즉시 저장
+
   persistAnnotations();
 
   return annotation;
@@ -64,7 +60,7 @@ export function deleteAnnotation(root: HTMLElement, id: string) {
   annotations = removeAnnotationById(annotations, id);
   renderAnnotations(root, annotations);
 
-  // ✅ 삭제 즉시 저장
+
   persistAnnotations();
 }
 

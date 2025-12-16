@@ -9,7 +9,7 @@ export function renderAnnotations(
 ) {
   clearAnnotations(root);
 
-  // 🔥 start offset 기준으로 정렬 (겹침 방지)
+
   const sorted = [...annotations].sort(
     (a, b) => a.range.start - b.range.start
   );
@@ -22,7 +22,7 @@ export function renderAnnotations(
 /* ===============================
  * 개별 Annotation 렌더
  * =============================== */
-function renderAnnotation(root: HTMLElement, annotation: Annotation) {
+export function renderAnnotation(root: HTMLElement, annotation: Annotation) {
   const domRange = createDomRange(root, annotation.range);
   if (!domRange) return;
 
@@ -38,8 +38,7 @@ function renderAnnotation(root: HTMLElement, annotation: Annotation) {
   }
 
   /* ---------------------------
-   * Memo / Comment 공통 스타일
-   * → 텍스트도 highlight처럼 감쌈
+   * Memo 스타일
    * --------------------------- */
   if (annotation.type === "memo") {
     span.style.borderBottom = "1px solid #c93b4d";
@@ -47,7 +46,7 @@ function renderAnnotation(root: HTMLElement, annotation: Annotation) {
   }
 
   /* ---------------------------
-   * Range 감싸기 (🔥 핵심)
+   * 🔥 Range 감싸기 (먼저!)
    * --------------------------- */
   try {
     domRange.surroundContents(span);
@@ -56,15 +55,20 @@ function renderAnnotation(root: HTMLElement, annotation: Annotation) {
   }
 
   /* ---------------------------
-   * Comment 인라인 표시
+   * Quote / Memo content 렌더링
+   * (항상 span 안에서!)
    * --------------------------- */
-  if (annotation.content) {
+  if (
+    (annotation.type === "quote" || annotation.type === "memo") &&
+    annotation.content
+  ) {
     const commentEl = document.createElement("span");
     commentEl.className = "inline-comment";
     commentEl.textContent = annotation.content;
     span.appendChild(commentEl);
   }
 }
+
 
 /* ===============================
  * DOM Range 생성
@@ -91,7 +95,20 @@ function findNode(
   offset: number
 ): { node: Node; offset: number } | null {
   let count = 0;
-  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+
+  const walker = document.createTreeWalker(
+    root,
+    NodeFilter.SHOW_TEXT,
+    {
+      acceptNode(node) {
+        // 🔥 inline-comment 내부 텍스트는 전부 제외
+        if (node.parentElement?.closest(".inline-comment")) {
+          return NodeFilter.FILTER_REJECT;
+        }
+        return NodeFilter.FILTER_ACCEPT;
+      },
+    }
+  );
 
   let node: Node | null = walker.nextNode();
   while (node) {
@@ -104,6 +121,7 @@ function findNode(
   }
   return null;
 }
+
 
 /* ===============================
  * 기존 Annotation 제거
