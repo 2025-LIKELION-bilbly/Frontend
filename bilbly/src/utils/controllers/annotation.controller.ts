@@ -10,7 +10,7 @@ import { otherUserAnnotationsMock } from "../mocks/annotation.mock";
 
 
 /**
- * 🔥 전역 annotation 상태
+ * 전역 annotation 상태
  * - 페이지 이동 / 재렌더 시 기준 데이터
  */
 let annotations: Annotation[] = [];
@@ -24,8 +24,8 @@ export function setAnnotations(next: Annotation[]) {
 export function createAnnotation(
   root: HTMLElement,
   params: {
-    type: AnnotationType;          // ✅ highlight | comment | memo
-    page: number;                  // ✅ 페이지 필수
+    type: AnnotationType;          //  highlight | comment | memo
+    page: number;                  // 페이지 필수
     color?: string;                // highlight
     content?: string;              // comment / memo
     groupId?: string;
@@ -43,7 +43,7 @@ const annotation: Annotation = {
     color: params.color,
     content: params.content,
   }),
-  isMine: true, // 🔥 내가 만든 것
+  isMine: true, // 내가 만든 것
 };
 
 
@@ -55,7 +55,6 @@ const annotation: Annotation = {
   annotations = addAnnotation(annotations, annotation);
 
   /**
-   * 🔥 핵심
    * - 항상 전체 annotations 기준으로 렌더
    * - renderer 내부에서 page 필터링
    */

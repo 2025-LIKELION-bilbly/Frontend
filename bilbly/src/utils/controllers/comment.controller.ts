@@ -26,6 +26,7 @@ export function createAnnotation(
     type: "highlight" | "quote";
     color?: string;
     content?: string;
+    page: number; 
     groupId?: string;
   }
 ): Annotation | null {
@@ -36,6 +37,7 @@ export function createAnnotation(
     type: params.type,
     text: result.text,
     range: result.range,
+    page: params.page,  
     color: params.color,
     content: params.content,
   });

@@ -4,6 +4,8 @@ import styled from "styled-components";
 import BackgroundPattern from "../../../assets/background_pattern.png";
 
 export const Container = styled.div`
+  position: relative;
+  overflow: hidden; 
   width: 100%;
   max-width: 393px;
   background-color: #fffcf8;
@@ -37,12 +39,12 @@ export const Container = styled.div`
 /* 입력 중 textarea */
 .inline-comment-input {
   position: absolute;
-  top: 100%;
+  top: 80%;
   left: 0;
 
   width: auto;
-  min-width: 180px;   /* 🔥 기본 가로폭 */
-  max-width: 280px;   /* 🔥 너무 길어지지 않게 */
+  min-width: 180px;   
+  max-width: 280px;  
 
   font-size: 13px;
   line-height: 1.4;
@@ -63,8 +65,8 @@ export const Container = styled.div`
 /* 저장된 코멘트 */
 .inline-comment {
   position: absolute;
-  top: 100%;
-  left: 20%;
+  top: 80%;
+  left: 0;
 
   font-size: 13px;
   line-height: 1.4;

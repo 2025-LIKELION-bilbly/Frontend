@@ -1,29 +1,29 @@
-import { useState } from "react";
 import type { Annotation } from "../../../utils/annotation/annotation.core";
 import CommentInput from "./CommentInput";
 
 interface CommentThreadProps {
   annotation: Annotation;
+  comments: { id: string; content: string; isMine: boolean }[];
   top: number;
   left: number;
   onClose: () => void;
-  onSubmit: (content: string) => void;
+  onAddComment: (comment: {
+    id: string;
+    content: string;
+    isMine: boolean;
+  }) => void;
 }
 
-const THREAD_MAX_HEIGHT = 360; // ⭐ ModeToggle 위까지만
+const THREAD_MAX_HEIGHT = 360;
 
 const CommentThread = ({
   annotation,
+  comments,
   top,
   left,
   onClose,
-  onSubmit,
+  onAddComment,
 }: CommentThreadProps) => {
-  const [comments, setComments] = useState<
-    { id: string; content: string; isMine: boolean }[]
-  >(annotation.comments ?? []);
-
-
   return (
     <div
       style={{
@@ -43,19 +43,17 @@ const CommentThread = ({
       {/* 닫기 */}
       <div
         onClick={onClose}
-        style={{ textAlign: "right", cursor: "pointer"}}
+        style={{ textAlign: "right", cursor: "pointer" }}
       >
         ✕
       </div>
 
-      {/* 드래그된 문장 (고정) */}
+      {/* 🔹 드래그된 문장 */}
       <div
         style={{
           marginBottom: 12,
           fontSize: 14,
           flexShrink: 0,
-
-          /* 2줄 말줄임 처리 */
           display: "-webkit-box",
           WebkitLineClamp: 2,
           WebkitBoxOrient: "vertical",
@@ -63,8 +61,6 @@ const CommentThread = ({
           textOverflow: "ellipsis",
           lineHeight: "1.4em",
           maxHeight: "2.8em",
-
-          /* 아래 구분선 */
           borderBottom: "1px solid #ddd",
           paddingBottom: 8,
         }}
@@ -72,8 +68,7 @@ const CommentThread = ({
         {annotation.text}
       </div>
 
-
-      {/* 댓글 리스트 (스크롤 영역) */}
+      {/* 🔹 댓글 리스트 (스크롤) */}
       <div
         style={{
           flex: 1,
@@ -87,6 +82,7 @@ const CommentThread = ({
             style={{
               padding: "6px 8px",
               fontSize: 14,
+              color: c.isMine ? "#100F0F" : "#555",
             }}
           >
             {c.content}
@@ -94,20 +90,14 @@ const CommentThread = ({
         ))}
       </div>
 
-      {/* 입력 영역 (고정) */}
+      {/* 🔹 입력 */}
       <CommentInput
         onSubmit={content => {
-          const newComment = {
+          onAddComment({
             id: Date.now().toString(),
             content,
             isMine: true,
-          };
-
-          // ✅ 스레드에 즉시 추가
-          setComments(prev => [...prev, newComment]);
-
-          // ✅ API 연동용
-          onSubmit(content);
+          });
         }}
       />
     </div>

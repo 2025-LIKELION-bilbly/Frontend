@@ -28,15 +28,10 @@ import CommentEntryButton from "../components/CommentEntryButton";
 import CommentThread from "../components/CommentThread";
 
 
-import {
-  createAnnotation,
-  deleteAnnotation,
-} from "../../../utils/controllers/annotation.controller";
+import { createAnnotation, deleteAnnotation} from "../../../utils/controllers/annotation.controller";
 
-import type {
-  Annotation,
-  AnnotationType,
-} from "../../../utils/annotation/annotation.core";
+import type { Annotation, AnnotationType } from "../../../utils/annotation/annotation.core";
+import WarningModal from "../components/WarningModel"; 
 
 
 
@@ -80,27 +75,46 @@ const ReadingBookPage = () => {
   const [showUI, setShowUI] = useState(false);
   const [mode, setMode] = useState<Mode>("focus");
 
-  const [toolbarPos, setToolbarPos] =
-    useState<{ top: number; left: number } | null>(null);
+  // 교환독서 처음 시작 시 경고 모달
+  const [showWarning, setShowWarning] = useState(() => {
+    const hideForever = localStorage.getItem("hideReadingWarning") === "true";
 
-  const [activeAnnotation, setActiveAnnotation] =
-    useState<ActiveAnnotation | null>(null);
+    const startedKey = `exchangeReadingStarted_${bookId}`;
+    const hasStarted = localStorage.getItem(startedKey) === "true";
+
+    return hasStarted && !hideForever;
+  });
+
+
+
+  const [toolbarPos, setToolbarPos] = useState<{ top: number; left: number } | null>(null);
+
+  const [activeAnnotation, setActiveAnnotation] = useState<ActiveAnnotation | null>(null);
 
   const [isDeleteUiActive, setIsDeleteUiActive] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [deleteBlockedType, setDeleteBlockedType] =
-    useState<AnnotationType | null>(null);
+  const [deleteBlockedType, setDeleteBlockedType] = useState<AnnotationType | null>(null);
 
   const selectedBgKey = "userMint";
   const cssColor = getBgColor(selectedBgKey);
   const backendColor = toBackendColor(selectedBgKey);
-  const [commentTarget, setCommentTarget] =
-  useState<Annotation | null>(null);
-const [showCommentEntry, setShowCommentEntry] = useState(false);
+  const [commentTarget, setCommentTarget] = useState<Annotation | null>(null);
+  const [showCommentEntry, setShowCommentEntry] = useState(false);
 
 
-const [commentAnchorPos, setCommentAnchorPos] =
-  useState<{ top: number; left: number } | null>(null);
+  // annotationId → 댓글 목록
+  interface ThreadComment {
+    id: string;
+    content: string;
+    isMine: boolean;
+  }
+
+  const [commentMap, setCommentMap] = useState<Record<string, ThreadComment[]>>({});
+
+  const [commentAnchorPos, setCommentAnchorPos] =
+    useState<{ top: number; left: number } | null>(null);
+
+  const threadComments = commentTarget ? commentMap[commentTarget.id] ?? [] : [];
 
 
 
@@ -145,22 +159,21 @@ const [commentAnchorPos, setCommentAnchorPos] =
 
 
 
-  
 
-useLayoutEffect(() => {
-  if (!containerRef.current) return;
+  useLayoutEffect(() => {
+    if (!containerRef.current) return;
 
-  let annotations = getAnnotations().filter(
-    a => a.page === page
-  );
+    let annotations = getAnnotations().filter(
+      a => a.page === page
+    );
 
-  // 🔥 집중모드에서는 "내 annotation만"
-  if (mode === "focus") {
-    annotations = annotations.filter(a => a.isMine);
-  }
+    // 🔥 집중모드에서는 "내 annotation만"
+    if (mode === "focus") {
+      annotations = annotations.filter(a => a.isMine);
+    }
 
-  renderAnnotations(containerRef.current, annotations);
-}, [page, mode]);
+    renderAnnotations(containerRef.current, annotations);
+  }, [page, mode]);
 
 
 
@@ -315,12 +328,12 @@ console.log("showCommentEntry:", showCommentEntry);
 const handleComment = () => {
   if (!containerRef.current || !lastSelectionRangeRef.current) return;
 
-  // 🔥 selection 복구
+  // selection 복구
   const sel = window.getSelection();
   sel?.removeAllRanges();
   sel?.addRange(lastSelectionRangeRef.current);
 
-  // 🔥 highlight 생성 (없으면)
+  // highlight 생성 (없으면)
   const annotation = createAnnotation(containerRef.current, {
     type: "highlight",
     page,
@@ -359,10 +372,10 @@ const handleComment = () => {
     textarea.remove();
     if (!value) return;
 
-    // 🔥 annotation 데이터에 저장
+    // annotation 데이터에 저장
     annotation.content = value;
 
-    // 🔥 화면 표시
+    // 화면 표시
     const span = document.createElement("span");
     span.className = "inline-comment";
     span.textContent = value;
@@ -386,24 +399,22 @@ const handleComment = () => {
 
 
 
-
-
 const handleMemo = () => {
   if (!lastSelectionRangeRef.current) return;
 
   const sel = window.getSelection();
   if (!sel) return;
 
-  // 🔥 기존 selection 완전 초기화
+  // 기존 selection 완전 초기화
   sel.removeAllRanges();
 
-  // 🔥 마지막 드래그 selection 복구
+  // 마지막 드래그 selection 복구
   sel.addRange(lastSelectionRangeRef.current);
 
-  // 🔥 memo 생성 (popup + icon은 memo.ts에서 처리)
+  // memo 생성 (popup + icon은 memo.ts에서 처리)
   const result = applyMemo();
 
-  // ❗ 실패하면 아무 것도 정리하지 않음
+  // 실패하면 아무 것도 정리하지 않음
   if (!result) return;
 
   // UI 정리
@@ -431,17 +442,30 @@ const handleMemo = () => {
   return (
     <>
       <AnnotationStyle />
+
+      {showWarning && (
+        <WarningModal
+          onClose={() => {
+            // 첵 첫 진입 처리 완료
+            localStorage.removeItem(`exchangeReadingStarted_${bookId}`);
+
+            setShowWarning(false);
+          }}
+        />
+      )}
+
       <S.Container
         ref={containerRef}
         className="reading-page-container"
+        style={{ position: "relative" }}
         onMouseUp={handleMouseUp}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
         {showUI && (
           <ReadingHeader
-            title="책 이름"
-            percent={percent}
+            title="책 이름" // 수정
+            percent={percent} // 진행현황
             page={page}
             bookId={bookId ?? ""}
           />
@@ -485,6 +509,43 @@ const handleMemo = () => {
             lineHeight: "30px",
           }}
         />
+
+
+        {/* 다른 사용자 하이라이트 클릭 시 */}
+      {showCommentEntry && commentTarget && commentAnchorPos && (
+        <CommentEntryButton
+          top={commentAnchorPos.top}
+          left={commentAnchorPos.left}
+          onClick={() => setShowCommentEntry(false)}
+        />
+      )}
+
+
+      {!showCommentEntry && commentTarget && commentAnchorPos && (
+        <CommentThread
+          annotation={commentTarget}
+          comments={threadComments} 
+          top={commentAnchorPos.top}
+          left={commentAnchorPos.left}
+          onClose={() => {
+            setCommentTarget(null);
+            setShowCommentEntry(false);
+            setCommentAnchorPos(null);
+          }}
+          onAddComment={newComment => {
+            setCommentMap(prev => ({
+              ...prev,
+              [commentTarget.id]: [
+                ...(prev[commentTarget.id] ?? []),
+                newComment,
+              ],
+            }));
+
+        // 🔥 나중에 여기서 API 연동
+        // createComment(...)
+        }}
+        />
+      )}
       </S.Container>
 
       {showDeleteModal && activeAnnotation && (
@@ -501,39 +562,6 @@ const handleMemo = () => {
           onConfirm={() => setDeleteBlockedType(null)}
         />
       )}
-
-
-      {/* 1️⃣ 다른 사용자 하이라이트 클릭 시 */}
-{showCommentEntry && commentTarget && commentAnchorPos && (
-  <CommentEntryButton
-    top={commentAnchorPos.top}
-    left={commentAnchorPos.left}
-    onClick={() => setShowCommentEntry(false)}
-  />
-)}
-
-{!showCommentEntry && commentTarget && commentAnchorPos && (
-  <CommentThread
-    annotation={commentTarget}
-    top={commentAnchorPos.top}
-    left={commentAnchorPos.left}
-    onClose={() => {
-      setCommentTarget(null);
-      setShowCommentEntry(false);
-      setCommentAnchorPos(null);
-    }}
-    onSubmit={content => {
-      console.log("POST comment", content);
-      // setCommentTarget(null);
-      // setShowCommentEntry(false);
-      // setCommentAnchorPos(null);
-    }}
-  />
-)}
-
-
-
-
     </>
   );
 };

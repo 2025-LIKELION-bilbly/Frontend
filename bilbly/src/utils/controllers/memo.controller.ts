@@ -11,6 +11,7 @@ export function createMemoFromQuote(
 
   const memo = createAnnotation(root, {
     type: "memo",
+    page: quote.page, 
     groupId: quote.groupId,
     content,
   });

@@ -11,7 +11,7 @@
 
 interface OpenCommentParams {
   container: HTMLElement;
-  annotationId: string; // 🔥 highlight id
+  annotationId: string; // highlight id
   top: number;
   left: number;
   initialContent?: string;

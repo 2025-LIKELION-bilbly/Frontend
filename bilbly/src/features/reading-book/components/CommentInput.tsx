@@ -1,10 +1,9 @@
 import { useState } from "react";
+import CommentSubmitButton from "./CommentSubmitButton";
 
 interface CommentInputProps {
   onSubmit: (content: string) => void;
 }
-
-import CommentSubmitButton from "./CommentSubmitButton";
 
 const CommentInput = ({ onSubmit }: CommentInputProps) => {
   const [value, setValue] = useState("");
@@ -16,7 +15,7 @@ const CommentInput = ({ onSubmit }: CommentInputProps) => {
   };
 
   return (
-    <div>
+    <div style={{ flexShrink: 0 }}>
       {/* 입력 영역 */}
       <textarea
         placeholder="코멘트를 입력..."
@@ -43,8 +42,7 @@ const CommentInput = ({ onSubmit }: CommentInputProps) => {
         }}
       />
 
-      {/* 등록 버튼 */}
-    <CommentSubmitButton onClick={handleSubmit} />
+      <CommentSubmitButton onClick={handleSubmit} />
     </div>
   );
 };
