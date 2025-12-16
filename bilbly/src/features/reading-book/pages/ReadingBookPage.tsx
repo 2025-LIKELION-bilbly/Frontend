@@ -17,16 +17,16 @@ import ToolBar from "../components/ToolBar";
 import DeleteHighlightModal from "../components/DeleteHighlightModal";
 import DeleteAlertModal from "../components/DeleteAlterModal";
 import { applyMemo } from "../../../utils/memo";
+import { getTextRangeFromSelection } from "../../../utils/annotation/selection.adapter";
 
 import { createGlobalStyle } from "styled-components";
 import { getBgColor, toBackendColor } from "../../../styles/ColorUtils";
 import { getAnnotations } from "../../../utils/controllers/annotation.controller";
 import { renderAnnotations } from "../../../utils/annotation/annotation.renderer";
 
-
 import CommentEntryButton from "../components/CommentEntryButton";
 import CommentThread from "../components/CommentThread";
-
+import OverlapToTogetherModal from "../components/overlap/OverlapToTogetherModal";
 
 import { createAnnotation, deleteAnnotation} from "../../../utils/controllers/annotation.controller";
 
@@ -74,6 +74,7 @@ const ReadingBookPage = () => {
   const [page, setPage] = useState(0);
   const [showUI, setShowUI] = useState(false);
   const [mode, setMode] = useState<Mode>("focus");
+  
 
   // 교환독서 처음 시작 시 경고 모달
   const [showWarning, setShowWarning] = useState(() => {
@@ -88,9 +89,7 @@ const ReadingBookPage = () => {
 
 
   const [toolbarPos, setToolbarPos] = useState<{ top: number; left: number } | null>(null);
-
   const [activeAnnotation, setActiveAnnotation] = useState<ActiveAnnotation | null>(null);
-
   const [isDeleteUiActive, setIsDeleteUiActive] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteBlockedType, setDeleteBlockedType] = useState<AnnotationType | null>(null);
@@ -101,6 +100,10 @@ const ReadingBookPage = () => {
   const [commentTarget, setCommentTarget] = useState<Annotation | null>(null);
   const [showCommentEntry, setShowCommentEntry] = useState(false);
 
+  const [showOverlapTogether, setShowOverlapTogether] = useState(false);
+
+// 🔥 겹친 annotation이 있는 페이지로 이동하기 위한 상태
+const [overlapTargetPage, setOverlapTargetPage] = useState<number | null>(null);
 
   // annotationId → 댓글 목록
   interface ThreadComment {
@@ -231,6 +234,38 @@ const ReadingBookPage = () => {
 
     const range = sel.getRangeAt(0);
     lastSelectionRangeRef.current = range.cloneRange();
+
+    if (!containerRef.current) return;
+
+// 🔥 selection → text range 변환
+const textRange = getTextRangeFromSelection(containerRef.current);
+if (!textRange) return;
+
+// 🔥 집중 모드 + 다른 사람 annotation과 겹치면
+if (mode === "focus") {
+  const overlaps = getAnnotations().filter(
+    a =>
+      !a.isMine &&
+      a.page === page &&
+      textRange.range.start < a.range.end &&
+      textRange.range.end > a.range.start
+  );
+
+  if (overlaps.length > 0) {
+    // ⭐ 이동할 페이지 저장
+    setOverlapTargetPage(overlaps[0].page);
+
+    // selection / UI 정리
+    sel.removeAllRanges();
+    setToolbarPos(null);
+    setActiveAnnotation(null);
+    setIsDeleteUiActive(false);
+
+    // ⭐ 모달 열기
+    setShowOverlapTogether(true);
+    return; // ⛔ 여기서 끝
+  }
+}
 
     const rects = range.getClientRects();
     if (!rects.length || !containerRef.current) return;
@@ -590,6 +625,25 @@ const handleMemo = () => {
           onConfirm={() => setDeleteBlockedType(null)}
         />
       )}
+
+      {showOverlapTogether && (
+        <OverlapToTogetherModal
+          highlights={[]} // (지금은 UI용이라 비워도 됨)
+          onConfirm={() => {
+            if (overlapTargetPage !== null) {
+              setPage(overlapTargetPage); // 🔥 해당 페이지로 이동
+            }
+            setMode("together");          // 🔥 같이 보기 전환
+            setShowOverlapTogether(false);
+            setOverlapTargetPage(null);
+          }}
+          onCancel={() => {
+            setShowOverlapTogether(false);
+            setOverlapTargetPage(null);
+          }}
+        />
+      )}
+
     </>
   );
 };
