@@ -17,7 +17,7 @@ const generateMockCards = (startIndex: number, count: number): CardData[] => {
     const currentIndex = startIndex + index;
     return {
       id: currentIndex + 1,
-      text: '이 책에 대한 코멘트를\n다같이 공유해봐요',
+      text: '이 책에 대한 코멘트를 다같이 공유해봐요',
       user: `모임원${(currentIndex % 3) + 1}`,
       progress: '-71%',
       isBlurred: currentIndex >= 3, // 4번째 카드부터는 계속 블러 처리
