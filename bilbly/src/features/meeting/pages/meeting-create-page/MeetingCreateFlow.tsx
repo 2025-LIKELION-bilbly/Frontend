@@ -17,6 +17,8 @@ const MeetingCreateFlow = () => {
     const stepNumber = Number(step) || 1;
 
     const [groupName, setGroupName] = useState("");
+    const [readingPeriod, setReadingPeriod] = useState<number>(0);
+
 
     const goNext = () => {
         navigate(`/meeting/create/${stepNumber + 1}`);
@@ -38,7 +40,13 @@ const MeetingCreateFlow = () => {
                 />
             );
         case 2:
-            return <MeetingCreatePeriod onNext={goNext} />;
+            return (
+            <MeetingCreatePeriod
+                readingPeriod={readingPeriod}
+                setReadingPeriod={setReadingPeriod}
+                onNext={goNext}
+            />
+            );
         case 3:
             return <MeetingCreateNickname onNext={goNext} />;
         case 4:
