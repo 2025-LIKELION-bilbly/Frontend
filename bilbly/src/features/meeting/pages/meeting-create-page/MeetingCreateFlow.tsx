@@ -1,16 +1,22 @@
 import { useParams, useNavigate } from "react-router-dom";
-import MeetingCreateName from "./MeetingCreateNamePage";
+import { useState } from "react";
+
+import MeetingCreateGroupName from "./MeetingCreateGroupNamePage";
 import MeetingCreatePeriod from "./MeetingCreatePeriodPage";
 import MeetingCreateNickname from "./MeetingCreateNicknamePage";
 import MeetingCreateColor from "./MeetingCreateColorPage";
 import CodeDisplayPage from "./CodeDisplayPage";
 import SelectBookIntroPage from "./SelectBookIntroPage";
 
+import type { BgKey } from "../../../../styles/ColorUtils";
+
 const MeetingCreateFlow = () => {
     const { step } = useParams();
     const navigate = useNavigate();
 
     const stepNumber = Number(step) || 1;
+
+    const [groupName, setGroupName] = useState("");
 
     const goNext = () => {
         navigate(`/meeting/create/${stepNumber + 1}`);
@@ -24,7 +30,13 @@ const MeetingCreateFlow = () => {
     const renderStep = () => {
         switch (stepNumber) {
         case 1:
-            return <MeetingCreateName onNext={goNext} />;
+            return (
+                <MeetingCreateGroupName
+                    groupName={groupName}
+                    setGroupName={setGroupName}
+                    onNext={goNext}
+                />
+            );
         case 2:
             return <MeetingCreatePeriod onNext={goNext} />;
         case 3:
@@ -36,7 +48,7 @@ const MeetingCreateFlow = () => {
         case 6:
             return <SelectBookIntroPage />;
         default:
-            return <MeetingCreateName onNext={goNext} />;
+            return <MeetingCreateGroupName onNext={goNext} />;
         }
     };
 

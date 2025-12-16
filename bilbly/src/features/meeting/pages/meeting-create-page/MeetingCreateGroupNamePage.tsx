@@ -1,20 +1,28 @@
-import { useState } from "react";
-import * as S from "./MeetingCreateNamePage.styles";
+import * as S from "./MeetingCreateGroupNamePage.styles";
 import NextBtn from "../../../../components/NextBtn";
 
-type MeetingCreateNameProps = {
+
+
+type MeetingCreateGroupNameProps = {
+    groupName: string;
+    setGroupName: (v: string) => void;
     onNext: () => void;
 };
 
-const MeetingCreateName = ({ onNext }: MeetingCreateNameProps) => {
-    const [name, setName] = useState("");
+const MeetingCreateGroupName = ({
+    groupName,
+    setGroupName,
+    onNext,
+}: MeetingCreateGroupNameProps) => {
+    const name = groupName;
 
     const isValid = name.length >= 1 && name.length <= 15;
     const isInvalid = name.length > 0 && !isValid;
+
     const buttonState = name.length === 0 ? "default" : isValid ? "valid" : "invalid";
 
     const handleNext = () => {
-        console.log("meeting-name:", name);  // 삭제 예정: 모임이름 확인용
+        console.log("groupName:", name);  
 
         if (buttonState !== "valid") return;  // 조건 불만족하면 이동 막기
         onNext(); // 만족하면 이동
@@ -34,10 +42,10 @@ const MeetingCreateName = ({ onNext }: MeetingCreateNameProps) => {
                     <S.InputWrapper>
 
                         <S.InputField
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        placeholder="모임이름을 입력해 주세요"
-                        $isInvalid={isInvalid}
+                            value={name}
+                            onChange={(e) => setGroupName(e.target.value)}
+                            placeholder="모임이름을 입력해 주세요"
+                            $isInvalid={isInvalid}
                         />
 
                         <S.Desc $isInvalid={isInvalid}>
@@ -54,4 +62,4 @@ const MeetingCreateName = ({ onNext }: MeetingCreateNameProps) => {
     );
 };
 
-export default MeetingCreateName;
+export default MeetingCreateGroupName;
