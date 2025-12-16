@@ -16,29 +16,27 @@ const MeetingCreateFlow = () => {
 
     const stepNumber = Number(step) || 1;
 
+    /* ✅ 공통 state (여기가 핵심) */
     const [groupName, setGroupName] = useState("");
-    const [readingPeriod, setReadingPeriod] = useState<number>(0);
-
+    const [readingPeriod, setReadingPeriod] = useState(14);
+    const [nickname, setNickname] = useState("");
+    const [color, setColor] = useState<BgKey>("userRose");
 
     const goNext = () => {
         navigate(`/meeting/create/${stepNumber + 1}`);
     };
 
-    // 이전 내용으로
-    // const goPrev = () => {
-    //     navigate(`/meeting/create/${stepNumber - 1}`);
-    // };
-
     const renderStep = () => {
         switch (stepNumber) {
         case 1:
             return (
-                <MeetingCreateGroupName
-                    groupName={groupName}
-                    setGroupName={setGroupName}
-                    onNext={goNext}
-                />
+            <MeetingCreateGroupName
+                groupName={groupName}
+                setGroupName={setGroupName}
+                onNext={goNext}
+            />
             );
+
         case 2:
             return (
             <MeetingCreatePeriod
@@ -47,16 +45,47 @@ const MeetingCreateFlow = () => {
                 onNext={goNext}
             />
             );
+
         case 3:
-            return <MeetingCreateNickname onNext={goNext} />;
+            return (
+            <MeetingCreateNickname
+                nickname={nickname}
+                setNickname={setNickname}
+                onNext={goNext}
+            />
+            );
+
         case 4:
-            return <MeetingCreateColor onNext={goNext} />;
+            return (
+            <MeetingCreateColor
+                color={color}
+                setColor={setColor}
+                onNext={goNext}
+            />
+            );
+
         case 5:
-            return <CodeDisplayPage onNext={goNext} />;
+            return (
+            <CodeDisplayPage
+                groupName={groupName}
+                readingPeriod={readingPeriod}
+                nickname={nickname}
+                color={color}
+                onNext={goNext}
+            />
+            );
+
         case 6:
             return <SelectBookIntroPage />;
+
         default:
-            return <MeetingCreateGroupName onNext={goNext} />;
+            return (
+            <MeetingCreateGroupName
+                groupName={groupName}
+                setGroupName={setGroupName}
+                onNext={goNext}
+            />
+            );
         }
     };
 
