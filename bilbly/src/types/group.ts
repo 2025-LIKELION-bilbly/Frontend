@@ -23,3 +23,17 @@ export interface CreateGroupResponse {
     readingPeriod: number;
     memberId: number;
 }
+
+/* =========================
+ * 초대 코드 검증 응답
+ * ========================= */
+
+export type ValidateInviteCodeResponse = {
+    groupId: number;
+    groupName: string;
+    readingPeriod: number;
+    members: {
+        nickname: string;
+        color: "RED" | "BLUE" | "GREEN" | "YELLOW" | "PURPLE" | "ORANGE" | "PINK" | "CYAN";
+    }[];
+};

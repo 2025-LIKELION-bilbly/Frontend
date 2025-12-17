@@ -32,10 +32,8 @@ import MeetingSelect from './features/meeting/pages/MeetingSelectPage';
 import MeetingCreateFlow from './features/meeting/pages/meeting-create-page/MeetingCreateFlow';
 
 // meeting-join 페이지
-import MeetingJoinCode from './features/meeting/pages/meeting-join-page/MeetingJoinCodePage';
-import MeetingJoinNickname from './features/meeting/pages/meeting-join-page/MeetingJoinNicknamePage';
-import MeetingJoinColor from './features/meeting/pages/meeting-join-page/MeetingJoinColorPage';
-import SelectBookShow from './features/meeting/pages/meeting-join-page/SelectBookShowPage';
+import MeetingJoinFlow from './features/meeting/pages/meeting-join-page/MeetingJoinFlow';
+
 
 // 책 고르기 페이지
 import SelectBookListPage from './features/SelectBookListPage';
@@ -101,10 +99,8 @@ function App() {
           <Route path="/meeting/create/:step" element={<MeetingCreateFlow />} />
 
           {/* 기존 모임 참여하기 경로 */}
-          <Route path="/meeting/join/1" element={<MeetingJoinCode />} />
-          <Route path="/meeting/join/:code/2" element={<MeetingJoinNickname />} />
-          <Route path="/meeting/join/:code/3" element={<MeetingJoinColor />} />
-          <Route path="/meeting/join/:code/selectbookshow" element={<SelectBookShow />} /> 
+          <Route path="/meeting/join/:step" element={<MeetingJoinFlow />} />
+
 
           {/* 책 고르기 경로 */}
           <Route path="/:code/selectbooklist" element={<SelectBookListPage />}/> // 책 선택 - 책 리스트 임시 경로
