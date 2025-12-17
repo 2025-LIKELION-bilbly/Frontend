@@ -1,23 +1,30 @@
-import { useState } from "react";
 import * as S from "./MeetingCreatePeriodPage.styles";
 import NextBtn from "../../../../components/NextBtn";
 
 type MeetingCreatePeriodProps = {
+    readingPeriod: number;
+    setReadingPeriod: (v: number) => void;
     onNext: () => void;
-};
+    };
 
-const MeetingCreatePeriod = ({ onNext }: MeetingCreatePeriodProps) => {
-    const [name, setName] = useState("");
 
-    const period = Number(name);
+const MeetingCreatePeriod = ({ 
+    readingPeriod,
+    setReadingPeriod,
+    onNext, 
+}: MeetingCreatePeriodProps) => {
+    const periodInput = readingPeriod === 0 ? "" : String(readingPeriod);
+
+    const period = Number(periodInput);
 
     const isValid = period >= 7 && period <= 60;
-    const isInvalid = name.length > 0 && !isValid;
-    const buttonState = name.length === 0 ? "default" : isValid ? "valid" : "invalid";
+    const isInvalid = periodInput.length > 0 && !isValid;
+
+    const buttonState = periodInput.length === 0 ? "default" : isValid ? "valid" : "invalid";
 
 
     const handleNext = () => {
-        console.log("period: ", period);
+        console.log("readingPeriod: ", period);
         
         if (buttonState !== "valid") return;  // 조건 불만족하면 이동 막기
         onNext(); // 만족하면 이동
@@ -36,10 +43,13 @@ const MeetingCreatePeriod = ({ onNext }: MeetingCreatePeriodProps) => {
                 <S.MainBox2>
                     <S.InputWrapper>
                         <S.InputField
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        placeholder="기간을 입력해 주세요"
-                        $isInvalid={isInvalid}
+                            value={periodInput}
+                            onChange={(e) => {
+                                const value = Number(e.target.value);
+                                setReadingPeriod(Number.isNaN(value) ? 0 : value);
+                            }}
+                            placeholder="기간을 입력해 주세요"
+                            $isInvalid={isInvalid}
                         />
 
                         <S.Desc $isInvalid={isInvalid}>

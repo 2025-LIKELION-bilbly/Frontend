@@ -1,8 +1,12 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { useState } from 'react'
 import { ThemeProvider } from 'styled-components'; 
 
 import GlobalStyle from './styles/GlobalStyle';
 import { theme } from './styles/theme'; // theme 불러오기
+
+import { useEffect } from "react";
+import { createUser } from "./api/user.api"; // 로컬스토리지-사용자 userid 확보
 
 // 모임 시작전 페이지 (인트로)
 import LandingPage from './features/landing/pages/LandingPage';
@@ -41,9 +45,32 @@ import BottomNavBar from './components/BottomNavBar';
 // 책 읽기 페이지
 import ReadingBookPage from "./features/reading-book/pages/ReadingBookPage";
 
+const ensureUser = async () => {
+  const storedUserId = localStorage.getItem("userId");
+
+  if (!storedUserId) {
+    const res = await createUser();
+    localStorage.setItem("userId", res.userId);
+  }
+};
 
 
 function App() {
+  const [ready, setReady] = useState(false);
+
+
+  useEffect(() => {
+    const init = async () => {
+      await ensureUser();
+      setReady(true);
+    };
+    init();
+  }, []);
+
+  if (!ready) {
+    return null; // 또는 로딩 스피너
+  }
+
   return (
     <ThemeProvider theme={theme}>
       <GlobalStyle />

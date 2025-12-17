@@ -1,16 +1,20 @@
-import { useState } from "react";
 import * as S from "./MeetingCreateNicknamePage.styles";
 import NextBtn from "../../../../components/NextBtn";
 import NicknameInputBox from "../../components/NicknameInputBox";
 
 
 type MeetingCreateNicknameProps = {
+    nickname: string;
+    setNickname: (v: string) => void;
     onNext: () => void;
 };
 
-const MeetingCreateNickname = ({ onNext }: MeetingCreateNicknameProps) => {
-    const [nickname, setName] = useState("");
 
+const MeetingCreateNickname = ({ 
+    nickname,
+    setNickname,
+    onNext
+}: MeetingCreateNicknameProps) => {
     // 특수문자 검사
     const hasSpecialChar = /[~!@#$%";'^,&*()_+|</>=>`?:{[}]/g.test(nickname);
 
@@ -24,7 +28,7 @@ const MeetingCreateNickname = ({ onNext }: MeetingCreateNicknameProps) => {
     const buttonState = nickname.length === 0 ? "default" : isValid ? "valid" : "invalid";
 
     const handleNext = () => {
-        console.log("meeting-nickname: ", nickname)
+        console.log("nickname: ", nickname)
         
         if (buttonState !== "valid") return;  // 조건 불만족하면 이동 막기
         onNext(); // 성공하면 이동
@@ -43,7 +47,7 @@ const MeetingCreateNickname = ({ onNext }: MeetingCreateNicknameProps) => {
                 <S.MainBox2>
                     <NicknameInputBox
                         value={nickname}
-                        onChange={(value) => setName(value)}
+                        onChange={(value) => setNickname(value)}
                         isInvalid={isInvalid}
                     />
                 </S.MainBox2>

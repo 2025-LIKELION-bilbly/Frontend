@@ -1,42 +1,93 @@
 import { useParams, useNavigate } from "react-router-dom";
-import MeetingCreateName from "./MeetingCreateNamePage";
+import { useState } from "react";
+
+import MeetingCreateGroupName from "./MeetingCreateGroupNamePage";
 import MeetingCreatePeriod from "./MeetingCreatePeriodPage";
 import MeetingCreateNickname from "./MeetingCreateNicknamePage";
 import MeetingCreateColor from "./MeetingCreateColorPage";
 import CodeDisplayPage from "./CodeDisplayPage";
 import SelectBookIntroPage from "./SelectBookIntroPage";
 
+import type { BgKey } from "../../../../styles/ColorUtils";
+
 const MeetingCreateFlow = () => {
     const { step } = useParams();
     const navigate = useNavigate();
-
     const stepNumber = Number(step) || 1;
+
+    /* 공통 state  */
+    const [groupName, setGroupName] = useState("");
+    const [readingPeriod, setReadingPeriod] = useState<number>(0);
+    const [nickname, setNickname] = useState("");
+    const [color, setColor] = useState<BgKey | null>(null);
 
     const goNext = () => {
         navigate(`/meeting/create/${stepNumber + 1}`);
     };
 
-    // 이전 내용으로
-    // const goPrev = () => {
-    //     navigate(`/meeting/create/${stepNumber - 1}`);
-    // };
-
     const renderStep = () => {
         switch (stepNumber) {
         case 1:
-            return <MeetingCreateName onNext={goNext} />;
+            return (
+            <MeetingCreateGroupName
+                groupName={groupName}
+                setGroupName={setGroupName}
+                onNext={goNext}
+            />
+            );
+
         case 2:
-            return <MeetingCreatePeriod onNext={goNext} />;
+            return (
+            <MeetingCreatePeriod
+                readingPeriod={readingPeriod}
+                setReadingPeriod={setReadingPeriod}
+                onNext={goNext}
+            />
+            );
+
         case 3:
-            return <MeetingCreateNickname onNext={goNext} />;
+            return (
+            <MeetingCreateNickname
+                nickname={nickname}
+                setNickname={setNickname}
+                onNext={goNext}
+            />
+            );
+
         case 4:
-            return <MeetingCreateColor onNext={goNext} />;
+            return (
+            <MeetingCreateColor
+                color={color}
+                setColor={setColor}
+                onNext={goNext}
+            />
+            );
+
         case 5:
-            return <CodeDisplayPage onNext={goNext} />;
+            if (!color) return null;
+            
+            return (
+            <CodeDisplayPage
+                groupName={groupName}
+                readingPeriod={readingPeriod}
+                nickname={nickname}
+                color={color!}
+                onNext={goNext}
+            />
+            );
+
         case 6:
-            return <SelectBookIntroPage />;
+            return <SelectBookIntroPage readingPeriod={readingPeriod} />;
+
         default:
-            return <MeetingCreateName onNext={goNext} />;
+            return null;
+            // return (
+            // <MeetingCreateGroupName
+            //     groupName={groupName}
+            //     setGroupName={setGroupName}
+            //     onNext={goNext}
+            // />
+            // );
         }
     };
 

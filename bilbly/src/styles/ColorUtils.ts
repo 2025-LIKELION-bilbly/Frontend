@@ -1,15 +1,37 @@
 import { theme } from "../styles/GlobalStyle"; 
 
+
 export const COLOR_OPTIONS = [
     { label: "rose", bgKey: "userRose", textKey: "textRose" },
     { label: "lime", bgKey: "userLime", textKey: "textLime" },
     { label: "blue", bgKey: "userBlue", textKey: "textBlue" },
     { label: "green", bgKey: "userGreen", textKey: "textGreen" },
-    { label: "brown", bgKey: "userBrown", textKey: "textBrown" },
+    { label: "brown", bgKey: "userOrange", textKey: "textOrange" },
     { label: "mint", bgKey: "userMint", textKey: "textMint" },
     { label: "pink", bgKey: "userPink", textKey: "textPink" },
     { label: "violet", bgKey: "userViolet", textKey: "textViolet" },
 ] as const;
+
+
+export type BgKey =
+  | "userRose"
+  | "userLime"
+  | "userBlue"
+  | "userGreen"
+  | "userOrange"
+  | "userMint"
+  | "userPink"
+  | "userViolet";
+
+export type BackendColor =
+  | "RED"
+  | "BLUE"
+  | "GREEN"
+  | "YELLOW"
+  | "PURPLE"
+  | "ORANGE"
+  | "PINK"
+  | "CYAN";
 
 export const getTextColorFromBg = (bgKey: string) => {
     const found = COLOR_OPTIONS.find((opt) => opt.bgKey === bgKey);
@@ -19,19 +41,22 @@ export const getTextColorFromBg = (bgKey: string) => {
     return theme.colors[found.textKey];
 };
 
-export type BgKey = typeof COLOR_OPTIONS[number]["bgKey"];
 
-export const getBgColor = (bgKey: BgKey) => theme.colors[bgKey];
 
-export const BGKEY_TO_BACKEND: Record<BgKey, string> = {
-    userRose: "RED",
-    userBlue: "BLUE",
-    userGreen: "GREEN",
-    userLime: "YELLOW",
-    userViolet: "PURPLE",
-    userBrown: "ORANGE",
-    userPink: "PINK",
-    userMint: "CYAN",
+export const COLOR_TO_BACKEND: Record<BgKey, BackendColor> = {
+  userRose: "RED",
+  userLime: "YELLOW",
+  userBlue: "BLUE",
+  userGreen: "GREEN",
+  userOrange: "ORANGE",
+  userMint: "CYAN",
+  userPink: "PINK",
+  userViolet: "PURPLE",
 };
 
-export const toBackendColor = (bgKey: BgKey) => BGKEY_TO_BACKEND[bgKey];
+export const toBackendColor = (bgKey: BgKey): BackendColor =>
+  COLOR_TO_BACKEND[bgKey];
+
+export const getBgColor = (bgKey: BgKey) => {
+  return theme.colors[bgKey];
+};
