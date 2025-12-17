@@ -13,14 +13,13 @@ import type { BgKey } from "../../../../styles/ColorUtils";
 const MeetingCreateFlow = () => {
     const { step } = useParams();
     const navigate = useNavigate();
-
     const stepNumber = Number(step) || 1;
 
-    /* ✅ 공통 state (여기가 핵심) */
+    /* 공통 state  */
     const [groupName, setGroupName] = useState("");
-    const [readingPeriod, setReadingPeriod] = useState(14);
+    const [readingPeriod, setReadingPeriod] = useState<number>(0);
     const [nickname, setNickname] = useState("");
-    const [color, setColor] = useState<BgKey>("userRose");
+    const [color, setColor] = useState<BgKey | null>(null);
 
     const goNext = () => {
         navigate(`/meeting/create/${stepNumber + 1}`);
@@ -65,12 +64,14 @@ const MeetingCreateFlow = () => {
             );
 
         case 5:
+            if (!color) return null;
+            
             return (
             <CodeDisplayPage
                 groupName={groupName}
                 readingPeriod={readingPeriod}
                 nickname={nickname}
-                color={color}
+                color={color!}
                 onNext={goNext}
             />
             );
@@ -79,13 +80,14 @@ const MeetingCreateFlow = () => {
             return <SelectBookIntroPage />;
 
         default:
-            return (
-            <MeetingCreateGroupName
-                groupName={groupName}
-                setGroupName={setGroupName}
-                onNext={goNext}
-            />
-            );
+            return null;
+            // return (
+            // <MeetingCreateGroupName
+            //     groupName={groupName}
+            //     setGroupName={setGroupName}
+            //     onNext={goNext}
+            // />
+            // );
         }
     };
 

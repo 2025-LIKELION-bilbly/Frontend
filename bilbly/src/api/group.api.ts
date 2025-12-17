@@ -1,10 +1,19 @@
-// src/api/group.api.ts
-import api from "./apiClient";
+import axios from "axios";
 import type { CreateGroupPayload, CreateGroupResponse } from "../types/group";
 
-export async function createGroup(
-    payload: CreateGroupPayload
-): Promise<CreateGroupResponse> {
-    const res = await api.post("/api/v1/groups", payload);
-    return res.data;
-}
+export const createGroup = async (
+  payload: CreateGroupPayload
+): Promise<CreateGroupResponse> => {
+  const userId = localStorage.getItem("userId");
+
+  const res = await axios.post("http://bib-ly.kro.kr/api/v1/groups",
+    payload,
+    {
+      headers: {
+        "X-User-Id": userId, // ⭐ 필수
+      },
+    }
+  );
+
+  return res.data;
+};
