@@ -42,7 +42,7 @@ export const getTextColorFromBg = (bgKey: string) => {
 };
 
 
-
+// 프엔 -> 백
 export const COLOR_TO_BACKEND: Record<BgKey, BackendColor> = {
   userRose: "RED",
   userLime: "YELLOW",
@@ -60,3 +60,19 @@ export const toBackendColor = (bgKey: BgKey): BackendColor =>
 export const getBgColor = (bgKey: BgKey) => {
   return theme.colors[bgKey];
 };
+
+
+// 백 -> 프엔
+export const BACKEND_TO_BG: Record<BackendColor, BgKey> = {
+  RED: "userRose",
+  YELLOW: "userLime",
+  BLUE: "userBlue",
+  GREEN: "userGreen",
+  ORANGE: "userOrange",
+  CYAN: "userMint",
+  PINK: "userPink",
+  PURPLE: "userViolet",
+};
+
+export const backendToBgKey = (color: BackendColor): BgKey =>
+  BACKEND_TO_BG[color];

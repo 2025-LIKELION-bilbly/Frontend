@@ -81,13 +81,6 @@ const MeetingCreateFlow = () => {
 
         default:
             return null;
-            // return (
-            // <MeetingCreateGroupName
-            //     groupName={groupName}
-            //     setGroupName={setGroupName}
-            //     onNext={goNext}
-            // />
-            // );
         }
     };
 

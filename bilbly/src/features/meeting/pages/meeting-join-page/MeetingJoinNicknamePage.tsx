@@ -1,75 +1,125 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import * as S from "./MeetingJoinNicknamePage.styles";
 import NextBtn from "../../../../components/NextBtn";
 import NicknameInputBox from "../../components/NicknameInputBox";
+import type { BgKey } from "../../../../styles/ColorUtils";
+
+/* =====================
+ * Types
+ * ===================== */
+
+type Member = {
+  nickname: string;
+  color: BgKey;
+};
+
+type LocationState = {
+  groupId: number;
+  groupName: string;
+  members: Member[];
+  usedColors: BgKey[];
+};
+
+/* =====================
+ * Component
+ * ===================== */
 
 const MeetingJoinNickname = () => {
-    const { code } = useParams();
-    const navigate = useNavigate();
-    const location = useLocation();
+  const { code } = useParams<{ code: string }>();
+  const navigate = useNavigate();
+  const location = useLocation();
 
-    // 👉 CodePage에서 넘어온 데이터 받기
-    const { members, meetingName} = location.state || {};
+  const {
+    groupId,
+    groupName,
+    members = [],
+    usedColors = [],
+  } = (location.state as LocationState) || {};
 
-    const [nickname, setName] = useState("");
+  const [nickname, setNickname] = useState("");
 
-    // 확인용 console
-    console.log("현재 모임 코드: ", code);
-    // console.log("넘어온 멤버 정보: ", members);
+  /* =====================
+   * 안전 처리: state 없으면 되돌리기
+   * ===================== */
+  useEffect(() => {
+    if (!location.state) {
+      navigate(`/meeting/join/${code}/1`, { replace: true });
+    }
+  }, [location.state, navigate, code]);
 
-    // 특수문자 검사
-    const hasSpecialChar = /[~!@#$%";'^,&*()_+|</>=>`?:{[}]/g.test(nickname);
+  /* =====================
+   * Validation
+   * ===================== */
 
-    // 1~8글자 && 특수문자 X
-    const isValid =
-        nickname.length >= 1 &&
-        nickname.length <= 8 &&
-        !hasSpecialChar;
+  const hasSpecialChar = /[^a-zA-Z0-9가-힣]/g.test(nickname);
+  const isLengthValid = nickname.length >= 1 && nickname.length <= 8;
+  const isDuplicate = members.some((m) => m.nickname === nickname);
 
-    const isInvalid = nickname.length > 0 && !isValid;
-    const buttonState = nickname.length === 0 ? "default" : isValid ? "valid" : "invalid";
+  const isValid =
+    isLengthValid &&
+    !hasSpecialChar &&
+    !isDuplicate;
 
-    const handleNext = () => {
-        console.log("meeting-nickname: ", nickname);
+  const isInvalid = nickname.length > 0 && !isValid;
 
-        if (buttonState !== "valid") return;
+  const buttonState =
+    nickname.length === 0
+      ? "default"
+      : isValid
+      ? "valid"
+      : "invalid";
 
-        navigate(`/meeting/join/${code}/3`, {
-            state: {
-                members,       // 다음 페이지로 다시 전달
-                meetingName,
-                nickname       // 사용자가 입력한 닉네임 전달
-            }
-        });
-    };
+  /* =====================
+   * Next
+   * ===================== */
 
-    return (
-        <S.Container>
-            <S.MainContainer>
-                <S.MainBox1>
-                    <S.StepText>2/3</S.StepText>
+  const handleNext = () => {
+    if (!isValid) return;
 
-                    <S.Title>사용할 닉네임을 설정해 주세요</S.Title>
-                    <S.SubTitle>
-                        모임별로 다르게 지정할 수 있어요<br />한 번 설정하면 바꿀 수 없어요
-                    </S.SubTitle>
-                </S.MainBox1>
+    navigate(`/meeting/join/${code}/3`, {
+      state: {
+        groupId,
+        groupName,
+        members,
+        usedColors,
+        nickname,
+      },
+    });
+  };
 
-                <S.MainBox2>
-                    <NicknameInputBox
-                        value={nickname}
-                        onChange={(value) => setName(value)}
-                        isInvalid={isInvalid}
-                    />
-                </S.MainBox2>
-            </S.MainContainer>
+  return (
+    <S.Container>
+      <S.MainContainer>
+        <S.MainBox1>
+          <S.StepText>2/3</S.StepText>
 
-            <S.BottomArea>
-                <NextBtn label="다음으로" state={buttonState} onClick={handleNext} />
-            </S.BottomArea>
-        </S.Container>
-    );
+          <S.Title>사용할 닉네임을 설정해 주세요</S.Title>
+          <S.SubTitle>
+            모임별로 다르게 지정할 수 있어요
+            <br />
+            한 번 설정하면 바꿀 수 없어요
+          </S.SubTitle>
+        </S.MainBox1>
+
+        <S.MainBox2>
+          <NicknameInputBox
+            value={nickname}
+            onChange={setNickname}
+            isInvalid={isInvalid}
+          />
+        </S.MainBox2>
+      </S.MainContainer>
+
+      <S.BottomArea>
+        <NextBtn
+          label="다음으로"
+          state={buttonState}
+          onClick={handleNext}
+        />
+      </S.BottomArea>
+    </S.Container>
+  );
 };
 
 export default MeetingJoinNickname;
