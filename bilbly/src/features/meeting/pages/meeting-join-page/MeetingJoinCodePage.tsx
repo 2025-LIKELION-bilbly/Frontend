@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import * as S from "./MeetingJoinCodePage.styles";
 import NextBtn from "../../../../components/NextBtn";
 import CodeInput from "../../components/CodeInputBox";
@@ -9,36 +10,16 @@ import JoinFullModal from "../../components/meeting-join/JoinFullModal";
 import { validateInviteCode } from "../../../../api/group.api";
 import { backendToBgKey, type BgKey } from "../../../../styles/ColorUtils";
 
-/* =====================
- * Types
- * ===================== */
-
 type Member = {
   nickname: string;
   color: BgKey;
 };
 
-type Props = {
-  inviteCode: string;
-  setInviteCode: (v: string) => void;
-  setGroupId: (id: number) => void;
-  setGroupName: (name: string) => void;
-  setUsedColors: (colors: BgKey[]) => void;
-  onNext: () => void;
-};
+const MeetingJoinCodePage = () => {
+  const navigate = useNavigate();
 
-/* =====================
- * Component
- * ===================== */
-
-const MeetingJoinCodePage = ({
-  inviteCode,
-  setInviteCode,
-  setGroupId,
-  setGroupName,
-  setUsedColors,
-  onNext,
-}: Props) => {
+  // 🔹 로컬 state
+  const [inviteCode, setInviteCode] = useState("");
   const trimmedCode = inviteCode.replace(/\s/g, "");
   const isValid = trimmedCode.length === 4;
 
@@ -48,11 +29,12 @@ const MeetingJoinCodePage = ({
   const [showFullModal, setShowFullModal] = useState(false);
 
   const [members, setMembers] = useState<Member[]>([]);
-  const [meetingName, setMeetingName] = useState("");
+  const [groupId, setGroupId] = useState<number>(0);
+  
+  const [groupName, setGroupName] = useState("");
 
-  /* =====================
-   * 초대 코드 검증
-   * ===================== */
+
+  // 코드 검증
   const handleNext = async () => {
     if (!isValid || loading) return;
 
@@ -60,10 +42,8 @@ const MeetingJoinCodePage = ({
       setLoading(true);
 
       const res = await validateInviteCode(trimmedCode);
-
       const { groupId, groupName, members: serverMembers } = res;
 
-      // 🔁 backend color → BgKey 변환
       const mappedMembers: Member[] = serverMembers.map((m) => ({
         nickname: m.nickname,
         color: backendToBgKey(m.color),
@@ -71,7 +51,7 @@ const MeetingJoinCodePage = ({
 
       // 🚫 모임 인원 초과
       if (mappedMembers.length >= 8) {
-        setMeetingName(groupName);
+        setGroupName(groupName);
         setMembers(mappedMembers);
         setShowFullModal(true);
         return;
@@ -81,8 +61,6 @@ const MeetingJoinCodePage = ({
       setGroupId(groupId);
       setGroupName(groupName);
       setMembers(mappedMembers);
-      setUsedColors(mappedMembers.map((m) => m.color));
-      setMeetingName(groupName);
       setShowConfirmModal(true);
     } catch {
       setErrorToastVisible(true);
@@ -92,11 +70,19 @@ const MeetingJoinCodePage = ({
   };
 
   /* =====================
-   * 모달에서 참여 확정
+   * 참여 확정
    * ===================== */
   const handleConfirmJoin = () => {
-    setShowConfirmModal(false);
-    onNext();
+    if (!groupId) return;
+
+    navigate(`/meeting/join/${trimmedCode}/2`, {
+      state: {
+        groupId,
+        groupName,
+        members,
+        usedColors: members.map((m) => m.color),
+      },
+    });
   };
 
   return (
@@ -125,7 +111,6 @@ const MeetingJoinCodePage = ({
         </S.BottomArea>
       </S.Container>
 
-      {/* ❌ 코드 오류 */}
       {errorToastVisible && (
         <CodeErrorToast
           duration={1500}
@@ -133,20 +118,18 @@ const MeetingJoinCodePage = ({
         />
       )}
 
-      {/* ✅ 모임 확인 */}
       {showConfirmModal && (
         <JoinConfirmModal
-          meetingName={meetingName}
+          meetingName={groupName}
           members={members}
           onClose={() => setShowConfirmModal(false)}
           onConfirm={handleConfirmJoin}
         />
       )}
 
-      {/* 🚫 모임 인원 초과 */}
       {showFullModal && (
         <JoinFullModal
-          meetingName={meetingName}
+          meetingName={groupName}
           members={members}
           onClose={() => setShowFullModal(false)}
         />

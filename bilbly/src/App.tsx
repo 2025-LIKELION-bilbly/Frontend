@@ -66,7 +66,7 @@ function App() {
   }, []);
 
   if (!ready) {
-    return null; // 또는 로딩 스피너
+    return null; 
   }
 
   return (
@@ -98,8 +98,8 @@ function App() {
           {/* 모임 새로 생성하기 경로 */}
           <Route path="/meeting/create/:step" element={<MeetingCreateFlow />} />
 
-          {/* 기존 모임 참여하기 경로 */}
-          <Route path="/meeting/join/:step" element={<MeetingJoinFlow />} />
+          {/* 기존 모임 참여하기 경로  - 모임 코드 받아야 함*/}
+          <Route path="/meeting/join/:code/:step" element={<MeetingJoinFlow />} />
 
 
           {/* 책 고르기 경로 */}

@@ -1,70 +1,37 @@
-import { useParams, useNavigate } from "react-router-dom";
-import { useState } from "react";
-
+import { useParams, useNavigate} from "react-router-dom";
+import { useEffect } from "react";
 import MeetingJoinCodePage from "./MeetingJoinCodePage";
-import  MeetingJoinColor from "./MeetingJoinNicknamePage";
-import  MeetingJoinNickname from "./MeetingJoinColorPage";
-import SelectBookShowPage from "./SelectBookShowPage"
-
-import type { BgKey } from "../../../../styles/ColorUtils";
+import MeetingJoinNickname from "./MeetingJoinNicknamePage";
+import MeetingJoinColor from "./MeetingJoinColorPage";
+import SelectBookShowPage from "./SelectBookShowPage";
 
 const MeetingJoinFlow = () => {
-    const { step } = useParams();
+
+    const { code, step } = useParams<{ code: string; step: string }>();
     const navigate = useNavigate();
+
     const stepNumber = Number(step) || 1;
 
-    /* 공통 state  */
-    const [inviteCode, setInviteCode] = useState("");
-    const [groupId, setGroupId] = useState<number | null>(null);
-    const [groupName, setGroupName] = useState("");
-    const [nickname, setNickname] = useState("");
-    const [color, setColor] = useState<BgKey | null>(null);
-    const [usedColors, setUsedColors] = useState<string[]>([]);
-
-    const goNext = () => {
-        navigate(`/meeting/join/${stepNumber + 1}`);
-    };
+    useEffect(() => {
+        // 1단계가 아닌데 code가 "_"면 잘못된 접근
+        if (code === "_" && stepNumber > 1) {
+        navigate("/meeting/join/_/1", { replace: true });
+        }
+    }, [code, stepNumber, navigate]);
 
     const renderStep = () => {
         switch (stepNumber) {
-            case 1:
-            return (
-            <MeetingJoinCodePage
-                inviteCode={inviteCode}
-                setInviteCode={setInviteCode}
-                setGroupId={setGroupId}
-                setGroupName={setGroupName}
-                setUsedColors={setUsedColors}
-                onNext={goNext}
-            />
-            );
 
-      /** 2️⃣ 닉네임 입력 */
+            
+        case 1:
+            return <MeetingJoinCodePage />;
+
         case 2:
-            return (
-            <MeetingJoinNickname
-                nickname={nickname}
-                setNickname={setNickname}
-                onNext={goNext}
-            />
-            );
+            return <MeetingJoinNickname />;
 
-      /** 3️⃣ 색상 선택 */
         case 3:
-            if (!groupId) return null;
+            return <MeetingJoinColor />;
 
-            return (
-            <MeetingJoinColor
-                color={color}
-                setColor={setColor}
-                usedColors={usedColors}
-                groupId={groupId}
-                nickname={nickname}
-                onNext={goNext}
-            />
-            );
-
-      /** 4️⃣ 참여 완료 → 책 선택 */
         case 4:
             return <SelectBookShowPage />;
 
