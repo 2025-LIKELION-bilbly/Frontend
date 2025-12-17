@@ -9,7 +9,7 @@ export const theme = {
     userViolet: '#D5C2F0',
     userMint: '#CBEFED',
     userPink: '#FBD7EE',
-    userBrown: '#E6D5C9',
+    userOrange: '#E6D5C9',
 
     textPrimary: '#333333', 
     textWhite: '#FFFFFF',
@@ -19,7 +19,7 @@ export const theme = {
     textGreen: '#347333',
     textMint: '#30706C',
     textPink: '#7E1853',
-    textBrown: '#6E3C16',
+    textOrange: '#6E3C16',
     textLime: '#888F00',
     Strokeprimary: '#100F0F',
 
@@ -56,7 +56,6 @@ export const theme = {
 
     brown100: '#E6D5C9',
     brown200: '#D7B9A1',
-    brown300: '#CA9C79',
     brown400: '#BE7F4F',
 
     green100: '#CDF1CD',

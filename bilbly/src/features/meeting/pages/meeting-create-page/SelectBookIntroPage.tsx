@@ -3,12 +3,16 @@ import { useNavigate } from "react-router-dom";
 import * as S from "./SelectBookIntroPage.styles";
 import NextBtnTwo from "../../../../components/NextBtnTwo";
 
-const IntroPage = () => {
+
+type IntroPageProps = {
+    readingPeriod: number;
+}
+
+const IntroPage = ({ readingPeriod }: IntroPageProps) => {
     const navigate = useNavigate();
 
     const handleLater = () => {
-        // navigate("/main"); // 나중에 고르기 -> main 페이지로 이동
-        navigate("/meeting/join/1"); // 추후 수정: 나중에 고르기 -> 데모에서 코드가 일치할 때 넘어가는 거 확인하는 용도
+        navigate("/main"); 
     };
 
     const handleSelectBook = () => {
@@ -25,12 +29,12 @@ const IntroPage = () => {
                     <S.SubTitle>
                         각자 고른 책을
                         <br />
-                        n일 마다 교환해요
+                        {readingPeriod}일 마다 교환해요
                     </S.SubTitle>
                 </S.MainBox1>
             </S.MainContainer>
 
-            {/* 🔥 여기 NextBtnTwo 사용! */}
+            
             <S.BottomArea>
                 <NextBtnTwo
                     leftLabel="나중에"

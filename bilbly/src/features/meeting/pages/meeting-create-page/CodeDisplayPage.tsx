@@ -27,35 +27,55 @@ const CodeDisplayPage = ({
   const [toastVisible, setToastVisible] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const create = async () => {
-      try {
-        console.log("📤 보내는 payload:", {
-          groupName,
-          readingPeriod,
-          nickname,
-          color: toBackendColor(color),
-        });
+  //const hasCreatedRef = useRef(false);
 
-        const res = await createGroup({
-          groupName,
-          readingPeriod,
-          nickname,
-          color: toBackendColor(color), // ✅ BACKEND ENUM
-        });
+  // 만료일
+  const getExpireDateText = (days: number) => {
+    const now = new Date();
+    const expireDate = new Date(now);
+    expireDate.setDate(now.getDate() + days);
 
-        console.log("📥 응답:", res);
+    const year = expireDate.getFullYear();
+    const month = String(expireDate.getMonth() + 1).padStart(2, "0");
+    const day = String(expireDate.getDate()).padStart(2, "0");
 
-        setInviteCode(res.inviteCode);
-      } catch (e) {
-        console.error("❌ 모임 생성 실패", e);
-      } finally {
-        setLoading(false);
-      }
-    };
+    return `~${year}.${month}.${day}`;
+  };
 
-    create();
-  }, [groupName, readingPeriod, nickname, color]);
+
+
+
+useEffect(() => {
+  if (inviteCode) return; // ⭐ 이미 생성됨 → 절대 다시 호출 안 함
+
+  const create = async () => {
+    try {
+      console.log("보내는 payload:", {
+        groupName,
+        readingPeriod,
+        nickname,
+        color: toBackendColor(color),
+      });
+
+      const res = await createGroup({
+        groupName,
+        readingPeriod,
+        nickname,
+        color: toBackendColor(color),
+      });
+
+      console.log("응답:", res);
+      setInviteCode(res.inviteCode);
+    } catch (e) {
+      console.error("모임 생성 실패", e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  create();
+},  [groupName, readingPeriod, nickname, color, inviteCode]); // ⭐ 이것만!
+
 
   const handleCopy = () => {
     navigator.clipboard.writeText(inviteCode);
@@ -84,9 +104,18 @@ const CodeDisplayPage = ({
             </S.Subtitle>
           </S.MainBox1>
 
-          <S.DateText>7일 후 만료</S.DateText>
+          <S.DateText>{getExpireDateText(readingPeriod)}</S.DateText>
 
-          <CodeInput readOnly value={inviteCode} />
+          {inviteCode && (
+            <CodeInput
+              readOnly
+              value={inviteCode}
+              length={inviteCode.length}
+            />
+          )}
+
+
+
 
           <S.CopyButton onClick={handleCopy}>
             코드 복사하기

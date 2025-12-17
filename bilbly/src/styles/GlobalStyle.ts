@@ -51,7 +51,7 @@ export const theme = {
     userViolet: '#D5C2F0',
     userMint: '#CBEFED',
     userPink: '#FBD7EE',
-    userBrown: '#E6D5C9',
+    userOrange: '#E6D5C9',
 
     textPrimary: '#333333', 
     textWhite: '#FFFFFF',
@@ -61,7 +61,7 @@ export const theme = {
     textGreen: '#347333',
     textMint: '#30706C',
     textPink: '#7E1853',
-    textBrown: '#6E3C16',
+    textOrange: '#6E3C16',
     textLime: '#888F00',
   },
 };

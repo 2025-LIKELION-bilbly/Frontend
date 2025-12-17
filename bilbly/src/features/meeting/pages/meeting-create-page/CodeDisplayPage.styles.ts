@@ -112,3 +112,12 @@ export const BottomArea = styled.div`
     padding-bottom: 24px;
 `;
 
+
+export const InviteCode = styled.div`
+  margin: 16px 0;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 6px;
+  color: #100f0f;
+  z-index: 1;
+`;

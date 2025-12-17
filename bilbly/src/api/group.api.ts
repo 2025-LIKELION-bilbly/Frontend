@@ -15,5 +15,5 @@ export const createGroup = async (
     }
   );
 
-  return res.data;
+  return res.data.data;
 };

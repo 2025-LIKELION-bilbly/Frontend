@@ -6,7 +6,7 @@ export const COLOR_OPTIONS = [
     { label: "lime", bgKey: "userLime", textKey: "textLime" },
     { label: "blue", bgKey: "userBlue", textKey: "textBlue" },
     { label: "green", bgKey: "userGreen", textKey: "textGreen" },
-    { label: "brown", bgKey: "userBrown", textKey: "textBrown" },
+    { label: "brown", bgKey: "userOrange", textKey: "textOrange" },
     { label: "mint", bgKey: "userMint", textKey: "textMint" },
     { label: "pink", bgKey: "userPink", textKey: "textPink" },
     { label: "violet", bgKey: "userViolet", textKey: "textViolet" },
@@ -18,7 +18,7 @@ export type BgKey =
   | "userLime"
   | "userBlue"
   | "userGreen"
-  | "userBrown"
+  | "userOrange"
   | "userMint"
   | "userPink"
   | "userViolet";
@@ -48,7 +48,7 @@ export const COLOR_TO_BACKEND: Record<BgKey, BackendColor> = {
   userLime: "YELLOW",
   userBlue: "BLUE",
   userGreen: "GREEN",
-  userBrown: "ORANGE",
+  userOrange: "ORANGE",
   userMint: "CYAN",
   userPink: "PINK",
   userViolet: "PURPLE",

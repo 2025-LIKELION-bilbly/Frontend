@@ -77,7 +77,7 @@ const MeetingCreateFlow = () => {
             );
 
         case 6:
-            return <SelectBookIntroPage />;
+            return <SelectBookIntroPage readingPeriod={readingPeriod} />;
 
         default:
             return null;

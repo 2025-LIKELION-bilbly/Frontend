@@ -17,7 +17,6 @@ export const Box = styled.div<{
   justify-content: space-around;
 
   background-color: ${({ $bgColor }) => $bgColor};
-  border-radius: 8px;
   cursor: pointer;
 
   opacity: ${({ $disabled }) => ($disabled ? 0.4 : 1)};
