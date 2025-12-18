@@ -58,7 +58,7 @@ export const joinGroup = async (
     }
   );
 
-  // ⭐️ 핵심: data 안의 data
+  // 핵심: data 안의 data
   return res.data.data;
 };
 
@@ -69,7 +69,7 @@ export const validateInviteCode = async (
     `http://bib-ly.kro.kr/api/v1/groups/invite/${inviteCode}`
   );
 
-  // ⭐️ 핵심: 항상 data 안의 data
+  // 핵심: 항상 data 안의 data
   return res.data.data;
 };
 // --------------------------------------------------------

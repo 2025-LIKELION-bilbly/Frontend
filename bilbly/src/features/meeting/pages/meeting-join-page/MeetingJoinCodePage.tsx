@@ -18,7 +18,7 @@ type Member = {
 const MeetingJoinCodePage = () => {
   const navigate = useNavigate();
 
-  // 🔹 로컬 state
+
   const [inviteCode, setInviteCode] = useState("");
   const trimmedCode = inviteCode.replace(/\s/g, "");
   const isValid = trimmedCode.length === 4;
@@ -42,14 +42,16 @@ const MeetingJoinCodePage = () => {
       setLoading(true);
 
       const res = await validateInviteCode(trimmedCode);
+      console.log("📦 validateInviteCode 응답 전체:", res);
       const { groupId, groupName, members: serverMembers } = res;
+      console.log("👥 서버 members (원본):", serverMembers);
 
       const mappedMembers: Member[] = serverMembers.map((m) => ({
         nickname: m.nickname,
         color: backendToBgKey(m.color),
       }));
 
-      // 🚫 모임 인원 초과
+      // 모임 인원 초과
       if (mappedMembers.length >= 8) {
         setGroupName(groupName);
         setMembers(mappedMembers);
@@ -57,7 +59,7 @@ const MeetingJoinCodePage = () => {
         return;
       }
 
-      // ✅ 정상
+      //  정상
       setGroupId(groupId);
       setGroupName(groupName);
       setMembers(mappedMembers);
@@ -73,6 +75,7 @@ const MeetingJoinCodePage = () => {
    * 참여 확정
    * ===================== */
   const handleConfirmJoin = () => {
+    console.log("➡️ 다음 단계로 넘기는 members:", members);
     if (!groupId) return;
 
     navigate(`/meeting/join/${trimmedCode}/2`, {
@@ -118,14 +121,17 @@ const MeetingJoinCodePage = () => {
         />
       )}
 
-      {showConfirmModal && (
-        <JoinConfirmModal
-          meetingName={groupName}
-          members={members}
-          onClose={() => setShowConfirmModal(false)}
-          onConfirm={handleConfirmJoin}
-        />
-      )}
+  {showConfirmModal && (
+    <>
+      {console.log("🪟 모달에 전달되는 members:", members)}
+      <JoinConfirmModal
+        meetingName={groupName}
+        members={members}
+        onClose={() => setShowConfirmModal(false)}
+        onConfirm={handleConfirmJoin}
+      />
+    </>
+  )}
 
       {showFullModal && (
         <JoinFullModal
