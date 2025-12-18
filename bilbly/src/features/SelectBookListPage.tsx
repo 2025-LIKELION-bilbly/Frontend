@@ -14,7 +14,7 @@ const IntroPage = () => {
     };
 
     const handleSelectBook = () => {
-        navigate("/selectbookpage"); // 책 고르기 -> 책 리스트 페이지로 이동
+        navigate("/select-book"); // 책 고르기 -> 책 리스트 페이지로 이동
     };
 
     return (
