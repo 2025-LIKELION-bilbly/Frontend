@@ -94,7 +94,7 @@ const ReadingBookPage = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteBlockedType, setDeleteBlockedType] = useState<AnnotationType | null>(null);
 
-  const selectedBgKey = "userMint";
+  const selectedBgKey = "userRose";
   const cssColor = getBgColor(selectedBgKey);
   const backendColor = toBackendColor(selectedBgKey);
   const [commentTarget, setCommentTarget] = useState<Annotation | null>(null);
@@ -124,9 +124,25 @@ const [overlapTargetPage, setOverlapTargetPage] = useState<number | null>(null);
 
 
   const fullText = useMemo(
-    () => "책 내용이 들어가는 자리 ".repeat(500),
+    () => `
+  About two hours after this occurrence we heard the ground sea, and before
+  night the ice broke and freed our ship. We, however, lay to until the
+  morning, fearing to encounter in the dark those large loose masses which
+  float about after the breaking up of the ice. I profited of this time to
+  rest for a few hours.
+
+  In the morning, however, as soon as it was light, I went upon deck and
+  found all the sailors busy on one side of the vessel, apparently
+  talking to someone in the sea. It was, in fact, a sledge, like that we
+  had seen before, which had drifted towards us in the night on a large
+  fragment of ice. Only one dog remained alive; but there was a human
+  being within it whom the sailors were persuading to enter the vessel.
+  He was not, as the other traveller seemed to be, a savage inhabitant of
+  some undiscovered island, but a European. When I appeared on deck
+  `.repeat(100),
     []
   );
+
 
 
   /* -----------------------------
@@ -522,7 +538,7 @@ const handleMemo = () => {
       >
         {showUI && (
           <ReadingHeader
-            title="책 이름" // 수정
+            title="bilbly" // 수정
             percent={percent} // 진행현황
             page={page}
             bookId={bookId ?? ""}
@@ -628,7 +644,6 @@ const handleMemo = () => {
 
       {showOverlapTogether && (
         <OverlapToTogetherModal
-          highlights={[]} // (지금은 UI용이라 비워도 됨)
           onConfirm={() => {
             if (overlapTargetPage !== null) {
               setPage(overlapTargetPage); // 🔥 해당 페이지로 이동
