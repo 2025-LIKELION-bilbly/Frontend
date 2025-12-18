@@ -46,7 +46,7 @@ const CodeDisplayPage = ({
 
 
 useEffect(() => {
-  if (inviteCode) return; // ⭐ 이미 생성됨 → 절대 다시 호출 안 함
+  if (inviteCode) return; 
 
   const create = async () => {
     try {
