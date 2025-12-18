@@ -117,4 +117,16 @@ export const TextWrapper = styled.div`
   width: 100%;
   user-select: text;
 `;
+export const InlineCommentBlock = styled.div`
+  // sdsd
+`;
 
+export const InlineComment = styled.div`
+  font-size: 13px;
+  color: #b00020;
+  background: #fff5f5;
+  padding: 6px 10px;
+  border-left: 3px solid #b00020;
+  border-radius: 4px;
+  cursor: pointer;
+`;

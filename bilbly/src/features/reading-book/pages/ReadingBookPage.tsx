@@ -10,6 +10,8 @@ import { deleteNote } from "../../../utils/controllers/annotation.controller";
 
 
 
+import CommentInputModal from "../components/CommentInputModal";
+
 import { useParams } from "react-router-dom";
 import * as S from "./ReadingBookPage.styles";
 import ReadingHeader from "../components/ReadingHeader";
@@ -31,7 +33,7 @@ import CommentThread from "../components/CommentThread";
 import OverlapToTogetherModal from "../components/overlap/OverlapToTogetherModal";
 
 import { createHighlight, deleteHighlight } from "../../../utils/controllers/annotation.controller";
-import type { Annotation } from "../../../utils/annotation/annotation.core";
+import type { Annotation, Note } from "../../../utils/annotation/annotation.core";
 
 
 
@@ -73,6 +75,8 @@ const ReadingBookPage = () => {
   const [showUI, setShowUI] = useState(false);
   const [mode, setMode] = useState<Mode>("focus");
 
+  const [showCommentInput, setShowCommentInput] = useState(false);
+  const [editingComment, setEditingComment] = useState<Note | null>(null);
 
   
 
@@ -117,6 +121,7 @@ const ReadingBookPage = () => {
 
 // 겹친 annotation이 있는 페이지로 이동하기 위한 상태
 const [overlapTargetPage, setOverlapTargetPage] = useState<number | null>(null);
+
 
   // annotationId → 댓글 목록
   interface ThreadComment {
@@ -267,7 +272,8 @@ function canDeleteAnnotation(
   };
 
   const handleContentClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (handleNoteIconClick(e.nativeEvent)) return;
+    if (handleInlineCommentClick(e.nativeEvent)) return;
+    if (handleNoteIconClick(e)) return;
     if (handleAnnotationClick(e)) return;
 
     const selection = window.getSelection();
@@ -355,32 +361,121 @@ if (mode === "focus") {
     setIsDeleteUiActive(false);
   };
 
+  const handleInlineCommentClick = (e: MouseEvent) => {
+    const el = (e.target as HTMLElement).closest(
+      ".inline-comment"
+    ) as HTMLElement | null;
 
-const handleNoteIconClick = (e: MouseEvent) => {
-  const icon = (e.target as HTMLElement).closest(
-    ".note-icon"
-  ) as HTMLElement | null;
+    if (!el) return false;
 
-  if (!icon) return false;
+    const commentId = el.dataset.commentId;
 
-  const noteType = icon.dataset.noteType as "comment" | "memo";
-  const annotationId = icon.dataset.annotationId;
-  if (!annotationId || !noteType) return false;
+    const block = el.closest(
+      ".inline-comment-block"
+    ) as HTMLElement | null;
 
-  const annotation = getAnnotations(bookId!).find(
-    a => a.id === annotationId
-  );
-  if (!annotation) return false;
+    const annotationId = block?.dataset.annotationId;
 
-  if (!canDeleteAnnotation(annotation, mode)) {
-    setDeleteBlockedType(noteType);
+
+    if (!commentId || !annotationId) return false;
+
+    const annotation = getAnnotations(bookId!).find(
+      a => a.id === annotationId
+    );
+    if (!annotation) return false;
+
+    const comment = annotation.notes.find(
+      n => n.id === commentId && n.type === "comment"
+    );
+    if (!comment) return false;
+
+    setCommentTarget(annotation);
+    setEditingComment(comment);
+    setShowCommentInput(true);
+
     return true;
-  }
+  };
 
-  setPendingDelete({ annotationId, noteType });
-  setShowDeleteModal(true);
-  return true;
-};
+
+  const handleNoteIconClick = (
+    e: React.MouseEvent<HTMLDivElement>
+  ): boolean => {
+    // 클릭된 아이콘 찾기
+    const icon = (e.target as HTMLElement).closest(
+      ".note-icon"
+    ) as HTMLElement | null;
+
+    const container = containerRef.current;
+
+    // 필수 요소 가드
+    if (!icon || !container) return false;
+
+    const noteType = icon.dataset.noteType as "comment" | "memo" | undefined;
+    const annotationId = icon.dataset.annotationId;
+
+    if (!noteType || !annotationId) return false;
+
+    // 해당 annotation 찾기
+    const annotation = getAnnotations(bookId!).find(
+      a => a.id === annotationId
+    );
+    if (!annotation) return false;
+
+    /* ===============================
+    * 📝 Memo 아이콘 클릭
+    * =============================== */
+    if (noteType === "memo") {
+      const memoNotes = annotation.notes.filter(n => n.type === "memo");
+
+      const span = container.querySelector(
+        `.annotation[data-id="${annotationId}"]`
+      ) as HTMLElement | null;
+      if (!span) return true;
+
+      const rect = span.getBoundingClientRect();
+      const containerRect = container.getBoundingClientRect();
+
+      showMemoPopup({
+        container,
+        top:
+          rect.bottom -
+          containerRect.top +
+          container.scrollTop +
+          6,
+        left: rect.left - containerRect.left,
+        initialContent: memoNotes.map(n => n.content).join("\n"),
+        onSave: value => {
+          // 기존 memo 내용 업데이트
+          annotation.notes = annotation.notes.map(n =>
+            n.type === "memo" ? { ...n, content: value } : n
+          );
+
+          renderAnnotations(
+            container,
+            getAnnotations(bookId!).filter(a => a.page === page)
+          );
+        },
+        onCancel: () => {},
+      });
+
+      return true;
+    }
+
+    /* ===============================
+    * 💬 Comment 아이콘 클릭
+    * =============================== */
+    if (noteType === "comment") {
+      setCommentTarget(annotation);
+      setShowCommentEntry(false);
+      return true;
+    }
+
+    return false;
+  };
+
+
+  
+
 
 
 
@@ -538,21 +633,10 @@ const handleNoteIconClick = (e: MouseEvent) => {
     const highlight = activeAnnotation?.annotation;
     if (!highlight) return;
 
-    highlight.notes.push({
-      id: Date.now().toString(),
-      type: "comment",
-      source: mode === "focus" ? "focus" : "together",
-      content: "",
-      isMine: true,
-      createdAt: Date.now(),
-    });
-
     setCommentTarget(highlight);
-    setShowCommentEntry(true);
-
-    setToolbarPos(null);
-    setActiveAnnotation(null);
+    setShowCommentInput(true);
   };
+
 
 
 
@@ -694,6 +778,28 @@ const handleNoteIconClick = (e: MouseEvent) => {
 
         <S.ContentBox onClick={handleContentClick}>
           <S.TextWrapper>{pages[page]}</S.TextWrapper>
+            {getAnnotations(bookId!)
+            .filter(a => a.page === page)
+            .map(annotation =>
+              annotation.notes
+                .filter(n => n.type === "comment")
+                .map(comment => (
+                  <S.InlineCommentBlock
+                    key={comment.id}
+                    className="inline-comment-block"
+                    data-annotation-id={annotation.id}
+                  >
+                    <S.InlineComment
+                      className="inline-comment"
+                      data-comment-id={comment.id}
+                      data-annotation-id={annotation.id}
+                    >
+                      {comment.content}
+                    </S.InlineComment>
+                  </S.InlineCommentBlock>
+                ))
+            )}
+
         </S.ContentBox>
 
         <S.ToggleWrapper $showUI={showUI}>
@@ -720,6 +826,32 @@ const handleNoteIconClick = (e: MouseEvent) => {
             lineHeight: "30px",
           }}
         />
+
+
+        {/* {showCommentInput && commentTarget && (
+          <CommentInputModal
+            onSubmit={value => {
+              commentTarget.notes.push({
+                id: Date.now().toString(),
+                type: "comment",
+                source: mode,
+                content: value,
+                isMine: true,
+                createdAt: Date.now(),
+              });
+
+              renderAnnotations(
+                containerRef.current!,
+                getAnnotations(bookId!).filter(a => a.page === page)
+              );
+            }}
+            onClose={() => {
+              setShowCommentInput(false);
+              setCommentTarget(null);
+            }}
+          />
+        )} */}
+
 
 
         {/* 다른 사용자 하이라이트 클릭 시 */}
@@ -782,6 +914,40 @@ const handleNoteIconClick = (e: MouseEvent) => {
       )}
 
 
+    {showCommentInput && commentTarget && (
+      <CommentInputModal
+        initialValue={editingComment?.content ?? ""}
+        onSubmit={value => {
+          if (editingComment) {
+            // ✏️ 수정
+            setEditingComment(prev =>
+              prev ? { ...prev, content: value } : prev
+            );
+
+          } else {
+            // ➕ 신규
+            commentTarget.notes.push({
+              id: Date.now().toString(),
+              type: "comment",
+              source: mode,
+              content: value,
+              isMine: true,
+              createdAt: Date.now(),
+            });
+          }
+
+          renderAnnotations(
+            containerRef.current!,
+            getAnnotations(bookId!).filter(a => a.page === page)
+          );
+        }}
+        onClose={() => {
+          setShowCommentInput(false);
+          setEditingComment(null);
+          setCommentTarget(null);
+        }}
+      />
+    )}
 
       {showOverlapTogether && (
         <OverlapToTogetherModal

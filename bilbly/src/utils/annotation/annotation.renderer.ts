@@ -1,9 +1,7 @@
 import type { Annotation } from "./annotation.core";
 
-//import type { Annotation, Note } from "./annotation.core";
-/* ===============================
- * 전체 Annotation 렌더
- * =============================== */
+
+// 전체 렌더
 export function renderAnnotations(
   root: HTMLElement,
   annotations: Annotation[]
@@ -43,29 +41,48 @@ export function renderAnnotation(
     return;
   }
 
+  const comments = annotation.notes.filter(n => n.type === "comment");
+
+  if (comments.length > 0) {
+    const commentBlock = document.createElement("div");
+    commentBlock.className = "inline-comment-block";
+    commentBlock.dataset.annotationId = annotation.id;
+
+    comments.forEach(comment => {
+      const p = document.createElement("p");
+      p.className = "inline-comment";
+      p.dataset.commentId = comment.id;
+      p.textContent = comment.content;
+      commentBlock.appendChild(p);
+    });
+
+    // span 바로 뒤에 삽입
+    span.after(commentBlock);
+  }
+
   /* ---------------------------
    * Note 아이콘 렌더
    * --------------------------- */
   if (annotation.notes.length > 0) {
-    const hasFocusComment = annotation.notes.some(
-      n => n.type === "comment" && n.source === "focus"
-    );
+    // const hasFocusComment = annotation.notes.some(
+    //   n => n.type === "comment" && n.source === "focus"
+    // );
 
-    const hasTogetherComment = annotation.notes.some(
-      n => n.type === "comment" && n.source === "together"
-    );
+    // const hasTogetherComment = annotation.notes.some(
+    //   n => n.type === "comment" && n.source === "together"
+    // );
 
     const hasMemo = annotation.notes.some(n => n.type === "memo");
 
-    if (hasFocusComment || hasTogetherComment) {
-      const commentIcon = document.createElement("span");
-      commentIcon.className = "note-icon comment";
-      commentIcon.dataset.noteType = "comment";
-      commentIcon.dataset.annotationId = annotation.id;
-      commentIcon.dataset.source = hasTogetherComment ? "together" : "focus";
-      commentIcon.textContent = "💬";
-      span.appendChild(commentIcon);
-    }
+    // if (hasFocusComment || hasTogetherComment) {
+    //   const commentIcon = document.createElement("span");
+    //   commentIcon.className = "note-icon comment";
+    //   commentIcon.dataset.noteType = "comment";
+    //   commentIcon.dataset.annotationId = annotation.id;
+    //   commentIcon.dataset.source = hasTogetherComment ? "together" : "focus";
+    //   commentIcon.textContent = "💬";
+    //   span.appendChild(commentIcon);
+    // }
 
     if (hasMemo) {
       const memoIcon = document.createElement("span");
@@ -78,6 +95,9 @@ export function renderAnnotation(
   } // ← annotation.notes.length > 0 닫힘
   } // ← 🔥 renderAnnotation 함수 닫힘
 
+
+
+  
 
 /* ===============================
  * DOM Range 생성
