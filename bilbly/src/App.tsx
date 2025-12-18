@@ -8,7 +8,7 @@ import { theme } from './styles/theme'; // theme 불러오기
 import { useEffect } from "react";
 import { createUser } from "./api/user.api"; // 로컬스토리지-사용자 userid 확보
 
-// 모임 시작전 페이지 (인트로)
+// 모임 시작전 페이지
 import LandingPage from './features/landing/pages/LandingPage';
 // 모임장용 2번째 페이지 (교환독서 시작)
 import StartExchangePage from './features/landing/pages/StartExchangePage';
@@ -50,8 +50,18 @@ const ensureUser = async () => {
   const storedUserId = localStorage.getItem("userId");
 
   if (!storedUserId) {
-    const res = await createUser();
-    localStorage.setItem("userId", res.userId);
+    try {
+      const res = await createUser();
+      localStorage.setItem("userId", res.userId);
+    } catch (error: any) {
+      // 409 에러(이미 존재)가 나면 무시하고 다음 단계로 진행하게 함
+      if (error.response?.status === 409) {
+        console.log("이미 등록된 사용자입니다. 기존 정보를 사용합니다.");
+        // 서버에서 받아온 ID가 있다면 저장, 없다면 로직에 따라 처리
+      } else {
+        console.error("사용자 생성 실패:", error);
+      }
+    }
   }
 };
 
@@ -77,7 +87,7 @@ function App() {
       <GlobalStyle />
       <BrowserRouter>
         <Routes>
-          {/* 기본 경로: 랜딩 페이지 */}
+          {/* 기본 경로: 모임 선택 부분 */}
           <Route path="/" element={<MeetingSelect />} />
           
           {/* 모임장용 페이지 */}
