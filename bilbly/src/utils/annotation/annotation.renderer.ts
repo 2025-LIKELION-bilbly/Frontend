@@ -1,4 +1,8 @@
 import type { Annotation } from "./annotation.core";
+import { showMemoPopup } from "../../utils/memoPopup";
+// import { deleteAnnotation } from "../controllers/annotation.controller";
+
+
 
 /* ===============================
  * 전체 Annotation 렌더
@@ -37,13 +41,6 @@ export function renderAnnotation(root: HTMLElement, annotation: Annotation) {
     span.style.backgroundColor = annotation.color;
   }
 
-  /* ---------------------------
-   * Memo 스타일
-   * --------------------------- */
-  if (annotation.type === "memo") {
-    span.style.borderBottom = "1px solid #c93b4d";
-    span.style.paddingBottom = "2px";
-  }
 
   /* ---------------------------
    * 🔥 Range 감싸기 (먼저!)
@@ -59,7 +56,7 @@ export function renderAnnotation(root: HTMLElement, annotation: Annotation) {
    * (항상 span 안에서!)
    * --------------------------- */
   if (
-    (annotation.type === "quote" || annotation.type === "memo") &&
+    (annotation.type === "quote" ) &&
     annotation.content
   ) {
     const commentEl = document.createElement("span");
@@ -67,6 +64,48 @@ export function renderAnnotation(root: HTMLElement, annotation: Annotation) {
     commentEl.textContent = annotation.content;
     span.appendChild(commentEl);
   }
+
+  /* ---------------------------
+ *  Memo 아이콘 & 팝업 연결
+ * --------------------------- */
+  if (annotation.type === "memo") {
+    const icon = document.createElement("span");
+    icon.className = "memo-icon";
+    icon.textContent = "📝";
+    icon.style.marginLeft = "4px";
+    icon.style.cursor = "pointer";
+
+    icon.addEventListener("click", e => {
+      e.stopPropagation(); 
+
+  const container = document.querySelector(
+    ".reading-page-container"
+  ) as HTMLElement | null;
+
+  if (!container) return;
+
+
+      const rect = span.getBoundingClientRect();
+      const cRect = container.getBoundingClientRect();
+
+      showMemoPopup({
+        container,
+        top: rect.bottom - cRect.top + container.scrollTop + 6,
+        left: rect.left - cRect.left,
+        initialContent: annotation.content ?? "",
+        onSave: value => {
+          annotation.content = value;
+        },
+        onCancel: () => {},
+      });
+    });
+
+    span.appendChild(icon);
+  }
+
+
+
+
 }
 
 
@@ -101,7 +140,7 @@ function findNode(
     NodeFilter.SHOW_TEXT,
     {
       acceptNode(node) {
-        // 🔥 inline-comment 내부 텍스트는 전부 제외
+        // inline-comment 내부 텍스트는 전부 제외
         if (node.parentElement?.closest(".inline-comment")) {
           return NodeFilter.FILTER_REJECT;
         }

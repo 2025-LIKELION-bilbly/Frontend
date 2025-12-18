@@ -16,7 +16,7 @@ import ProgressBar from "../components/ProgressBar";
 import ToolBar from "../components/ToolBar";
 import DeleteHighlightModal from "../components/DeleteHighlightModal";
 import DeleteAlertModal from "../components/DeleteAlterModal";
-import { applyMemo } from "../../../utils/memo";
+
 import { getTextRangeFromSelection } from "../../../utils/annotation/selection.adapter";
 
 import { createGlobalStyle } from "styled-components";
@@ -32,6 +32,9 @@ import { createAnnotation, deleteAnnotation} from "../../../utils/controllers/an
 
 import type { Annotation, AnnotationType } from "../../../utils/annotation/annotation.core";
 import WarningModal from "../components/WarningModel"; 
+
+import { showMemoPopup } from "../../../utils/memoPopup";
+
 
 
 
@@ -86,6 +89,11 @@ const ReadingBookPage = () => {
     return hasStarted && !hideForever;
   });
 
+  // // 🔥 페이지별 메모 저장소
+  // const [memoStore, setMemoStore] = useState<
+  //   Record<number, ReturnType<typeof collectMemos>>
+  // >({});
+
 
 
   const [toolbarPos, setToolbarPos] = useState<{ top: number; left: number } | null>(null);
@@ -102,7 +110,7 @@ const ReadingBookPage = () => {
 
   const [showOverlapTogether, setShowOverlapTogether] = useState(false);
 
-// 🔥 겹친 annotation이 있는 페이지로 이동하기 위한 상태
+// 겹친 annotation이 있는 페이지로 이동하기 위한 상태
 const [overlapTargetPage, setOverlapTargetPage] = useState<number | null>(null);
 
   // annotationId → 댓글 목록
@@ -118,10 +126,6 @@ const [overlapTargetPage, setOverlapTargetPage] = useState<number | null>(null);
     useState<{ top: number; left: number } | null>(null);
 
   const threadComments = commentTarget ? commentMap[commentTarget.id] ?? [] : [];
-
-
-
-
 
   const fullText = useMemo(
     () => "책 내용이 들어가는 자리 ".repeat(500),
@@ -161,22 +165,22 @@ const [overlapTargetPage, setOverlapTargetPage] = useState<number | null>(null);
   }, [fullText]);
 
 
+    useLayoutEffect(() => {
+      if (!containerRef.current) return;
+
+      let annotations = getAnnotations().filter(
+        a => a.page === page
+      );
+
+      // 여기
+      if (mode === "focus") {
+        annotations = annotations.filter(a => a.isMine);
+      }
+
+      renderAnnotations(containerRef.current, annotations);
+    }, [page, mode]);
 
 
-  useLayoutEffect(() => {
-    if (!containerRef.current) return;
-
-    let annotations = getAnnotations().filter(
-      a => a.page === page
-    );
-
-    // 🔥 여기
-    if (mode === "focus") {
-      annotations = annotations.filter(a => a.isMine);
-    }
-
-    renderAnnotations(containerRef.current, annotations);
-  }, [page, mode]);
 
 
 
@@ -198,6 +202,8 @@ const [overlapTargetPage, setOverlapTargetPage] = useState<number | null>(null);
     const diff = e.changedTouches[0].clientX - touchStartX.current;
     if (Math.abs(diff) < 50) return;
 
+
+
     if (diff > 0) setPage(p => Math.max(p - 1, 0));
     else setPage(p => Math.min(p + 1, pages.length - 1));
   };
@@ -213,8 +219,11 @@ const [overlapTargetPage, setOverlapTargetPage] = useState<number | null>(null);
     const ratio = x / rect.width;
 
     if (ratio < 0.25) {
+      // 페이지 이동 - 메모 저장
+
       setPage(p => Math.max(p - 1, 0));
     } else if (ratio > 0.75) {
+
       setPage(p => Math.min(p + 1, pages.length - 1));
     } else {
       setShowUI(prev => !prev);
@@ -237,11 +246,11 @@ const [overlapTargetPage, setOverlapTargetPage] = useState<number | null>(null);
 
     if (!containerRef.current) return;
 
-// 🔥 selection → text range 변환
+// selection → text range 변환
 const textRange = getTextRangeFromSelection(containerRef.current);
 if (!textRange) return;
 
-// 🔥 집중 모드 + 다른 사람 annotation과 겹치면
+// 집중 모드 + 다른 사람 annotation과 겹치면
 if (mode === "focus") {
   const overlaps = getAnnotations().filter(
     a =>
@@ -252,7 +261,7 @@ if (mode === "focus") {
   );
 
   if (overlaps.length > 0) {
-    // ⭐ 이동할 페이지 저장
+    // 이동할 페이지 저장
     setOverlapTargetPage(overlaps[0].page);
 
     // selection / UI 정리
@@ -261,9 +270,9 @@ if (mode === "focus") {
     setActiveAnnotation(null);
     setIsDeleteUiActive(false);
 
-    // ⭐ 모달 열기
+    // 모달 열기
     setShowOverlapTogether(true);
-    return; // ⛔ 여기서 끝
+    return; // 여기서 끝
   }
 }
 
@@ -431,8 +440,8 @@ const handleComment = () => {
     annotation.content = value;
     if (containerRef.current === null) return;
 
-// ❌ DOM에 span 붙이지 않음
-// ⭕ renderAnnotations가 책임지게 함
+// DOM에 span 붙이지 않음
+// renderAnnotations가 책임지게 함
 
   renderAnnotations(containerRef.current, getAnnotations());
 
@@ -453,36 +462,60 @@ const handleComment = () => {
 
 
 
-const handleMemo = () => {
-  if (!lastSelectionRangeRef.current) return;
 
-  const sel = window.getSelection();
-  if (!sel) return;
 
-  // 기존 selection 완전 초기화
-  sel.removeAllRanges();
+  const handleMemo = () => {
+    if (!containerRef.current || !lastSelectionRangeRef.current) return;
 
-  // 마지막 드래그 selection 복구
-  sel.addRange(lastSelectionRangeRef.current);
+    const sel = window.getSelection();
+    sel?.removeAllRanges();
+    sel?.addRange(lastSelectionRangeRef.current);
 
-  // memo 생성 (popup + icon은 memo.ts에서 처리)
-  const result = applyMemo();
+    const annotation = createAnnotation(containerRef.current, {
+      type: "memo",
+      page,
+      content: "",
+    });
 
-  // 실패하면 아무 것도 정리하지 않음
-  if (!result) return;
+    if (!annotation) return;
 
-  // UI 정리
-  setActiveAnnotation(null);
-  setToolbarPos(null);
-  setIsDeleteUiActive(false);
-};
+    // 🔥 위치 계산 (드래그된 텍스트 기준)
+    const range = lastSelectionRangeRef.current;
+    const rect = range.getBoundingClientRect();
+    const containerRect = containerRef.current.getBoundingClientRect();
+
+    showMemoPopup({
+      container: containerRef.current,
+      top: rect.bottom - containerRect.top + containerRef.current.scrollTop + 6,
+      left: rect.left - containerRect.left,
+      initialContent: "",
+      onSave: value => {
+        annotation.content = value;
+
+        renderAnnotations(
+          containerRef.current!,
+          getAnnotations().filter(a => a.page === page)
+        );
+      },
+      onCancel: () => {
+        deleteAnnotation(containerRef.current!, annotation.id);
+      },
+    });
+
+
+    setActiveAnnotation(null);
+    setToolbarPos(null);
+    setIsDeleteUiActive(false);
+  };
+
+
 
 
 
   const handleDelete = () => {
     if (!containerRef.current || !activeAnnotation) return;
 
-    // 🔥 남의 annotation은 삭제 불가
+    // 남의 annotation은 삭제 불가
     if (!activeAnnotation.annotation?.isMine) return;
 
     deleteAnnotation(containerRef.current, activeAnnotation.id);
@@ -575,40 +608,40 @@ const handleMemo = () => {
 
 
         {/* 다른 사용자 하이라이트 클릭 시 */}
-      {showCommentEntry && commentTarget && commentAnchorPos && (
-        <CommentEntryButton
-          top={commentAnchorPos.top}
-          left={commentAnchorPos.left}
-          onClick={() => setShowCommentEntry(false)}
-        />
-      )}
+        {showCommentEntry && commentTarget && commentAnchorPos && (
+          <CommentEntryButton
+            top={commentAnchorPos.top}
+            left={commentAnchorPos.left}
+            onClick={() => setShowCommentEntry(false)}
+          />
+        )}
 
 
-      {!showCommentEntry && commentTarget && commentAnchorPos && (
-        <CommentThread
-          annotation={commentTarget}
-          comments={threadComments} 
-          top={commentAnchorPos.top}
-          left={commentAnchorPos.left}
-          onClose={() => {
-            setCommentTarget(null);
-            setShowCommentEntry(false);
-            setCommentAnchorPos(null);
+        {!showCommentEntry && commentTarget && commentAnchorPos && (
+          <CommentThread
+            annotation={commentTarget}
+            comments={threadComments} 
+            top={commentAnchorPos.top}
+            left={commentAnchorPos.left}
+            onClose={() => {
+              setCommentTarget(null);
+              setShowCommentEntry(false);
+              setCommentAnchorPos(null);
+            }}
+            onAddComment={newComment => {
+              setCommentMap(prev => ({
+                ...prev,
+                [commentTarget.id]: [
+                  ...(prev[commentTarget.id] ?? []),
+                  newComment,
+                ],
+              }));
+
+          // 🔥 나중에 여기서 API 연동
+          // createComment(...)
           }}
-          onAddComment={newComment => {
-            setCommentMap(prev => ({
-              ...prev,
-              [commentTarget.id]: [
-                ...(prev[commentTarget.id] ?? []),
-                newComment,
-              ],
-            }));
-
-        // 🔥 나중에 여기서 API 연동
-        // createComment(...)
-        }}
-        />
-      )}
+          />
+        )}
       </S.Container>
 
       {showDeleteModal && activeAnnotation && (
