@@ -22,6 +22,12 @@ import ExchangePage from './features/exchange/pages/ExchangePage';
 import ExchangeResultPage from './features/exchange/pages/ExchangeResultPage';
 //교환 새로 선택 페이지
 import ExchangeNewStartPage from './features/exchange/pages/ExchangeNewStartPage';
+//책 선택 페이지1
+import SelectBookPage from './features/select-book/pages/SelectBookPage';
+//책 선택 페이지 2
+import SelectBookResultPage from './features/select-book/pages/SelectBookResultPage';
+//책 선택 페이지 마지막
+import ExchangeStatusPage from './features/select-book/pages/ExchangeStatusPage';
 // home-page 홈 페이지
 import HomePage from './features/home/pages/HomePage';
 
@@ -34,9 +40,6 @@ import MeetingCreateFlow from './features/meeting/pages/meeting-create-page/Meet
 // meeting-join 페이지
 import MeetingJoinFlow from './features/meeting/pages/meeting-join-page/MeetingJoinFlow';
 
-
-// 책 고르기 페이지
-import SelectBookListPage from './features/SelectBookListPage';
 import BottomNavBar from './components/BottomNavBar';
 
 
@@ -91,6 +94,13 @@ function App() {
           {/* 교환 새로 선택 페이지 */}
           <Route path="/exchange/new-start" element={<ExchangeNewStartPage />} />
           
+          {/* 새로 추가한 책 고르기 페이지 경로 */}
+          <Route path="/select-book" element={<SelectBookPage />} />
+          {/* 책 고르기 두 번째 */}
+          <Route path="/select-book/result" element={<SelectBookResultPage />} />
+          {/* 책 선택 마지막 페이지 */}
+          <Route path="/exchange/status" element={<ExchangeStatusPage />} />
+
           {/* 홈 페이지 */}
           <Route path="/main" element={<HomePage />} />
           <Route path="/meeting" element={<MeetingSelect />} />
@@ -101,9 +111,6 @@ function App() {
           {/* 기존 모임 참여하기 경로  - 모임 코드 받아야 함*/}
           <Route path="/meeting/join/:code/:step" element={<MeetingJoinFlow />} />
 
-
-          {/* 책 고르기 경로 */}
-          <Route path="/:code/selectbooklist" element={<SelectBookListPage />}/> // 책 선택 - 책 리스트 임시 경로
           
 
           {/* 책 읽기 경로 */}
