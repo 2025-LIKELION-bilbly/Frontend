@@ -31,6 +31,10 @@ export function renderAnnotation(
   span.className = "annotation highlight";
   span.dataset.id = annotation.id;
 
+  const tail = document.createElement("span");
+  tail.className = "annotation-tail";
+
+
   if (annotation.color) {
     span.style.backgroundColor = annotation.color;
   }
@@ -41,24 +45,24 @@ export function renderAnnotation(
     return;
   }
 
-  const comments = annotation.notes.filter(n => n.type === "comment");
+ const comments = annotation.notes.filter(n => n.type === "comment");
 
-  if (comments.length > 0) {
-    const commentBlock = document.createElement("div");
-    commentBlock.className = "inline-comment-block";
-    commentBlock.dataset.annotationId = annotation.id;
+if (comments.length > 0) {
+  const anchor = document.createElement("span");
+  anchor.className = "inline-comment-anchor";
 
-    comments.forEach(comment => {
-      const p = document.createElement("p");
-      p.className = "inline-comment";
-      p.dataset.commentId = comment.id;
-      p.textContent = comment.content;
-      commentBlock.appendChild(p);
-    });
+  comments.forEach(comment => {
+    const el = document.createElement("span");
+    el.className = "inline-comment";
+    el.textContent = comment.content;
+    anchor.appendChild(el);
+  });
 
-    // span 바로 뒤에 삽입
-    span.after(commentBlock);
-  }
+  // 🔥 span 안에 넣는다 (레이아웃 유지)
+  span.appendChild(anchor);
+}
+
+
 
   /* ---------------------------
    * Note 아이콘 렌더

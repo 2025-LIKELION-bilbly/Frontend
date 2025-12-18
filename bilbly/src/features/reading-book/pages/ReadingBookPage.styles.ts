@@ -33,50 +33,29 @@ export const Container = styled.div`
    * =============================== */
 
 .annotation {
-  position: relative;
+  position: relative; /* 기준점 */
 }
 
-/* 입력 중 textarea */
-.inline-comment-input {
+.inline-comment-anchor {
   position: absolute;
-  top: 80%;
-  left: 0;
-
-  width: auto;
-  min-width: 180px;   
-  max-width: 280px;  
-
-  font-size: 13px;
-  line-height: 1.4;
-  color: #b00020;
-
-  background: transparent;
-  border: none;
-  outline: none;
-  resize: none;
-
-  font-family: "Pretendard", sans-serif;
-  z-index: 5;
-  white-space: nowrap;
-  overflow: hidden;
+  top: 60%;      /* ❗ 레이아웃 영향 제거 */
+  pointer-events: auto;
+  left: 20%;
 }
 
-
-/* 저장된 코멘트 */
 .inline-comment {
+  display: inline-block;
+  font-size: 14px;
   position: absolute;
-  top: 80%;
-  left: 0;
-
-  font-size: 13px;
-  line-height: 1.4;
-  color: #b00020;
-
-  font-family: "Pretendard", sans-serif;
-  z-index: 4;
+  color: #444;
   white-space: nowrap;
-  overflow: hidden;
+
+  /* 선택사항 */
+  background: transparent;
 }
+
+
+
 
 `;
 
