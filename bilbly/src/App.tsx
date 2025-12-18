@@ -78,7 +78,7 @@ function App() {
       <BrowserRouter>
         <Routes>
           {/* 기본 경로: 랜딩 페이지 */}
-          <Route path="/" element={<LandingPage />} />
+          <Route path="/" element={<MeetingSelect />} />
           
           {/* 모임장용 페이지 */}
           <Route path="/exchange/start" element={<StartExchangePage />} />

@@ -1,16 +1,19 @@
-// bilbly/src/components/MeetingSelector.tsx
-
+// src/components/MeetingSelector.tsx
 import React from 'react';
 import * as S from './MeetingSelector.styles';
 
-function MeetingSelector() {
+interface MeetingSelectorProps {
+  groupName?: string; // 모임 이름을 받을 수 있게 추가
+}
+
+function MeetingSelector({ groupName }: MeetingSelectorProps) {
   return (
     <S.Container>
       <S.ArrowButton></S.ArrowButton>
       <S.MeetingName>
-        모임 이름이 들어가는 자리
+        {/* 데이터가 있으면 모임 이름을, 없으면 로딩 메시지를 보여줍니다 */}
+        {groupName || "가입된 모임이 없습니다"}
       </S.MeetingName>
-
       <S.ArrowButton></S.ArrowButton>
     </S.Container>
   );
