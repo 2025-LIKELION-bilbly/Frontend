@@ -28,7 +28,7 @@ export const otherUserAnnotationsMock: Annotation[] = [
     text: "전혀 안 겹침",
     page: 0,
     isMine: false,
-    range: { start: 40, end: 50 },
+    range: { start: 70, end: 80 },
     color: "#FFF9C4",
   },
 ];

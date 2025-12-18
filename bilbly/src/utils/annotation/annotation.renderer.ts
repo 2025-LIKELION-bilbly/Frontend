@@ -1,9 +1,6 @@
 import type { Annotation } from "./annotation.core";
-import { showMemoPopup } from "../../utils/memoPopup";
-// import { deleteAnnotation } from "../controllers/annotation.controller";
 
-
-
+//import type { Annotation, Note } from "./annotation.core";
 /* ===============================
  * 전체 Annotation 렌더
  * =============================== */
@@ -12,7 +9,6 @@ export function renderAnnotations(
   annotations: Annotation[]
 ) {
   clearAnnotations(root);
-
 
   const sorted = [...annotations].sort(
     (a, b) => a.range.start - b.range.start
@@ -26,25 +22,21 @@ export function renderAnnotations(
 /* ===============================
  * 개별 Annotation 렌더
  * =============================== */
-export function renderAnnotation(root: HTMLElement, annotation: Annotation) {
+export function renderAnnotation(
+  root: HTMLElement,
+  annotation: Annotation
+) {
   const domRange = createDomRange(root, annotation.range);
   if (!domRange) return;
 
   const span = document.createElement("span");
-  span.classList.add("annotation", annotation.type);
+  span.className = "annotation highlight";
   span.dataset.id = annotation.id;
 
-  /* ---------------------------
-   * Highlight 스타일
-   * --------------------------- */
-  if (annotation.type === "highlight" && annotation.color) {
+  if (annotation.color) {
     span.style.backgroundColor = annotation.color;
   }
 
-
-  /* ---------------------------
-   * 🔥 Range 감싸기 (먼저!)
-   * --------------------------- */
   try {
     domRange.surroundContents(span);
   } catch {
@@ -52,61 +44,39 @@ export function renderAnnotation(root: HTMLElement, annotation: Annotation) {
   }
 
   /* ---------------------------
-   * Quote / Memo content 렌더링
-   * (항상 span 안에서!)
+   * Note 아이콘 렌더
    * --------------------------- */
-  if (
-    (annotation.type === "quote" ) &&
-    annotation.content
-  ) {
-    const commentEl = document.createElement("span");
-    commentEl.className = "inline-comment";
-    commentEl.textContent = annotation.content;
-    span.appendChild(commentEl);
-  }
+  if (annotation.notes.length > 0) {
+    const hasFocusComment = annotation.notes.some(
+      n => n.type === "comment" && n.source === "focus"
+    );
 
-  /* ---------------------------
- *  Memo 아이콘 & 팝업 연결
- * --------------------------- */
-  if (annotation.type === "memo") {
-    const icon = document.createElement("span");
-    icon.className = "memo-icon";
-    icon.textContent = "📝";
-    icon.style.marginLeft = "4px";
-    icon.style.cursor = "pointer";
+    const hasTogetherComment = annotation.notes.some(
+      n => n.type === "comment" && n.source === "together"
+    );
 
-    icon.addEventListener("click", e => {
-      e.stopPropagation(); 
+    const hasMemo = annotation.notes.some(n => n.type === "memo");
 
-  const container = document.querySelector(
-    ".reading-page-container"
-  ) as HTMLElement | null;
+    if (hasFocusComment || hasTogetherComment) {
+      const commentIcon = document.createElement("span");
+      commentIcon.className = "note-icon comment";
+      commentIcon.dataset.noteType = "comment";
+      commentIcon.dataset.annotationId = annotation.id;
+      commentIcon.dataset.source = hasTogetherComment ? "together" : "focus";
+      commentIcon.textContent = "💬";
+      span.appendChild(commentIcon);
+    }
 
-  if (!container) return;
-
-
-      const rect = span.getBoundingClientRect();
-      const cRect = container.getBoundingClientRect();
-
-      showMemoPopup({
-        container,
-        top: rect.bottom - cRect.top + container.scrollTop + 6,
-        left: rect.left - cRect.left,
-        initialContent: annotation.content ?? "",
-        onSave: value => {
-          annotation.content = value;
-        },
-        onCancel: () => {},
-      });
-    });
-
-    span.appendChild(icon);
-  }
-
-
-
-
-}
+    if (hasMemo) {
+      const memoIcon = document.createElement("span");
+      memoIcon.className = "note-icon memo";
+      memoIcon.dataset.noteType = "memo";
+      memoIcon.dataset.annotationId = annotation.id;
+      memoIcon.textContent = "📝";
+      span.appendChild(memoIcon);
+    }
+  } // ← annotation.notes.length > 0 닫힘
+  } // ← 🔥 renderAnnotation 함수 닫힘
 
 
 /* ===============================
@@ -140,7 +110,6 @@ function findNode(
     NodeFilter.SHOW_TEXT,
     {
       acceptNode(node) {
-        // inline-comment 내부 텍스트는 전부 제외
         if (node.parentElement?.closest(".inline-comment")) {
           return NodeFilter.FILTER_REJECT;
         }
@@ -160,7 +129,6 @@ function findNode(
   }
   return null;
 }
-
 
 /* ===============================
  * 기존 Annotation 제거

@@ -1,6 +1,8 @@
-import type { Annotation, AnnotationType } from "../annotation/annotation.core";
+// utils/controllers/annotation.controller.ts
+
+import type { Annotation } from "../annotation/annotation.core";
 import {
-  createAnnotationFromSelection,
+  createHighlightFromSelection,
   addAnnotation,
   removeAnnotationById,
 } from "../annotation/annotation.core";
@@ -8,72 +10,92 @@ import { getTextRangeFromSelection } from "../annotation/selection.adapter";
 import { renderAnnotations } from "../annotation/annotation.renderer";
 import { otherUserAnnotationsMock } from "../mocks/annotation.mock";
 
-
-/**
- * 전역 annotation 상태
- * - 페이지 이동 / 재렌더 시 기준 데이터
- */
-let annotations: Annotation[] = [];
-export function setAnnotations(next: Annotation[]) {
-  annotations = next;
-}
 /* ===============================
- * Annotation 생성
- * (highlight / comment / memo 공통)
+ * In-memory store
  * =============================== */
-export function createAnnotation(
+
+let annotations: Annotation[] = [];
+
+/* ===============================
+ * Highlight 생성
+ * =============================== */
+export function createHighlight(
   root: HTMLElement,
   params: {
-    type: AnnotationType;          //  highlight | comment | memo
-    page: number;                  // 페이지 필수
-    color?: string;                // highlight
-    content?: string;              // comment / memo
-    groupId?: string;
+    page: number;
+    bookId: string;
+    color?: string;
   }
 ): Annotation | null {
   const result = getTextRangeFromSelection(root);
   if (!result) return null;
 
-const annotation: Annotation = {
-  ...createAnnotationFromSelection({
-    type: params.type,
+  const annotation = createHighlightFromSelection({
     text: result.text,
     range: result.range,
     page: params.page,
+    bookId: params.bookId,
     color: params.color,
-    content: params.content,
-  }),
-  isMine: true, // 내가 만든 것
-};
-
-
-
-  if (params.groupId) {
-    annotation.groupId = params.groupId;
-  }
+  });
 
   annotations = addAnnotation(annotations, annotation);
 
-  /**
-   * - 항상 전체 annotations 기준으로 렌더
-   * - renderer 내부에서 page 필터링
-   */
-  renderAnnotations(root, annotations);
+  // ✅ 현재 책 기준으로만 렌더
+  renderAnnotations(
+    root,
+    annotations.filter(a => a.bookId === params.bookId)
+  );
 
   return annotation;
 }
 
 /* ===============================
- * Annotation 삭제
+ * Highlight 삭제
  * =============================== */
-export function deleteAnnotation(root: HTMLElement, id: string) {
-  annotations = removeAnnotationById(annotations, id);
-  renderAnnotations(root, annotations);
+export function deleteHighlight(
+  root: HTMLElement,
+  annotationId: string,
+  bookId: string
+) {
+  annotations = removeAnnotationById(annotations, annotationId);
+
+  renderAnnotations(
+    root,
+    annotations.filter(a => a.bookId === bookId)
+  );
+}
+
+export function deleteNote(
+  annotationId: string,
+  noteType: "comment" | "memo"
+) {
+  const annotation = annotations.find(a => a.id === annotationId);
+  if (!annotation) return;
+
+  annotation.notes = annotation.notes.filter(
+    n => n.type !== noteType
+  );
+}
+
+export function hasTogetherNotes(annotation: Annotation): boolean {
+  return annotation.notes.some(
+    note => note.source === "together"
+  );
 }
 
 /* ===============================
  * 조회
  * =============================== */
-export function getAnnotations() {
-  return [...annotations, ...otherUserAnnotationsMock];
+export function getAnnotations(bookId: string): Annotation[] {
+  return [
+    ...annotations.filter(a => a.bookId === bookId),
+    ...otherUserAnnotationsMock.filter(a => a.bookId === bookId),
+  ];
+}
+
+/* ===============================
+ * (선택) 내부 접근용
+ * =============================== */
+export function getMyAnnotations(bookId: string): Annotation[] {
+  return annotations.filter(a => a.bookId === bookId);
 }

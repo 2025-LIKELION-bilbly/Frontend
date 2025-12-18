@@ -1,7 +1,6 @@
 // 책 고르기 -> 책 리스트 예시 파일// Step4ColorPage.tsx
 // ✨ 임시로 SelectBookIntroPage와 동일하게 세팅함 (추후에 수정 예정)
 
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import * as S from "./meeting/pages/meeting-create-page/SelectBookIntroPage.styles";
 import NextBtnTwo from "../components/NextBtnTwo";

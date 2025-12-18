@@ -1,28 +1,39 @@
-export type AnnotationType = "highlight" | "quote" | "memo";
+/* ==============================
+ * Types
+ * ============================== */
+
+export type AnnotationType = "highlight";
+
+export type NoteType = "comment" | "memo";
+export type NoteSource = "focus" | "together";
+
+export interface Note {
+  id: string;
+  type: NoteType;       // comment | memo
+  source: NoteSource;   // focus | together
+  content: string;
+  isMine: boolean;
+  createdAt: number;
+}
 
 export interface TextRange {
-  start: number; // document 기준 offset
+  start: number;
   end: number;
 }
 
 export interface Annotation {
   id: string;
-  type: AnnotationType;
+  type: "highlight";
   isMine: boolean;
-  range: {
-    start: number;
-    end: number;
-  };
+
+  range: TextRange;
   text: string;
-  page: number;  
-
+  page: number;
+  bookId: string;
   color?: string;
-  content?: string; // quote / memo 내용
-  groupId?: string; // 연결용 (ex. highlight ↔ quote)
-  parentId?: string;
-  comments?: Comment[];
-}
 
+  notes: Note[];        // 🔥 comment + memo 전부 여기
+}
 
 /* ==============================
  * Internal helpers
@@ -32,55 +43,33 @@ const generateUniqueId = () =>
   Date.now().toString(36) + Math.random().toString(36).slice(2);
 
 /* ==============================
- * Factory functions (순수)
+ * Factory
  * ============================== */
 
-/**
- * Selection으로부터 Annotation 데이터를 생성
- * ⚠️ DOM 변경 없음
- */
-export function createAnnotationFromSelection(
-  params: {
-    type: AnnotationType;
-    text: string;
-    range: TextRange;
-    page: number; 
-    color?: string;
-    content?: string;
-  }
-): Annotation {
-  const id = `${params.type[0]}-${generateUniqueId()}`;
-
+export function createHighlightFromSelection(params: {
+  text: string;
+  range: TextRange;
+  page: number;
+  bookId: string;
+  color?: string;
+}): Annotation {
   return {
-    id,
-    type: params.type,
-    isMine: true, 
+    id: generateUniqueId(), // 나중에 서버 id로 교체
+    type: "highlight",
+    isMine: true,
     text: params.text,
     range: params.range,
-    page: params.page,  
+    page: params.page,
+    bookId: params.bookId,
     color: params.color,
-    content: params.content,
-    groupId: id,
+    notes: [],              // 🔥 여기로 통일
   };
 }
 
 /* ==============================
- * State utilities
+ * State utils
  * ============================== */
 
-/**
- * Annotation 삭제 시 range 병합 등에 사용 가능
- */
-export function removeAnnotationById(
-  annotations: Annotation[],
-  id: string
-): Annotation[] {
-  return annotations.filter(a => a.id !== id);
-}
-
-/**
- * Annotation 추가
- */
 export function addAnnotation(
   annotations: Annotation[],
   next: Annotation
@@ -88,14 +77,11 @@ export function addAnnotation(
   return [...annotations, next];
 }
 
-/**
- * 특정 groupId 기준으로 묶기
- */
-export function getAnnotationsByGroup(
+export function removeAnnotationById(
   annotations: Annotation[],
-  groupId: string
+  id: string
 ): Annotation[] {
-  return annotations.filter(a => a.groupId === groupId);
+  return annotations.filter(a => a.id !== id);
 }
 
 /* ==============================
@@ -104,26 +90,4 @@ export function getAnnotationsByGroup(
 
 export function isValidRange(range: TextRange): boolean {
   return range.start >= 0 && range.end > range.start;
-}
-
-
-
-export interface Comment {
-  id: string;
-  content: string;
-  isMine: boolean;
-}
-
-export interface Annotation {
-  id: string;
-  type: AnnotationType;
-  isMine: boolean;
-  range: {
-    start: number;
-    end: number;
-  };
-  text: string;
-  page: number;
-  color?: string;
-  comments?: Comment[]; // ✅ 추가
 }

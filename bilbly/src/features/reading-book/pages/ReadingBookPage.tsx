@@ -6,7 +6,9 @@ import {
   useMemo,
   useRef,
 } from "react";
-// import { createComment } from "../../../api/comment.api";
+import { deleteNote } from "../../../utils/controllers/annotation.controller";
+
+
 
 import { useParams } from "react-router-dom";
 import * as S from "./ReadingBookPage.styles";
@@ -14,12 +16,12 @@ import ReadingHeader from "../components/ReadingHeader";
 import ModeToggle from "../components/ModeToggle";
 import ProgressBar from "../components/ProgressBar";
 import ToolBar from "../components/ToolBar";
-import DeleteHighlightModal from "../components/DeleteHighlightModal";
+import DeleteConfirmModal from "../components/DeleteConfirmModal";
 import DeleteAlertModal from "../components/DeleteAlterModal";
 
 import { getTextRangeFromSelection } from "../../../utils/annotation/selection.adapter";
 
-import { createGlobalStyle } from "styled-components";
+// import { createGlobalStyle } from "styled-components";
 import { getBgColor, toBackendColor } from "../../../styles/ColorUtils";
 import { getAnnotations } from "../../../utils/controllers/annotation.controller";
 import { renderAnnotations } from "../../../utils/annotation/annotation.renderer";
@@ -28,9 +30,11 @@ import CommentEntryButton from "../components/CommentEntryButton";
 import CommentThread from "../components/CommentThread";
 import OverlapToTogetherModal from "../components/overlap/OverlapToTogetherModal";
 
-import { createAnnotation, deleteAnnotation} from "../../../utils/controllers/annotation.controller";
+import { createHighlight, deleteHighlight } from "../../../utils/controllers/annotation.controller";
+import type { Annotation } from "../../../utils/annotation/annotation.core";
 
-import type { Annotation, AnnotationType } from "../../../utils/annotation/annotation.core";
+
+
 import WarningModal from "../components/WarningModel"; 
 
 import { showMemoPopup } from "../../../utils/memoPopup";
@@ -38,33 +42,24 @@ import { showMemoPopup } from "../../../utils/memoPopup";
 
 
 
-export const AnnotationStyle = createGlobalStyle`
-  .annotation.memo {
-    position: relative;
-    border-bottom: 1px solid #c93b4d;
-    padding-bottom: 2px;
-  }
-  .annotation.memo .memo-icon {
-    position: absolute;
-    bottom: -2px;
-    width: 12px;
-    height: 12px;
-    cursor: pointer;
-  }
-`;
+
 
 type Mode = "focus" | "together";
+// type DeleteTargetType = "highlight" | "comment" | "memo";
+
 
 interface ActiveAnnotation {
   id: string;
-  type: AnnotationType;
-  annotation?: Annotation;
+  annotation: Annotation;
 }
+
 
 const MAX_HEIGHT = 599;
 
 const ReadingBookPage = () => {
   const { bookId } = useParams<{ bookId: string }>();
+
+
 
   const containerRef = useRef<HTMLDivElement>(null);
   const measureRef = useRef<HTMLDivElement>(null);
@@ -77,6 +72,8 @@ const ReadingBookPage = () => {
   const [page, setPage] = useState(0);
   const [showUI, setShowUI] = useState(false);
   const [mode, setMode] = useState<Mode>("focus");
+
+
   
 
   // 교환독서 처음 시작 시 경고 모달
@@ -100,7 +97,15 @@ const ReadingBookPage = () => {
   const [activeAnnotation, setActiveAnnotation] = useState<ActiveAnnotation | null>(null);
   const [isDeleteUiActive, setIsDeleteUiActive] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [deleteBlockedType, setDeleteBlockedType] = useState<AnnotationType | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<{
+    annotationId: string;
+    noteType: "comment" | "memo";
+  } | null>(null);
+
+  const [deleteBlockedType, setDeleteBlockedType] =
+    useState<"highlight" | "comment" | "memo" | null>(null);
+
+
 
   const selectedBgKey = "userMint";
   const cssColor = getBgColor(selectedBgKey);
@@ -165,20 +170,20 @@ const [overlapTargetPage, setOverlapTargetPage] = useState<number | null>(null);
   }, [fullText]);
 
 
-    useLayoutEffect(() => {
-      if (!containerRef.current) return;
+  useLayoutEffect(() => {
+    if (!containerRef.current || !bookId) return;
 
-      let annotations = getAnnotations().filter(
-        a => a.page === page
-      );
+    let annotations = getAnnotations(bookId).filter(
+      a => a.page === page
+    );
 
-      // 여기
-      if (mode === "focus") {
-        annotations = annotations.filter(a => a.isMine);
-      }
+    // 여기
+    if (mode === "focus") {
+      annotations = annotations.filter(a => a.isMine);
+    }
 
-      renderAnnotations(containerRef.current, annotations);
-    }, [page, mode]);
+    renderAnnotations(containerRef.current, annotations);
+  }, [page, mode, bookId]);
 
 
 
@@ -190,6 +195,59 @@ const [overlapTargetPage, setOverlapTargetPage] = useState<number | null>(null);
     if (pages.length <= 1) return 100;
     return Math.round((page / (pages.length - 1)) * 100);
   }, [page, pages.length]);
+
+
+
+//   function canDeleteAnything({
+//   annotation,
+//   mode,
+// }: {
+//   annotation: Annotation;
+//   mode: Mode;
+// }) {
+//   // 1️⃣ 같이보기 모드: 무조건 삭제 불가
+//   if (mode === "together") {
+//     return false;
+//   }
+
+//   // 2️⃣ 집중모드: 다른 사용자의 together 코멘트가 있으면 삭제 불가
+//   const hasOtherTogetherComment = annotation.notes.some(
+//     n =>
+//       n.type === "comment" &&
+//       n.source === "together" &&
+//       !n.isMine
+//   );
+
+//   if (hasOtherTogetherComment) {
+//     return false;
+//   }
+
+//   // 3️⃣ 그 외에는 삭제 가능
+//   return true;
+// }
+
+function canDeleteAnnotation(
+  annotation: Annotation,
+  mode: Mode
+): boolean {
+  if (mode === "together") return false;
+
+  const hasOtherTogetherComment = annotation.notes.some(
+    n =>
+      n.type === "comment" &&
+      n.source === "together" &&
+      !n.isMine
+  );
+
+  return !hasOtherTogetherComment;
+}
+
+
+
+
+
+
+
 
   /* -----------------------------
    * Mouse / Touch UX
@@ -209,6 +267,7 @@ const [overlapTargetPage, setOverlapTargetPage] = useState<number | null>(null);
   };
 
   const handleContentClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (handleNoteIconClick(e.nativeEvent)) return;
     if (handleAnnotationClick(e)) return;
 
     const selection = window.getSelection();
@@ -252,13 +311,14 @@ if (!textRange) return;
 
 // 집중 모드 + 다른 사람 annotation과 겹치면
 if (mode === "focus") {
-  const overlaps = getAnnotations().filter(
+  const overlaps = getAnnotations(bookId!).filter(
     a =>
       !a.isMine &&
       a.page === page &&
       textRange.range.start < a.range.end &&
       textRange.range.end > a.range.start
   );
+
 
   if (overlaps.length > 0) {
     // 이동할 페이지 저장
@@ -295,71 +355,155 @@ if (mode === "focus") {
     setIsDeleteUiActive(false);
   };
 
-const handleAnnotationClick = (e: React.MouseEvent) => {
-  const el = (e.target as HTMLElement).closest(
-    ".annotation[data-id]"
+
+const handleNoteIconClick = (e: MouseEvent) => {
+  const icon = (e.target as HTMLElement).closest(
+    ".note-icon"
   ) as HTMLElement | null;
 
-  if (!el || !containerRef.current) return false;
+  if (!icon) return false;
 
-  const annotationId = el.dataset.id!;
-  const annotation = getAnnotations().find(a => a.id === annotationId);
+  const noteType = icon.dataset.noteType as "comment" | "memo";
+  const annotationId = icon.dataset.annotationId;
+  if (!annotationId || !noteType) return false;
+
+  const annotation = getAnnotations(bookId!).find(
+    a => a.id === annotationId
+  );
   if (!annotation) return false;
 
-  const rect = el.getBoundingClientRect();
-  const containerRect = containerRef.current.getBoundingClientRect();
-
-  const anchorPos = {
-    top:
-      rect.bottom -
-      containerRect.top +
-      containerRef.current.scrollTop +
-      8,
-    left: rect.left - containerRect.left,
-  };
-
-  /* ===============================
-   * 🔥 남의 annotation → 무조건 코멘트 버튼
-   * =============================== */
-  if (!annotation.isMine) {
-    setCommentTarget(annotation);
-    setCommentAnchorPos(anchorPos);
-    setShowCommentEntry(true);
-
-    // ❌ 툴바 / 삭제 / 선택 상태 전부 제거
-    setToolbarPos(null);
-    setActiveAnnotation(null);
-    setIsDeleteUiActive(false);
-
-    return true; // 🔥 여기서 끝
+  if (!canDeleteAnnotation(annotation, mode)) {
+    setDeleteBlockedType(noteType);
+    return true;
   }
 
-  /* ===============================
-   * 🔥 내 annotation → 기존 툴바 로직
-   * =============================== */
-  setToolbarPos({
-    top:
-      rect.top -
-      containerRect.top +
-      containerRef.current.scrollTop -
-      8,
-    left: rect.left - containerRect.left + rect.width / 2,
-  });
-
-  setActiveAnnotation({
-    id: annotation.id,
-    type: annotation.type,
-    annotation,
-  });
-
-  setIsDeleteUiActive(true);
+  setPendingDelete({ annotationId, noteType });
+  setShowDeleteModal(true);
   return true;
 };
 
 
 
+  const handleAnnotationClick = (e: React.MouseEvent) => {
+    const el = (e.target as HTMLElement).closest(
+      ".annotation[data-id]"
+    ) as HTMLElement | null;
+
+    if (!el || !containerRef.current) return false;
+
+    const annotationId = el.dataset.id!;
+    const annotation = getAnnotations(bookId!).find(
+    a => a.id === annotationId
+  );
+
+    if (!annotation) return false;
+
+    const rect = el.getBoundingClientRect();
+    const containerRect = containerRef.current.getBoundingClientRect();
 
 
+
+    /* ===============================
+    * 🔥 남의 annotation → 무조건 코멘트 버튼
+    * =============================== */
+      // 1️⃣ 남의 annotation
+    if (!annotation.isMine) {
+      setCommentTarget(annotation);
+      setCommentAnchorPos({
+        top:
+          rect.bottom -
+          containerRect.top +
+          containerRef.current.scrollTop +
+          8,
+        left: rect.left - containerRect.left,
+      });
+      setShowCommentEntry(true);
+
+      setToolbarPos(null);
+      setActiveAnnotation(null);
+      setIsDeleteUiActive(false);
+      return true;
+    }
+
+    
+    if (annotation.isMine) {
+      // 1️⃣ 툴바 위치 계산 (기존 로직 유지)
+      setToolbarPos({
+        top:
+          rect.top -
+          containerRect.top +
+          containerRef.current.scrollTop -
+          8,
+        left: rect.left - containerRect.left + rect.width / 2,
+      });
+
+      // 2️⃣ activeAnnotation 설정
+      setActiveAnnotation({
+        id: annotation.id,
+        annotation,
+      });
+
+      setIsDeleteUiActive(true);
+
+      // 3️⃣ 🔥 메모가 있으면 즉시 메모 팝업 열기
+      const memoNotes = annotation.notes.filter(n => n.type === "memo");
+
+      if (memoNotes.length > 0) {
+        const container = containerRef.current;
+        if (!container) return true;
+
+        const top =
+          rect.bottom -
+          containerRect.top +
+          container.scrollTop +
+          6;
+
+        const left =
+          rect.left -
+          containerRect.left;
+
+        const existing = document.getElementById("memo-popup");
+        if (!existing) {
+          showMemoPopup({
+            container,
+            top,
+            left,
+            initialContent: memoNotes.map(n => n.content).join("\n"),
+            onSave: value => {
+              annotation.notes = annotation.notes.map(n =>
+                n.type === "memo"
+                  ? { ...n, content: value }
+                  : n
+              );
+
+              renderAnnotations(
+                container,
+                getAnnotations(bookId!).filter(a => a.page === page)
+              );
+            },
+            onCancel: () => {},
+          });
+        }
+      }
+
+
+      return true;
+    }
+
+
+  };
+
+
+
+
+
+  function restoreSelection() {
+    if (!lastSelectionRangeRef.current) return;
+
+    const sel = window.getSelection();
+    sel?.removeAllRanges();
+    sel?.addRange(lastSelectionRangeRef.current);
+  }
 
 
   /* -----------------------------
@@ -368,163 +512,125 @@ const handleAnnotationClick = (e: React.MouseEvent) => {
   const handleHighlight = () => {
     if (!containerRef.current) return;
 
-    const annotation = createAnnotation(containerRef.current, {
-      type: "highlight",
-      color: cssColor,
-      page,
-    });
+    restoreSelection();
 
-    if (annotation) {
-      setActiveAnnotation({
-        id: annotation.id,
-        type: "highlight",
-        annotation,
-      });
-      console.log("[POST] highlight", backendColor);
+  const annotation = createHighlight(containerRef.current, {
+    page,
+    bookId: bookId!,
+    color: cssColor,
+});
+
+
+  if (annotation) {
+    setActiveAnnotation({
+      id: annotation.id,
+      annotation,
+    });
+    console.log("[POST] highlight", backendColor);
     }
 
     setToolbarPos(null);
   };
 
 
-
   
-const handleComment = () => {
-  if (!containerRef.current || !lastSelectionRangeRef.current) return;
+  const handleComment = () => {
+    const highlight = activeAnnotation?.annotation;
+    if (!highlight) return;
 
-  // selection 복구
-  const sel = window.getSelection();
-  sel?.removeAllRanges();
-  sel?.addRange(lastSelectionRangeRef.current);
+    highlight.notes.push({
+      id: Date.now().toString(),
+      type: "comment",
+      source: mode === "focus" ? "focus" : "together",
+      content: "",
+      isMine: true,
+      createdAt: Date.now(),
+    });
 
-  // highlight 생성 (없으면)
-  const annotation = createAnnotation(containerRef.current, {
-    type: "quote",
-    page,
-  });
+    setCommentTarget(highlight);
+    setShowCommentEntry(true);
 
-  if (!annotation) return;
-
-  const commentEl = document.querySelector(
-    `.annotation.quote[data-id="${annotation.id}"]`
-  ) as HTMLElement | null;
-
-  if (!commentEl) return;
-
-  // 중복 입력 방지
-  if (commentEl.querySelector(".inline-comment-input")) return;
-
-  // textarea 생성
-  const textarea = document.createElement("textarea");
-  textarea.className = "inline-comment-input";
-  textarea.placeholder = "코멘트를 입력하세요";
-  textarea.rows = 1;
-
-  commentEl.appendChild(textarea);
-  textarea.focus();
-
-  // 높이 자동 조절
-  const resize = () => {
-    textarea.style.height = "auto";
-    textarea.style.height = textarea.scrollHeight + "px";
+    setToolbarPos(null);
+    setActiveAnnotation(null);
   };
-  textarea.addEventListener("input", resize);
-  resize();
-
-  const save = () => {
-    const value = textarea.value.trim();
-    textarea.remove();
-    if (!value) return;
-
-    // annotation 데이터에 저장
-    annotation.content = value;
-    if (containerRef.current === null) return;
-
-// DOM에 span 붙이지 않음
-// renderAnnotations가 책임지게 함
-
-  renderAnnotations(containerRef.current, getAnnotations());
-
-    // 화면 표시
-    // const span = document.createElement("span");
-    // span.className = "inline-comment";
-    // span.textContent = value;
-    // commentEl.appendChild(span);
-    
-  };
-
-  textarea.addEventListener("blur", save);
-
-
-  setToolbarPos(null);
-  setActiveAnnotation(null);
-};
 
 
 
 
 
   const handleMemo = () => {
-    if (!containerRef.current || !lastSelectionRangeRef.current) return;
+    const highlight = activeAnnotation?.annotation;
+    if (!highlight || !containerRef.current) return;
 
-    const sel = window.getSelection();
-    sel?.removeAllRanges();
-    sel?.addRange(lastSelectionRangeRef.current);
+    const span = containerRef.current.querySelector(
+      `.annotation[data-id="${highlight.id}"]`
+    ) as HTMLElement | null;
+    if (!span) return;
 
-    const annotation = createAnnotation(containerRef.current, {
-      type: "memo",
-      page,
-      content: "",
-    });
-
-    if (!annotation) return;
-
-    // 🔥 위치 계산 (드래그된 텍스트 기준)
-    const range = lastSelectionRangeRef.current;
-    const rect = range.getBoundingClientRect();
+    const rect = span.getBoundingClientRect();
     const containerRect = containerRef.current.getBoundingClientRect();
 
     showMemoPopup({
       container: containerRef.current,
-      top: rect.bottom - containerRect.top + containerRef.current.scrollTop + 6,
+      top:
+        rect.bottom -
+        containerRect.top +
+        containerRef.current.scrollTop +
+        6,
       left: rect.left - containerRect.left,
       initialContent: "",
       onSave: value => {
-        annotation.content = value;
+        highlight.notes.push({
+          id: Date.now().toString(),
+          type: "memo",
+          source: "focus",
+          content: value,
+          isMine: true,
+          createdAt: Date.now(),
+        });
 
         renderAnnotations(
           containerRef.current!,
-          getAnnotations().filter(a => a.page === page)
+          getAnnotations(bookId!).filter(a => a.page === page)
         );
       },
-      onCancel: () => {
-        deleteAnnotation(containerRef.current!, annotation.id);
-      },
+      onCancel: () => {},
     });
 
-
-    setActiveAnnotation(null);
     setToolbarPos(null);
-    setIsDeleteUiActive(false);
+    setActiveAnnotation(null);
   };
 
 
 
+  const handleConfirmDeleteHighlight = () => {
+  if (!activeAnnotation || !containerRef.current) return;
 
+  deleteHighlight(containerRef.current, activeAnnotation.id, bookId!);
 
-  const handleDelete = () => {
-    if (!containerRef.current || !activeAnnotation) return;
+  setActiveAnnotation(null);
+  setToolbarPos(null);
+  setShowDeleteModal(false);
+};
 
-    // 남의 annotation은 삭제 불가
-    if (!activeAnnotation.annotation?.isMine) return;
+  const handleConfirmDeleteNote = () => {
+  if (!pendingDelete || !containerRef.current) return;
 
-    deleteAnnotation(containerRef.current, activeAnnotation.id);
+  deleteNote(
+    pendingDelete.annotationId,
+    pendingDelete.noteType
+  );
 
-    setActiveAnnotation(null);
-    setToolbarPos(null);
-    setIsDeleteUiActive(false);
-    setShowDeleteModal(false);
+  renderAnnotations(
+    containerRef.current,
+    getAnnotations(bookId!).filter(a => a.page === page)
+  );
+
+  setPendingDelete(null);
+  setShowDeleteModal(false);
   };
+
+
 
 
   /* -----------------------------
@@ -532,7 +638,6 @@ const handleComment = () => {
    * ----------------------------- */
   return (
     <>
-      <AnnotationStyle />
 
       {showWarning && (
         <WarningModal
@@ -566,15 +671,25 @@ const handleComment = () => {
           position={toolbarPos}
           activeAnnotation={activeAnnotation}
           isDeleteUiActive={isDeleteUiActive}
-
-          // 🔥 여기서 판단
-          canDelete={!!activeAnnotation?.annotation?.isMine}
-
+          canDelete={
+            !!activeAnnotation &&
+            canDeleteAnnotation(activeAnnotation.annotation, mode)
+          }
           onHighlight={handleHighlight}
           onComment={handleComment}
           onMemo={handleMemo}
-          onDeleteClick={() => setShowDeleteModal(true)}
+          onDeleteClick={() => {
+            if (!activeAnnotation) return;
+
+            if (!canDeleteAnnotation(activeAnnotation.annotation, mode)) {
+              setDeleteBlockedType("highlight");
+              return;
+            }
+
+            setShowDeleteModal(true);
+          }}
         />
+
 
 
         <S.ContentBox onClick={handleContentClick}>
@@ -644,11 +759,18 @@ const handleComment = () => {
         )}
       </S.Container>
 
-      {showDeleteModal && activeAnnotation && (
-        <DeleteHighlightModal
-          type={activeAnnotation.type}
-          onConfirm={handleDelete}
-          onCancel={() => setShowDeleteModal(false)}
+      {showDeleteModal && (
+        <DeleteConfirmModal
+          type={pendingDelete ? pendingDelete.noteType : "highlight"}
+          onConfirm={
+            pendingDelete
+              ? handleConfirmDeleteNote
+              : handleConfirmDeleteHighlight
+          }
+          onCancel={() => {
+            setPendingDelete(null);
+            setShowDeleteModal(false);
+          }}
         />
       )}
 
@@ -659,14 +781,16 @@ const handleComment = () => {
         />
       )}
 
+
+
       {showOverlapTogether && (
         <OverlapToTogetherModal
           highlights={[]} // (지금은 UI용이라 비워도 됨)
           onConfirm={() => {
             if (overlapTargetPage !== null) {
-              setPage(overlapTargetPage); // 🔥 해당 페이지로 이동
+              setPage(overlapTargetPage); // 해당 페이지로 이동
             }
-            setMode("together");          // 🔥 같이 보기 전환
+            setMode("together");          // 같이 보기 전환
             setShowOverlapTogether(false);
             setOverlapTargetPage(null);
           }}
