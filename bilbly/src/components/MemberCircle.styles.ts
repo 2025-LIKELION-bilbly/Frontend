@@ -4,9 +4,11 @@ import * as G from "../styles/GlobalStyle";
 export const Circle = styled.div<{
     $bgColor: keyof typeof G.theme.colors;
     $textColor: string;
+    $size: number;
+    $fontSize: number;
 }>`
-    width: 40px;
-    height: 40px;
+    width: ${({ $size }) => $size}px;
+    height: ${({ $size }) => $size}px;
     border-radius: 50%;
     background: ${({ $bgColor }) => G.theme.colors[$bgColor]};
     color: ${({ $textColor }) => $textColor};
@@ -15,8 +17,8 @@ export const Circle = styled.div<{
     justify-content: center;
     align-items: center;
     font-family: Pretendard;
-    font-size: 16px;
+    font-size: ${({ $fontSize }) => $fontSize}px;
     font-style: normal;
     font-weight: 500;
-    line-height: 24px; 
+    line-height: 1; 
 `;

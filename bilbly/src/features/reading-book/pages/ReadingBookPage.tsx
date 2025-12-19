@@ -94,7 +94,7 @@ const ReadingBookPage = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteBlockedType, setDeleteBlockedType] = useState<AnnotationType | null>(null);
 
-  const selectedBgKey = "userMint";
+  const selectedBgKey = "userRose";
   const cssColor = getBgColor(selectedBgKey);
   const backendColor = toBackendColor(selectedBgKey);
   const [commentTarget, setCommentTarget] = useState<Annotation | null>(null);
@@ -102,7 +102,7 @@ const ReadingBookPage = () => {
 
   const [showOverlapTogether, setShowOverlapTogether] = useState(false);
 
-// 🔥 겹친 annotation이 있는 페이지로 이동하기 위한 상태
+
 const [overlapTargetPage, setOverlapTargetPage] = useState<number | null>(null);
 
   // annotationId → 댓글 목록
@@ -124,9 +124,25 @@ const [overlapTargetPage, setOverlapTargetPage] = useState<number | null>(null);
 
 
   const fullText = useMemo(
-    () => "책 내용이 들어가는 자리 ".repeat(500),
+    () => `
+  About two hours after this occurrence we heard the ground sea, and before
+  night the ice broke and freed our ship. We, however, lay to until the
+  morning, fearing to encounter in the dark those large loose masses which
+  float about after the breaking up of the ice. I profited of this time to
+  rest for a few hours.
+
+  In the morning, however, as soon as it was light, I went upon deck and
+  found all the sailors busy on one side of the vessel, apparently
+  talking to someone in the sea. It was, in fact, a sledge, like that we
+  had seen before, which had drifted towards us in the night on a large
+  fragment of ice. Only one dog remained alive; but there was a human
+  being within it whom the sailors were persuading to enter the vessel.
+  He was not, as the other traveller seemed to be, a savage inhabitant of
+  some undiscovered island, but a European. When I appeared on deck
+  `.repeat(100),
     []
   );
+
 
 
   /* -----------------------------
@@ -170,7 +186,7 @@ const [overlapTargetPage, setOverlapTargetPage] = useState<number | null>(null);
       a => a.page === page
     );
 
-    // 🔥 여기
+
     if (mode === "focus") {
       annotations = annotations.filter(a => a.isMine);
     }
@@ -237,11 +253,10 @@ const [overlapTargetPage, setOverlapTargetPage] = useState<number | null>(null);
 
     if (!containerRef.current) return;
 
-// 🔥 selection → text range 변환
+
 const textRange = getTextRangeFromSelection(containerRef.current);
 if (!textRange) return;
 
-// 🔥 집중 모드 + 다른 사람 annotation과 겹치면
 if (mode === "focus") {
   const overlaps = getAnnotations().filter(
     a =>
@@ -252,7 +267,7 @@ if (mode === "focus") {
   );
 
   if (overlaps.length > 0) {
-    // ⭐ 이동할 페이지 저장
+    // 이동할 페이지 저장
     setOverlapTargetPage(overlaps[0].page);
 
     // selection / UI 정리
@@ -261,9 +276,9 @@ if (mode === "focus") {
     setActiveAnnotation(null);
     setIsDeleteUiActive(false);
 
-    // ⭐ 모달 열기
+    // 모달 열기
     setShowOverlapTogether(true);
-    return; // ⛔ 여기서 끝
+    return; 
   }
 }
 
@@ -310,23 +325,23 @@ const handleAnnotationClick = (e: React.MouseEvent) => {
   };
 
   /* ===============================
-   * 🔥 남의 annotation → 무조건 코멘트 버튼
+   * 남의 annotation → 무조건 코멘트 버튼
    * =============================== */
   if (!annotation.isMine) {
     setCommentTarget(annotation);
     setCommentAnchorPos(anchorPos);
     setShowCommentEntry(true);
 
-    // ❌ 툴바 / 삭제 / 선택 상태 전부 제거
+    // 툴바 / 삭제 / 선택 상태 전부 제거
     setToolbarPos(null);
     setActiveAnnotation(null);
     setIsDeleteUiActive(false);
 
-    return true; // 🔥 여기서 끝
+    return true; // 여기서 끝
   }
 
   /* ===============================
-   * 🔥 내 annotation → 기존 툴바 로직
+   * 내 annotation → 기존 툴바 로직
    * =============================== */
   setToolbarPos({
     top:
@@ -431,8 +446,8 @@ const handleComment = () => {
     annotation.content = value;
     if (containerRef.current === null) return;
 
-// ❌ DOM에 span 붙이지 않음
-// ⭕ renderAnnotations가 책임지게 함
+// DOM에 span 붙이지 않음
+// renderAnnotations가 책임지게 함
 
   renderAnnotations(containerRef.current, getAnnotations());
 
@@ -482,7 +497,7 @@ const handleMemo = () => {
   const handleDelete = () => {
     if (!containerRef.current || !activeAnnotation) return;
 
-    // 🔥 남의 annotation은 삭제 불가
+    // 남의 annotation은 삭제 불가
     if (!activeAnnotation.annotation?.isMine) return;
 
     deleteAnnotation(containerRef.current, activeAnnotation.id);
@@ -522,7 +537,7 @@ const handleMemo = () => {
       >
         {showUI && (
           <ReadingHeader
-            title="책 이름" // 수정
+            title="bilbly" // 수정
             percent={percent} // 진행현황
             page={page}
             bookId={bookId ?? ""}
@@ -534,7 +549,7 @@ const handleMemo = () => {
           activeAnnotation={activeAnnotation}
           isDeleteUiActive={isDeleteUiActive}
 
-          // 🔥 여기서 판단
+          // 여기서 판단
           canDelete={!!activeAnnotation?.annotation?.isMine}
 
           onHighlight={handleHighlight}
@@ -604,7 +619,7 @@ const handleMemo = () => {
               ],
             }));
 
-        // 🔥 나중에 여기서 API 연동
+        // 나중에 여기서 API 연동
         // createComment(...)
         }}
         />
@@ -628,12 +643,11 @@ const handleMemo = () => {
 
       {showOverlapTogether && (
         <OverlapToTogetherModal
-          highlights={[]} // (지금은 UI용이라 비워도 됨)
           onConfirm={() => {
             if (overlapTargetPage !== null) {
-              setPage(overlapTargetPage); // 🔥 해당 페이지로 이동
+              setPage(overlapTargetPage); // 해당 페이지로 이동
             }
-            setMode("together");          // 🔥 같이 보기 전환
+            setMode("together");          // 같이 보기 전환
             setShowOverlapTogether(false);
             setOverlapTargetPage(null);
           }}

@@ -70,7 +70,7 @@ export const Container = styled.div`
 
   font-size: 13px;
   line-height: 1.4;
-  color: #b00020;
+  color: #970522;
 
   font-family: "Pretendard", sans-serif;
   z-index: 4;

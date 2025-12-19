@@ -4,7 +4,7 @@ import { showMemoPopup } from "./memoPopup";
 const CONTAINER_SELECTOR = ".reading-page-container";
 
 /* ======================================================
- * Memo 생성 (DOM 전용 / annotation 시스템 ❌)
+ * Memo 생성 (DOM 전용 / annotation 시스템 )
  * ====================================================== */
 export const applyMemo = () => {
   const selection = window.getSelection();
@@ -79,10 +79,10 @@ export const applyMemo = () => {
     });
   };
 
-  // 🔥 생성 직후 바로 팝업
+  // 생성 직후 바로 팝업
   openPopup();
 
-  // 🔁 아이콘 클릭 → 수정
+  // 아이콘 클릭 → 수정
   icon.addEventListener("click", e => {
     e.stopPropagation();
     openPopup();
@@ -131,7 +131,7 @@ export function restoreMemos(
   }[]
 ) {
   memos.forEach(memo => {
-    // ⚠️ 단순 매칭 (현재 구조 기준)
+    // 단순 매칭 (현재 구조 기준)
     const target = Array.from(
       container.querySelectorAll("span")
     ).find(el => el.textContent === memo.text);

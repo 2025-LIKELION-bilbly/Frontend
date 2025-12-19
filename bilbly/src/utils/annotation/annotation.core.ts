@@ -37,7 +37,7 @@ const generateUniqueId = () =>
 
 /**
  * Selection으로부터 Annotation 데이터를 생성
- * ⚠️ DOM 변경 없음
+ * DOM 변경 없음
  */
 export function createAnnotationFromSelection(
   params: {
@@ -125,5 +125,5 @@ export interface Annotation {
   text: string;
   page: number;
   color?: string;
-  comments?: Comment[]; // ✅ 추가
+  comments?: Comment[]; 
 }

@@ -19,10 +19,8 @@ type Props = {
 
   activeAnnotation: ActiveAnnotation | null;
 
-  /** 🔥 삭제 가능 여부 (부모에서 판단) */
   canDelete: boolean;
 
-  /** 🔥 재클릭 상태 */
   isDeleteUiActive: boolean;
 
   onDeleteClick: () => void;
@@ -44,7 +42,6 @@ const ToolBar = ({
 
   const isAnnotationSelected = !!activeAnnotation;
 
-  // ⭐ 내 annotation + 재클릭 상태일 때만 삭제 버튼
   const shouldShowDeleteButton =
     isAnnotationSelected && isDeleteUiActive && canDelete;
 
