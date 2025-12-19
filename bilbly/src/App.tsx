@@ -31,6 +31,10 @@ import ExchangeStatusPage from './features/select-book/pages/ExchangeStatusPage'
 // home-page 홈 페이지
 import HomePage from './features/home/pages/HomePage';
 
+
+// 책장
+import BookShelfPage from './features/bookshelf/pages/BookShelfPage'
+
 // meeting-select 페이지
 import MeetingSelect from './features/meeting/pages/MeetingSelectPage';
 
@@ -89,6 +93,7 @@ function App() {
         <Routes>
           {/* 기본 경로: 모임 선택 부분 */}
           <Route path="/" element={<MeetingSelect />} />
+          <Route path="/bookshelf" element={<BookShelfPage />} />
           
           {/* 모임장용 페이지 */}
           <Route path="/exchange/start" element={<StartExchangePage />} />
@@ -103,6 +108,7 @@ function App() {
           <Route path="/exchange/result" element={<ExchangeResultPage />} />
           {/* 교환 새로 선택 페이지 */}
           <Route path="/exchange/new-start" element={<ExchangeNewStartPage />} />
+
           
           {/* 새로 추가한 책 고르기 페이지 경로 */}
           <Route path="/select-book" element={<SelectBookPage />} />
