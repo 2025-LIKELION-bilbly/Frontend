@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+
 import { useState, useEffect } from 'react';
 import { ThemeProvider } from 'styled-components'; 
 import axios from 'axios';
@@ -6,6 +7,8 @@ import axios from 'axios';
 import GlobalStyle from './styles/GlobalStyle';
 import { theme } from './styles/theme'; 
 import { createUser } from "./api/user.api"; 
+
+console.log("API BASE URL:", import.meta.env.VITE_API_BASE_URL);
 
 // 페이지 컴포넌트 임포트
 import LandingPage from './features/landing/pages/LandingPage';
