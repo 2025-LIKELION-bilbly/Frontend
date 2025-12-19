@@ -12,8 +12,6 @@ const mockComments = [
 ];
 
 const CommentList = ({     highlightId }: Props) => {
-    // ✅ 지금은 데모니까 highlightId를 “사용”만 해줘도 린트/에러 방지됨
-    // (나중에 GET /comments?highlightId= 붙일 때 여기서 사용)
     console.log("CommentList for highlightId:", highlightId);
 
     return (

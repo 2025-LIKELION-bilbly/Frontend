@@ -72,7 +72,7 @@ export function getAnnotations() {
 }
 
 /* ===============================
- * 🔐 저장 (store)
+ *  저장 (store)
  * =============================== */
 export function persistAnnotations() {
   try {
@@ -86,7 +86,7 @@ export function persistAnnotations() {
 }
 
 /* ===============================
- * 🔄 복원 (restore)
+ * 복원 (restore)
  * =============================== */
 export function restoreAnnotations(root: HTMLElement) {
   try {
@@ -98,7 +98,7 @@ export function restoreAnnotations(root: HTMLElement) {
 
     annotations = saved;
 
-    // 🔥 DOM 텍스트가 준비된 이후 호출돼야 함
+    // DOM 텍스트가 준비된 이후 호출돼야 함
     renderAnnotations(root, annotations);
   } catch (e) {
     console.error("annotation 복원 실패", e);

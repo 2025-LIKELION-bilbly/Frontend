@@ -102,7 +102,7 @@ const ReadingBookPage = () => {
 
   const [showOverlapTogether, setShowOverlapTogether] = useState(false);
 
-// 🔥 겹친 annotation이 있는 페이지로 이동하기 위한 상태
+
 const [overlapTargetPage, setOverlapTargetPage] = useState<number | null>(null);
 
   // annotationId → 댓글 목록
@@ -186,7 +186,7 @@ const [overlapTargetPage, setOverlapTargetPage] = useState<number | null>(null);
       a => a.page === page
     );
 
-    // 🔥 여기
+
     if (mode === "focus") {
       annotations = annotations.filter(a => a.isMine);
     }
@@ -253,11 +253,10 @@ const [overlapTargetPage, setOverlapTargetPage] = useState<number | null>(null);
 
     if (!containerRef.current) return;
 
-// 🔥 selection → text range 변환
+
 const textRange = getTextRangeFromSelection(containerRef.current);
 if (!textRange) return;
 
-// 🔥 집중 모드 + 다른 사람 annotation과 겹치면
 if (mode === "focus") {
   const overlaps = getAnnotations().filter(
     a =>
@@ -268,7 +267,7 @@ if (mode === "focus") {
   );
 
   if (overlaps.length > 0) {
-    // ⭐ 이동할 페이지 저장
+    // 이동할 페이지 저장
     setOverlapTargetPage(overlaps[0].page);
 
     // selection / UI 정리
@@ -277,9 +276,9 @@ if (mode === "focus") {
     setActiveAnnotation(null);
     setIsDeleteUiActive(false);
 
-    // ⭐ 모달 열기
+    // 모달 열기
     setShowOverlapTogether(true);
-    return; // ⛔ 여기서 끝
+    return; 
   }
 }
 
@@ -326,23 +325,23 @@ const handleAnnotationClick = (e: React.MouseEvent) => {
   };
 
   /* ===============================
-   * 🔥 남의 annotation → 무조건 코멘트 버튼
+   * 남의 annotation → 무조건 코멘트 버튼
    * =============================== */
   if (!annotation.isMine) {
     setCommentTarget(annotation);
     setCommentAnchorPos(anchorPos);
     setShowCommentEntry(true);
 
-    // ❌ 툴바 / 삭제 / 선택 상태 전부 제거
+    // 툴바 / 삭제 / 선택 상태 전부 제거
     setToolbarPos(null);
     setActiveAnnotation(null);
     setIsDeleteUiActive(false);
 
-    return true; // 🔥 여기서 끝
+    return true; // 여기서 끝
   }
 
   /* ===============================
-   * 🔥 내 annotation → 기존 툴바 로직
+   * 내 annotation → 기존 툴바 로직
    * =============================== */
   setToolbarPos({
     top:
@@ -447,8 +446,8 @@ const handleComment = () => {
     annotation.content = value;
     if (containerRef.current === null) return;
 
-// ❌ DOM에 span 붙이지 않음
-// ⭕ renderAnnotations가 책임지게 함
+// DOM에 span 붙이지 않음
+// renderAnnotations가 책임지게 함
 
   renderAnnotations(containerRef.current, getAnnotations());
 
@@ -498,7 +497,7 @@ const handleMemo = () => {
   const handleDelete = () => {
     if (!containerRef.current || !activeAnnotation) return;
 
-    // 🔥 남의 annotation은 삭제 불가
+    // 남의 annotation은 삭제 불가
     if (!activeAnnotation.annotation?.isMine) return;
 
     deleteAnnotation(containerRef.current, activeAnnotation.id);
@@ -550,7 +549,7 @@ const handleMemo = () => {
           activeAnnotation={activeAnnotation}
           isDeleteUiActive={isDeleteUiActive}
 
-          // 🔥 여기서 판단
+          // 여기서 판단
           canDelete={!!activeAnnotation?.annotation?.isMine}
 
           onHighlight={handleHighlight}
@@ -620,7 +619,7 @@ const handleMemo = () => {
               ],
             }));
 
-        // 🔥 나중에 여기서 API 연동
+        // 나중에 여기서 API 연동
         // createComment(...)
         }}
         />
@@ -646,9 +645,9 @@ const handleMemo = () => {
         <OverlapToTogetherModal
           onConfirm={() => {
             if (overlapTargetPage !== null) {
-              setPage(overlapTargetPage); // 🔥 해당 페이지로 이동
+              setPage(overlapTargetPage); // 해당 페이지로 이동
             }
-            setMode("together");          // 🔥 같이 보기 전환
+            setMode("together");          // 같이 보기 전환
             setShowOverlapTogether(false);
             setOverlapTargetPage(null);
           }}

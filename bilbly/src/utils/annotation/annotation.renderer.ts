@@ -46,7 +46,7 @@ export function renderAnnotation(root: HTMLElement, annotation: Annotation) {
   }
 
   /* ---------------------------
-   * 🔥 Range 감싸기 (먼저!)
+   * Range 감싸기 (먼저!)
    * --------------------------- */
   try {
     domRange.surroundContents(span);
@@ -101,7 +101,7 @@ function findNode(
     NodeFilter.SHOW_TEXT,
     {
       acceptNode(node) {
-        // 🔥 inline-comment 내부 텍스트는 전부 제외
+        // inline-comment 내부 텍스트는 전부 제외
         if (node.parentElement?.closest(".inline-comment")) {
           return NodeFilter.FILTER_REJECT;
         }
