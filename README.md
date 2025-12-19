@@ -30,7 +30,7 @@
     <tr>
       <td align="center">
         <div>홈 페이지, 교환 페이지</div>
-        <div>네비게이터</div>
+        <div>네비게이터, 선택 페이지</div>
       <td align="center">
         <div>책읽기 페이지, 모임 참여/생성 페이지</div>
         <div>책장 페이지, 탈퇴</div>
