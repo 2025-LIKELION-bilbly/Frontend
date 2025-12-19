@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import * as S from './SelectBookResultPage.styles';
 
@@ -22,12 +22,13 @@ const CloseXIcon = () => (
   </svg>
 );
 
+// 💡 구글 드라이브 썸네일 변환 로직 수정
 const convertDriveUrl = (url: string) => {
     if (!url) return "";
-    if (url.includes('drive.google.com') && url.includes('id=')) {
-        const idMatch = url.match(/id=([^&]+)/);
+    if (url.includes('drive.google.com')) {
+        const idMatch = url.match(/id=([^&]+)/) || url.match(/\/d\/([^/]+)/);
         if (idMatch && idMatch[1]) {
-            return `https://lh3.googleusercontent.com/d/${idMatch[1]}`;
+            return `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w500`;
         }
     }
     return url;
@@ -42,16 +43,12 @@ function SelectBookResultPage() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // 이전 페이지에서 받은 책 정보 & 그룹ID
   const initialBook = location.state?.book;
   const groupId = location.state?.groupId;
   
   const [bookDetail, setBookDetail] = useState<BookDetail | null>(null);
-  
-  // 🔥 토스트 상태
   const [isToastOpen, setIsToastOpen] = useState(false);
 
-  // 이미 선택된 책인지 확인
   const isTaken = initialBook?.isTaken;
 
   useEffect(() => {
@@ -74,19 +71,23 @@ function SelectBookResultPage() {
     navigate(-1); 
   };
 
-  
   const handleSelect = async () => {
-    // 1. 이미 선택된 책이면 -> 토스트 띄우고 중단
     if (isTaken) {
         setIsToastOpen(true);
         return;
     }
 
-    // 2. 선택 가능한 책이면 -> API 호출 후 이동
     if (initialBook?.bookId && groupId) {
         try {
-            console.log(`책 등록: BookID=${initialBook.bookId}, GroupID=${groupId}`);
+            console.log(`책 등록 요청: BookID=${initialBook.bookId}, GroupID=${groupId}`);
             await selectExchangeBook(initialBook.bookId, groupId);
+            
+            // 🔥 [핵심 추가] 서버 배정 전까지 화면에 즉시 띄우기 위해 로컬 스토리지에 이미지 저장
+            const finalImageUrl = bookDetail?.coverUrl || initialBook?.coverImageUrl || initialBook?.image;
+            if (finalImageUrl) {
+                localStorage.setItem('lastSelectedBookCover', finalImageUrl);
+            }
+
             alert("책 등록이 완료되었습니다!");
             navigate('/exchange/status'); 
         } catch (error) {
@@ -121,7 +122,7 @@ function SelectBookResultPage() {
       <S.BookSection>
         <S.LargeBookImage 
             src={displayImage} 
-            alt="교환된 책 표지" 
+            alt="선택한 책 표지" 
             referrerPolicy="no-referrer"
             onError={(e) => { e.currentTarget.src = BookCover1; }} 
         />
@@ -147,15 +148,9 @@ function SelectBookResultPage() {
           </S.InfoGrid>
 
           <S.DetailInfo>
-            <S.DetailText>
-              발행일 <S.DetailValue>{displayDate}</S.DetailValue>
-            </S.DetailText>
-            <S.DetailText>
-              출판사 <S.DetailValue>{displayPublisher}</S.DetailValue>
-            </S.DetailText>
-            <S.DetailText>
-              ISBN <S.DetailValue>{displayIsbn}</S.DetailValue>
-            </S.DetailText>
+            <S.DetailText>발행일 <S.DetailValue>{displayDate}</S.DetailValue></S.DetailText>
+            <S.DetailText>출판사 <S.DetailValue>{displayPublisher}</S.DetailValue></S.DetailText>
+            <S.DetailText>ISBN <S.DetailValue>{displayIsbn}</S.DetailValue></S.DetailText>
           </S.DetailInfo>
 
           <S.SummarySection>
@@ -163,21 +158,18 @@ function SelectBookResultPage() {
                 {displayDesc.length > 150 ? displayDesc.substring(0, 150) + "..." : displayDesc}
             </S.SummaryText>
           </S.SummarySection>
-
         </S.BookTextInfo>
       </S.BookSection>
 
       <S.BottomButtonArea>
-        {/* isTaken 상태에 따라 버튼 색상 및 텍스트 변경은 스타일에서 처리 */}
         <S.SelectButton 
             onClick={handleSelect}
-            $isTaken={isTaken} // 🔥 스타일 파일로 전달 (색상 변경용)
+            $isTaken={isTaken}
         >
           선택하기
         </S.SelectButton>
       </S.BottomButtonArea>
 
-      {/* 🔥 토스트 팝업 (이미 선택된 책일 때 표시) */}
       {isToastOpen && (
         <S.ToastContainer>
             <S.ToastIconBtn onClick={() => setIsToastOpen(false)}>
@@ -189,7 +181,6 @@ function SelectBookResultPage() {
             </S.ToastTextContainer>
         </S.ToastContainer>
       )}
-
     </S.Container>
   );
 }

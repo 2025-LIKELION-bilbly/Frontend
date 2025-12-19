@@ -89,8 +89,9 @@ function App() {
         <Routes>
           {/* 기본 경로: 모임 선택 부분 */}
           <Route path="/" element={<MeetingSelect />} />
-          
-          {/* 모임장용 페이지 */}
+          {/* 모임장용 첫 번째 페이지 */}
+          <Route path="/landing" element={<LandingPage />} />
+          {/* 모임장용 두 번째 페이지 */}
           <Route path="/exchange/start" element={<StartExchangePage />} />
           
           {/*모임원용 페이지  */}

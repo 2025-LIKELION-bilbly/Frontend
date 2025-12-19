@@ -1,101 +1,106 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import * as S from './LandingPage.styles'; // 스타일 재사용
-
+import * as S from '../pages/LandingPage.styles'; 
 import Header from '../../../components/Header'; 
+import Navbar from '../../../components/BottomNavBar';
 import MeetingSelector from '../../home/pages/MeetingSelector';
 import CategoryTabs from '../../home/pages/CategoryTabs';
+import api from '../../../api/apiClient';
 
-import BookCover1 from '../../../assets/book_cover_1.jpg';
-// BookCover2는 사용 안 하고 Placeholder로 대체 (사진 참고)
+// 💡 구글 드라이브 등 외부 이미지 URL이 깨지지 않도록 변환하는 함수
+const convertDriveUrl = (url: string) => {
+  if (!url || url === "string") return "";
+  if (url.includes('drive.google.com')) {
+    const idMatch = url.match(/id=([^&]+)/) || url.match(/\/d\/([^/]+)/);
+    if (idMatch && idMatch[1]) return `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w800`;
+  }
+  return url;
+};
 
-const ArrowIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="9" height="16" viewBox="0 0 9 16" fill="none">
-    <path d="M0.5 0.5L8 8L0.5 15.5" stroke="#100F0F" strokeLinecap="round" strokeLinejoin="round"/>
-  </svg>
-);
+interface MemberPageProps {
+  groupId: number;
+  passedGroupName: string;
+}
 
-function StartExchangeMemberPage() {
+function StartExchangeMemberPage({ groupId, passedGroupName }: MemberPageProps) {
   const navigate = useNavigate();
+  const [members, setMembers] = useState<any[]>([]);
+  const [hasSelectedBook, setHasSelectedBook] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  // 내가 책을 골랐는지 여부 (false: 안 고름 / true: 고름)
-  // 지금은 화면 확인을 위해 false로 둡니다. 
-  const [hasSelectedBook, setHasSelectedBook] = useState(false); 
+  useEffect(() => {
+    const fetchStatus = async () => {
+      if (!groupId) {
+        setLoading(false);
+        return;
+      }
+      
+      try {
+        // 📡 API 연동: /v1/assignments/groups/{groupId}/current
+        const res = await api.get(`/v1/assignments/groups/${groupId}/current`);
+        
+        if (res.data && res.data.success) {
+          const mList = res.data.data.memberAssignments || [];
+          console.log("🔍 [하니 화면 멤버 데이터]:", mList);
+          setMembers(mList);
+          
+          const userId = localStorage.getItem('userId');
+          const me = mList.find((m: any) => String(m.memberId) === String(userId));
+          
+          // 💡 본인이 책을 골랐는지 여부를 판단 (hasBook 필드 활용)
+          if (me?.hasBook || me?.coverImageUrl) {
+            setHasSelectedBook(true);
+          }
+        }
+      } catch (error) {
+        console.error("멤버 현황 조회 실패:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchStatus();
+  }, [groupId]);
 
-  // 책 고르러 가는 페이지로 이동
-  const handleGoToSelectBook = () => {
-    // 임시 경로 (책 선택 페이지)
-    navigate('/meeting/join/1/selectbooklist'); 
-  };
-
-  // 새로운 모임 생성/참여하기
-  const handleCreateMeeting = () => {
-    navigate('/meeting/create/step');
-  };
+  if (loading) return <S.Container><Header /><div>데이터 로딩 중...</div></S.Container>;
 
   return (
     <S.Container>
       <Header />
-      <MeetingSelector />
-      <CategoryTabs />
+      <MeetingSelector groupName={passedGroupName} />
+      <CategoryTabs members={members.map(m => m.nickname)} />
       
-      
-      {/* 책 이미지 영역 */}
       <S.BookImageContainer>
-        {/* 1. 다른 멤버 (책 고름) */}
-        <S.BookWrapper>
-          <S.BookImage src={BookCover1} alt="Book 1" />
-          <S.Nickname>닉네임</S.Nickname>
-        </S.BookWrapper>
-
-        {/* 2. 나 (아직 안 고름 - 가운데) */}
-        <S.BookWrapper>
-          <S.BookPlaceholder>
-            책<br/>고르는 중
-          </S.BookPlaceholder>
-          <S.Nickname>닉네임</S.Nickname>
-        </S.BookWrapper>
-        
-        {/* 3. 다른 멤버 (아직 안 고름) */}
-        <S.BookWrapper>
-          <S.BookPlaceholder>
-            책<br/>고르는 중
-          </S.BookPlaceholder>
-          <S.Nickname>닉네임</S.Nickname>
-        </S.BookWrapper>
+        {members.map((member) => (
+          <S.BookWrapper key={member.memberId}>
+            {/* 💡 서버 API의 hasBook이 true이고 이미지 주소가 있을 때만 렌더링 */}
+            {member.hasBook && member.coverImageUrl && member.coverImageUrl !== "string" ? (
+              <S.BookImage 
+                src={convertDriveUrl(member.coverImageUrl)} 
+                alt={member.nickname} 
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none'; // 이미지 로드 실패 시 숨김
+                }}
+              />
+            ) : (
+              <S.BookPlaceholder>
+                {member.nickname}<br/>책 고르는 중
+              </S.BookPlaceholder>
+            )}
+            <S.Nickname>{member.nickname}</S.Nickname>
+          </S.BookWrapper>
+        ))}
       </S.BookImageContainer>
+
+      <S.BottomSection>
+        <S.SectionTitle>
+          {hasSelectedBook ? "기다리는 동안\n새로운 모임은 어떠세요?" : "교환할 책을 골라보세요"}
+        </S.SectionTitle>
+        <S.ActionBtn onClick={() => navigate(hasSelectedBook ? '/meeting/create/step' : '/select-book', { state: { groupId } })}>
+          {hasSelectedBook ? "새로운 모임 생성/참여하기" : "책 고르러 가기"}
+        </S.ActionBtn>
+      </S.BottomSection>
       
-
-      {/* 상태에 따라 하단 내용 변경 */}
-      {hasSelectedBook ? (
-        // 책을 이미 고른 경우
-        <S.BottomSection>
-          <S.SectionTitle>
-            기다리는 동안<br />
-            새로운 모임은 어떠세요?
-          </S.SectionTitle>
-          <S.ActionBtn $isLast onClick={handleCreateMeeting}>
-            새로운 모임 생성/참여하기
-            <ArrowIcon />
-          </S.ActionBtn>
-        </S.BottomSection>
-      ) : (
-        // 책을 안 고른 경우
-        <S.BottomSection>
-          <S.SectionTitle>
-            교환할 책을 골라보세요
-          </S.SectionTitle>
-          <S.BottomSubTitle>
-            시작 전까지 책을 고르지 않으면 랜덤으로 결정돼요
-          </S.BottomSubTitle>
-          
-          <S.ActionBtn $isLast onClick={handleGoToSelectBook}>
-            책 고르러 가기
-            <ArrowIcon />
-          </S.ActionBtn>
-        </S.BottomSection>
-      )}
-
+      <Navbar />
     </S.Container>
   );
 }
