@@ -1,7 +1,7 @@
 import axios from "axios";
 import { apiFetch } from "../services/apiClient"; // 추가했습니다!
 import type { CreateGroupPayload, CreateGroupResponse, ValidateInviteCodeResponse } from "../types/group";
-
+import api from './apiClient';
 
 // 모임생성 api
 export const createGroup = async (

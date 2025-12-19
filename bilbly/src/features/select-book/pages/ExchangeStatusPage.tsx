@@ -1,23 +1,32 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import * as S from './ExchangeStatusPage.styles'; 
 import { getMyGroups } from '../../../api/group.api';
 import api from '../../../api/apiClient';
 
-const convertDriveUrl = (url: string) => {
-    if (!url) return "";
-    if (url.includes('drive.google.com') && url.includes('id=')) {
-        const idMatch = url.match(/id=([^&]+)/);
-        if (idMatch && idMatch[1]) {
-            return `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w500`;
-        }
+// 💡 [해결] any 제거를 위한 인터페이스 정의
+interface MemberStatus {
+  id: number;
+  nickname: string;
+  displayImage: string | null;
+  color: string;
+}
+
+const convertDriveUrl = (url: string | null) => {
+  if (!url) return "";
+  if (url.includes('drive.google.com') && url.includes('id=')) {
+    const idMatch = url.match(/id=([^&]+)/);
+    if (idMatch && idMatch[1]) {
+      return `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w500`;
     }
-    return url;
+  }
+  return url;
 };
 
 function ExchangeStatusPage() {
   const navigate = useNavigate();
-  const [members, setMembers] = useState<any[]>([]);
+  // 💡 [해결] any[] 대신 정의한 인터페이스 사용
+  const [members, setMembers] = useState<MemberStatus[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -27,20 +36,19 @@ function ExchangeStatusPage() {
         const myGroups = await getMyGroups();
         
         if (myGroups && myGroups.length > 0) {
+          // 가장 최근 그룹 ID 가져오기
           const groupId = myGroups[0].groupId;
 
-          // 💡 2. [핵심] 찾으신 API로 멤버들의 현재 선택 상태 조회
-          // URL: /api/v1/assignments/groups/{groupId}/current
+          // 2. 멤버들의 현재 선택 상태 조회
           const res = await api.get(`/v1/assignments/groups/${groupId}/current`);
           
           if (res.data && res.data.success) {
             const assignmentData = res.data.data.memberAssignments;
             
-            // 💡 3. API 응답 데이터를 화면 포맷에 맞게 변핑
-            const processedMembers = assignmentData.map((m: any) => ({
+            // 💡 [핵심] API 응답의 고유한 닉네임과 데이터를 정확히 매핑
+            const processedMembers: MemberStatus[] = assignmentData.map((m: any) => ({
               id: m.memberId,
               nickname: m.nickname,
-              // hasBook이 true이고 coverImageUrl이 있을 때만 이미지 표시
               displayImage: m.coverImageUrl, 
               color: m.color
             }));
@@ -50,9 +58,6 @@ function ExchangeStatusPage() {
         }
       } catch (error) {
         console.error("데이터 로드 실패:", error);
-        // API 실패 시 getMyGroups의 기본 멤버 리스트라도 노출 (방어 로직)
-        const groups = await getMyGroups().catch(() => []);
-        if (groups.length > 0) setMembers(groups[0].members || []);
       } finally {
         setLoading(false);
       }
@@ -71,8 +76,8 @@ function ExchangeStatusPage() {
         {!loading ? (
           members.map((member) => (
             <S.BookWrapper key={member.id}>
-              {/* 💡 displayImage(coverImageUrl) 존재 여부에 따라 분기 */}
-              {member.displayImage ? (
+              {/* 💡 각 멤버별로 할당된 이미지 표시 */}
+              {member.displayImage && member.displayImage !== "string" ? (
                 <S.BookImage 
                   src={convertDriveUrl(member.displayImage)} 
                   alt={member.nickname} 
@@ -80,14 +85,18 @@ function ExchangeStatusPage() {
                 />
               ) : (
                 <S.BookPlaceholder>
-                    책<br/>고르는 중
+                  {/* 💡 책을 아직 안 고른 멤버는 이 화면이 뜸 */}
+                  책<br/>고르는 중
                 </S.BookPlaceholder>
               )}
+              {/* 💡 정확한 멤버의 닉네임 출력 */}
               <S.Nickname>{member.nickname}</S.Nickname>
             </S.BookWrapper>
           ))
         ) : (
-          <div style={{ textAlign: 'center', width: '100%', padding: '50px' }}>현황 확인 중...</div>
+          <div style={{ textAlign: 'center', width: '100%', padding: '50px' }}>
+            모임원 현황 확인 중...
+          </div>
         )}
       </S.BookGrid>
 

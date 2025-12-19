@@ -7,7 +7,7 @@ export const Container = styled.div`
   justify-content: center;
   padding: 20px 0 24px 0;
   gap: 8px;
-  /* 👈 "위에 줄이 없어져야 하고" -> border-top 삭제했습니다. */
+ 
 `;
 
 export const TabItem = styled.div`
@@ -27,7 +27,7 @@ export const Circle = styled.div<{ $bgColor: string; $textColor: string }>`
 
   border-radius: 50%;
 
-  /* 👇 전달받은 색상 코드 적용 */
+  
   background-color: ${props => props.$bgColor};
   color: ${props => props.$textColor};
 

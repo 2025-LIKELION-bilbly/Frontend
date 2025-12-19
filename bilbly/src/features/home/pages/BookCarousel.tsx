@@ -1,5 +1,22 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import * as S from './BookCarousel.styles';
+
+// 💡 에러 방지를 위해 인터페이스를 여기서도 직접 선언 (import 에러 해결)
+interface MemberAssignment {
+  memberId: number;
+  nickname: string;
+  bookId: number;
+  color: string;
+  hasBook: boolean;
+  coverImageUrl: string | null;
+}
+
+interface ReadingInfo {
+  daysRemaining: number;
+  nextExchangeDate: string;
+  progressPercent: number;
+  coverImageUrl: string;
+}
 
 const COLOR_SYSTEM: { [key: string]: { bg: string; text: string } } = {
   ROSE: { bg: '#F6C5CF', text: '#970522' },   
@@ -22,8 +39,8 @@ const getTheme = (serverColor: string) => {
 
 interface BookCarouselProps {
   onSlideChange?: (index: number) => void;
-  members: any[]; 
-  readingInfo?: any;
+  members: MemberAssignment[]; 
+  readingInfo?: ReadingInfo | null;
 }
 
 function BookCarousel({ onSlideChange, members, readingInfo }: BookCarouselProps) {
@@ -38,12 +55,12 @@ function BookCarousel({ onSlideChange, members, readingInfo }: BookCarouselProps
     return url;
   };
 
-  const getBookImage = (member: any) => {
+  const getBookImage = (member: MemberAssignment) => {
     if (member.nickname === '민지') {
       const saved = localStorage.getItem('lastSelectedBookCover');
       if (saved && saved !== "string") return convertDriveUrl(saved);
     }
-    return convertDriveUrl(member.coverImageUrl || (activeId === 0 ? readingInfo?.coverImageUrl : ""));
+    return convertDriveUrl(member.coverImageUrl || (activeId === 0 ? readingInfo?.coverImageUrl || "" : ""));
   };
 
   useEffect(() => {
@@ -72,7 +89,6 @@ function BookCarousel({ onSlideChange, members, readingInfo }: BookCarouselProps
           const isActive = activeId === index;
           const theme = getTheme(member.color);
 
-          // 💡 날짜 데이터 연동: readingInfo에서 남은 일수와 날짜 추출
           const daysLeftText = (index === 0 && readingInfo?.daysRemaining !== undefined)
             ? `${readingInfo.daysRemaining}일 남음`
             : "";

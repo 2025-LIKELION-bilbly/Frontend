@@ -2,8 +2,6 @@ import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import * as S from './BottomNavBar.styles';
 
-// --- 💡 [해결] 아이콘 컴포넌트들을 함수 외부에 선언하여 '찾을 수 없음' 에러 방지 ---
-
 const HomeOnIcon = () => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path d="M21 11.25V20.25C21 20.4489 20.921 20.6397 20.7803 20.7803C20.6397 20.921 20.4489 21 20.25 21H15C14.8011 21 14.6103 20.921 14.4697 20.7803C14.329 20.6397 14.25 20.4489 14.25 20.25V15.375C14.25 15.2755 14.2105 15.1801 14.1402 15.1098C14.0698 15.0395 13.9745 15 13.875 15H10.125C10.0255 15 9.93016 15.0395 9.85983 15.1098C9.78951 15.1801 9.75 15.2755 9.75 15.375V20.25C9.75 20.4489 9.67098 20.6397 9.53033 20.7803C9.38968 20.921 9.19891 21 9 21H3.75C3.55109 21 3.36032 20.921 3.21967 20.7803C3.07902 20.6397 3 20.4489 3 20.25V11.25C3.00018 10.8522 3.15834 10.4708 3.43969 10.1897L10.9397 2.68966C11.221 2.40857 11.6023 2.25067 12 2.25067C12.3977 2.25067 12.779 2.40857 13.0603 2.68966L20.5603 10.1897C20.8417 10.4708 20.9998 10.8522 21 11.25Z" fill="#252525"/> 
@@ -42,8 +40,6 @@ const MyOffIcon = () => (
   </svg>
 );
 
-// --- 💡 [수정 완료] 메인 컴포넌트 ---
-
 function BottomNavBar() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -51,21 +47,21 @@ function BottomNavBar() {
   const visiblePaths = [
     '/main',
     '/landing',
-    '/exchange/start/member'
+    '/exchange/start/member',
+    '/bookshelf'
   ];
 
   if (!visiblePaths.includes(location.pathname)) {
     return null;
   }
 
-  // 홈 활성화 판단 (대기 페이지 포함)
   const isHome = 
     location.pathname === '/main' || 
     location.pathname === '/landing' || 
     location.pathname === '/exchange/start/member';
   
   const isMeeting = location.pathname.includes('/reading');
-  const isMyPage = location.pathname.includes('/mypage');
+  const isBookShelf = location.pathname === '/bookshelf';
 
   return (
     <S.BottomBackground>
@@ -79,7 +75,7 @@ function BottomNavBar() {
           {isHome ? <HomeOnIcon /> : <HomeOffIcon />}
         </S.NavItem>
 
-        {/* 2. 책 읽기 (가운데) */}
+        {/* 2. 책 읽기 */}
         <S.NavItem 
           $isActive={isMeeting} 
           onClick={() => navigate('/reading/1/1')}
@@ -87,11 +83,12 @@ function BottomNavBar() {
           {isMeeting ? <MeetingOnIcon /> : <MeetingOffIcon />}
         </S.NavItem>
 
-        {/* 3. 책장 (오른쪽) */}
+        {/* 3. 책장 (수정됨) */}
         <S.NavItem 
-          $isActive={isMyPage} 
+          $isActive={isBookShelf} 
+          onClick={() => navigate('/bookshelf')}
         >
-          {isMyPage ? <MyOnIcon /> : <MyOffIcon />}
+          {isBookShelf ? <MyOnIcon /> : <MyOffIcon />}
         </S.NavItem>
 
       </S.NavPill>
