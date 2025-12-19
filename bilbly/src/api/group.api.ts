@@ -106,3 +106,12 @@ export const getCurrentAssignments = async (groupId: number): Promise<CurrentAss
     method: "GET",
   });
 };
+export const startExchange = async (groupId: number) => {
+  try {
+    const res = await api.post(`/v1/assignments/groups/${groupId}/start`);
+    return res.data; // 성공 시 groupId, groupStatus(IN_PROGRESS) 등 반환
+  } catch (error) {
+    console.error("교환독서 시작 실패:", error);
+    throw error;
+  }
+};

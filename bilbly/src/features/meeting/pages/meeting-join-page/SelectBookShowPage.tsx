@@ -24,7 +24,7 @@ const mockMembers: Member[] = [
     const navigate = useNavigate();
 
     const handleNext = () => {
-        navigate(`/${code}/select-book`);
+        navigate(`/select-book`);
     };
 
     return (
