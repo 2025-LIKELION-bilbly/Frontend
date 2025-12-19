@@ -35,7 +35,7 @@ function CategoryTabs({ members = [] }: CategoryTabsProps) {
         return (
           <S.TabItem key={index}>
             <S.Circle $bgColor={color.bgColor} $textColor={color.textColor}>
-              {/* 닉네임의 첫 글자만 표시 (예: "고권혜" -> "고") */}
+              {/* 닉네임의 첫 글자만 표시 */}
               {nickname ? nickname.charAt(0) : '?'}
             </S.Circle>
             {/* 필요하다면 원 아래에 전체 닉네임을 텍스트로 추가할 수 있습니다 */}
